@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Environment (never commit API keys or secrets)
+.env
+.env.local
+.env.*.local
+
+# Build / cache
+dist/
+.next/
+*.tsbuildinfo
+
+# OS
+.DS_Store
