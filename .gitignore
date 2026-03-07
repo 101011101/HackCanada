@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.*
 
 # Build / cache
 dist/
@@ -14,7 +15,9 @@ dist/
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 *.pyo
+*.pyd
 .venv/
 venv/
 *.egg-info/
