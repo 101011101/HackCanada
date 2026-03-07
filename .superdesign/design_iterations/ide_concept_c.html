@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept C — Mission Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E8E5E0;
+  --bg-warm: #DDD9D3;
+  --bg-card: #F2F0EC;
+  --bg-elevated: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6762;
+  --text-tertiary: #9E9A94;
+  --accent: #E8913A;
+  --accent-light: #F5C991;
+  --accent-bg: rgba(232,145,58,0.12);
+  --border: #D1CDC7;
+  --border-light: #E2DFD9;
+  --success: #4CAF50;
+  --dark: #141A14;
+  --dark-2: #1C2619;
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #B8B4AE;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  min-height: 100vh;
+}
+.label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+.desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 16px;
+  text-align: center;
+  max-width: 340px;
+}
+.screen-nav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.screen-nav button {
+  padding: 7px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+.screen-nav button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.phone {
+  width: 375px;
+  min-height: 780px;
+  background: var(--bg);
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; }
+
+/* ---- LANDING: dark network theme ---- */
+.nl-shell {
+  flex: 1;
+  background: var(--dark);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated node network SVG background */
+.nl-network-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 340px;
+  opacity: 0.35;
+}
+
+.nl-top {
+  padding: 20px 24px 0;
+  position: relative;
+  z-index: 1;
+}
+.nl-wordmark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: -0.01em;
+}
+.nl-wordmark span { color: var(--accent); }
+
+.nl-hero {
+  padding: 32px 24px 28px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+.nl-overline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nl-overline::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--green);
+  display: block;
+}
+.nl-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+}
+.nl-title em {
+  font-style: normal;
+  color: var(--green);
+}
+.nl-body {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.65;
+  margin-bottom: 36px;
+  max-width: 280px;
+}
+
+/* Live network nodes visual */
+.nl-nodes {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+.nl-node {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(74,222,128,0.4);
+  border: 1.5px solid var(--green);
+  position: relative;
+  flex-shrink: 0;
+}
+.nl-node.active {
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(74,222,128,0.6);
+}
+.nl-node::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(74,222,128,0.2);
+}
+.nl-edge {
+  height: 1px;
+  flex: 1;
+  background: rgba(74,222,128,0.2);
+  max-width: 28px;
+}
+.nl-you-node {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px dashed rgba(232,145,58,0.8);
+  background: rgba(232,145,58,0.08);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nl-you-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+  text-align: center;
+}
+.nl-nodes-col { display: flex; flex-direction: column; align-items: center; }
+
+.nl-cta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.nl-btn-primary {
+  padding: 14px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+.nl-btn-ghost {
+  padding: 13px 20px;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+
+.nl-footer {
+  padding: 16px 24px 24px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.nl-stat { text-align: center; }
+.nl-stat-n {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+.nl-stat-l { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.06em; }
+.nl-stat-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
+
+/* ---- SETUP: minimal 2-step ---- */
+.ms-header {
+  padding: 18px 20px 14px;
+  background: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ms-back {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+}
+.ms-header-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+.ms-step-indicator {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ms-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+}
+.ms-dot.active { background: var(--accent); }
+
+.ms-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 20px;
+  padding-bottom: 90px;
+  background: var(--bg);
+}
+.ms-section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.ms-section-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.field-group { margin-bottom: 18px; }
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 7px;
+  display: block;
+}
+.field-input {
+  width: 100%;
+  height: 44px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  padding: 0 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+}
+.field-select {
+  width: 100%;
+  height: 44px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  padding: 0 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6762' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+.gps-btn {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--accent-bg);
+  border: 1.5px solid rgba(232,145,58,0.3);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+.gps-set {
+  background: rgba(74,222,128,0.08);
+  border-color: rgba(74,222,128,0.3);
+  color: #16a34a;
+}
+.level-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.level-opt {
+  padding: 11px 0;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  cursor: pointer;
+}
+.level-opt.active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ms-cta-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 20px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--border-light);
+}
+.ms-cta {
+  width: 100%;
+  padding: 14px;
+  background: var(--dark);
+  color: var(--green);
+  border: 1px solid rgba(74,222,128,0.3);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+
+/* ---- DASHBOARD: Mission Brief ---- */
+.mb-shell { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+
+.mb-header {
+  background: var(--dark);
+  padding: 18px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mb-wordmark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+}
+.mb-wordmark span { color: var(--accent); }
+.mb-cycle-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+.online-dot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 500;
+}
+.online-dot::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(74,222,128,0.6);
+}
+
+.mb-mission-card {
+  background: var(--dark-2);
+  margin: 16px 16px 0;
+  border-radius: 8px;
+  padding: 18px;
+  border: 1px solid rgba(74,222,128,0.15);
+  position: relative;
+  overflow: hidden;
+}
+.mb-mission-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--green), rgba(74,222,128,0.2));
+}
+.mb-mission-overline {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+.mb-mission-crop {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  padding-left: 10px;
+  margin-bottom: 4px;
+}
+.mb-mission-reason {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  padding-left: 10px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.mb-mission-stats {
+  display: flex;
+  gap: 8px;
+  padding-left: 10px;
+}
+.mb-ms {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 7px 10px;
+}
+.mb-ms-n {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+}
+.mb-ms-l {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 1px;
+}
+.mb-prog-row {
+  padding-left: 10px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mb-prog-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.mb-prog-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 999px;
+}
+.mb-prog-l {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+}
+
+.mb-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0 72px;
+}
+
+.mb-section {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+.mb-sec-head {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+.mb-alert {
+  background: #FEF3EC;
+  border: 1px solid rgba(232,145,58,0.25);
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7A3A00;
+}
+.mb-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.mb-task:last-child { border-bottom: none; }
+.mb-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.mb-check.done {
+  background: var(--success);
+  border-color: var(--success);
+  display: flex; align-items: center; justify-content: center;
+}
+.mb-task-text { flex: 1; }
+.mb-task-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.mb-task-name.done { text-decoration: line-through; color: var(--text-tertiary); }
+.mb-task-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.mb-due {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: 3px;
+  padding: 2px 6px;
+  align-self: flex-start;
+  margin-top: 3px;
+}
+
+.mb-log-section {
+  padding: 14px 20px;
+}
+.mb-log-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--dark);
+  color: var(--green);
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Tab bar */
+.tab-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: var(--dark);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.tab-icon { color: rgba(255,255,255,0.25); }
+.tab-item.active .tab-icon { color: var(--green); }
+.tab-label { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.25); }
+.tab-item.active .tab-label { color: var(--green); }
+.bdot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: absolute;
+  top: 5px; right: -3px;
+}
+.tab-icon-wrap { position: relative; }
+</style>
+</head>
+<body>
+
+<div class="label">Concept C — Mission Brief</div>
+<p class="desc">Network-native narrative. You are a node. Dark, purposeful aesthetic throughout.</p>
+
+<div class="screen-nav">
+  <button class="active" onclick="show('landing')">1 Network</button>
+  <button onclick="show('setup')">2 Enlist</button>
+  <button onclick="show('dashboard')">3 Mission</button>
+</div>
+
+<div class="phone">
+
+  <!-- SCREEN 1: LANDING — network theme -->
+  <div class="screen active" id="landing">
+    <div class="nl-shell">
+      <!-- SVG network background -->
+      <svg class="nl-network-bg" viewBox="0 0 375 340" xmlns="http://www.w3.org/2000/svg">
+        <line x1="60" y1="80" x2="180" y2="140" stroke="#4ade80" stroke-width="0.8" opacity="0.4"/>
+        <line x1="180" y1="140" x2="290" y2="90" stroke="#4ade80" stroke-width="0.8" opacity="0.4"/>
+        <line x1="180" y1="140" x2="240" y2="220" stroke="#4ade80" stroke-width="0.8" opacity="0.3"/>
+        <line x1="60" y1="80" x2="120" y2="200" stroke="#4ade80" stroke-width="0.8" opacity="0.25"/>
+        <line x1="120" y1="200" x2="240" y2="220" stroke="#4ade80" stroke-width="0.8" opacity="0.25"/>
+        <line x1="290" y1="90" x2="320" y2="180" stroke="#4ade80" stroke-width="0.8" opacity="0.2"/>
+        <line x1="240" y1="220" x2="320" y2="180" stroke="#4ade80" stroke-width="0.8" opacity="0.2"/>
+        <line x1="120" y1="200" x2="80" y2="280" stroke="#4ade80" stroke-width="0.8" opacity="0.15"/>
+        <circle cx="60" cy="80" r="4" fill="#4ade80" opacity="0.7"/>
+        <circle cx="60" cy="80" r="8" fill="#4ade80" opacity="0.12"/>
+        <circle cx="180" cy="140" r="6" fill="#4ade80" opacity="0.9"/>
+        <circle cx="180" cy="140" r="12" fill="#4ade80" opacity="0.1"/>
+        <circle cx="290" cy="90" r="3.5" fill="#4ade80" opacity="0.5"/>
+        <circle cx="240" cy="220" r="4.5" fill="#4ade80" opacity="0.6"/>
+        <circle cx="120" cy="200" r="3" fill="#4ade80" opacity="0.45"/>
+        <circle cx="320" cy="180" r="3.5" fill="#4ade80" opacity="0.4"/>
+        <circle cx="80" cy="280" r="3" fill="#4ade80" opacity="0.3"/>
+        <!-- you node placeholder -->
+        <circle cx="188" cy="310" r="7" fill="none" stroke="#E8913A" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>
+        <circle cx="188" cy="310" r="3" fill="#E8913A" opacity="0.5"/>
+        <line x1="188" y1="303" x2="188" y2="230" stroke="#E8913A" stroke-width="0.8" stroke-dasharray="4,4" opacity="0.4"/>
+      </svg>
+
+      <div class="nl-top">
+        <div class="nl-wordmark">My<span>Celium</span></div>
+      </div>
+
+      <div class="nl-hero">
+        <div class="nl-overline">Urban food network</div>
+        <div class="nl-title">Become<br>a <em>node</em>.</div>
+        <div class="nl-body">47 urban growers are already producing food for Toronto. The network tells each one exactly what to grow. Together they fill the gaps.</div>
+
+        <div class="nl-cta-stack">
+          <button class="nl-btn-primary" onclick="show('setup')">Enlist my plot</button>
+          <button class="nl-btn-ghost">What would I grow? &rarr;</button>
+        </div>
+      </div>
+
+      <div class="nl-footer">
+        <div class="nl-stat">
+          <div class="nl-stat-n">47</div>
+          <div class="nl-stat-l">Active nodes</div>
+        </div>
+        <div class="nl-stat-divider"></div>
+        <div class="nl-stat">
+          <div class="nl-stat-n">84%</div>
+          <div class="nl-stat-l">Network health</div>
+        </div>
+        <div class="nl-stat-divider"></div>
+        <div class="nl-stat">
+          <div class="nl-stat-n">3</div>
+          <div class="nl-stat-l">Nearby hubs</div>
+        </div>
+        <div class="nl-stat-divider"></div>
+        <div class="nl-stat">
+          <div class="nl-stat-n">312 kg</div>
+          <div class="nl-stat-l">This cycle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: SETUP — minimal enlist form -->
+  <div class="screen" id="setup">
+    <div class="ms-header">
+      <div class="ms-back" onclick="show('landing')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="ms-header-title">Enlist your plot</div>
+      <div class="ms-step-indicator">
+        <div class="ms-dot active"></div>
+        <div class="ms-dot active"></div>
+        <div class="ms-dot"></div>
+      </div>
+    </div>
+
+    <div class="ms-body">
+      <div class="ms-section-title">Your plot</div>
+      <div class="ms-section-sub">The network needs to know where you are and what you're working with.</div>
+
+      <div class="field-group">
+        <label class="field-label">Plot name</label>
+        <input class="field-input" type="text" placeholder="e.g. Balcony East" value="Rooftop North">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Location</label>
+        <button class="gps-btn gps-set">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Location set — 43.6532, -79.38
+        </button>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Plot size</label>
+        <input class="field-input" type="number" value="48" placeholder="sq ft">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Plot type</label>
+        <select class="field-select">
+          <option>Balcony</option>
+          <option selected>Rooftop</option>
+          <option>Backyard</option>
+          <option>Community lot</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Gear level</label>
+        <div class="level-row">
+          <div class="level-opt active">Basic</div>
+          <div class="level-opt">Medium</div>
+          <div class="level-opt">Advanced</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Monthly budget</label>
+        <div class="level-row">
+          <div class="level-opt active">Low</div>
+          <div class="level-opt">Medium</div>
+          <div class="level-opt">High</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-cta-bar">
+      <button class="ms-cta" onclick="show('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 16 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Connect to network
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: DASHBOARD — mission brief style -->
+  <div class="screen" id="dashboard">
+    <div class="mb-shell">
+      <div class="mb-header">
+        <div class="mb-wordmark">My<span>Celium</span></div>
+        <div class="mb-cycle-tag">Cycle 1 · Week 1</div>
+        <div class="online-dot">Online</div>
+      </div>
+
+      <div class="mb-mission-card">
+        <div class="mb-mission-overline">Mission assigned</div>
+        <div class="mb-mission-crop">Spinach</div>
+        <div class="mb-mission-reason">87% suitability — fills a network gap. Your conditions match optimal ranges for this crop.</div>
+        <div class="mb-mission-stats">
+          <div class="mb-ms">
+            <div class="mb-ms-n">1.4 kg</div>
+            <div class="mb-ms-l">Target</div>
+          </div>
+          <div class="mb-ms">
+            <div class="mb-ms-n">4 wks</div>
+            <div class="mb-ms-l">Duration</div>
+          </div>
+          <div class="mb-ms">
+            <div class="mb-ms-n">~1.3 kg</div>
+            <div class="mb-ms-l">Estimated</div>
+          </div>
+        </div>
+        <div class="mb-prog-row">
+          <div class="mb-prog-track">
+            <div class="mb-prog-fill" style="width:18%"></div>
+          </div>
+          <span class="mb-prog-l">Day 5 of 28</span>
+        </div>
+      </div>
+
+      <div class="mb-body">
+        <div class="mb-section">
+          <div class="mb-sec-head">Alerts</div>
+          <div class="mb-alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8913A" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+            Frost likely this weekend — cover seedlings
+          </div>
+        </div>
+
+        <div class="mb-section">
+          <div class="mb-sec-head">Field orders</div>
+
+          <div class="mb-task">
+            <div class="mb-check done">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg>
+            </div>
+            <div class="mb-task-text">
+              <div class="mb-task-name done">Prepare and loosen soil bed</div>
+              <div class="mb-task-sub">Spade · 30 min</div>
+            </div>
+          </div>
+
+          <div class="mb-task">
+            <div class="mb-check"></div>
+            <div class="mb-task-text">
+              <div class="mb-task-name">Distribute seeds evenly</div>
+              <div class="mb-task-sub">Hands · 15 min</div>
+            </div>
+            <div class="mb-due">Today</div>
+          </div>
+
+          <div class="mb-task">
+            <div class="mb-check"></div>
+            <div class="mb-task-text">
+              <div class="mb-task-name">Water every 2 days — light moisture</div>
+              <div class="mb-task-sub">Watering can · 10 min</div>
+            </div>
+          </div>
+
+          <div class="mb-task">
+            <div class="mb-check"></div>
+            <div class="mb-task-text">
+              <div class="mb-task-name">Harvest at 5cm leaf height</div>
+              <div class="mb-task-sub">Scissors · Week 4</div>
+            </div>
+            <div class="mb-due" style="color:var(--text-tertiary);background:var(--bg-warm);">Mar 28</div>
+          </div>
+        </div>
+
+        <div class="mb-log-section">
+          <button class="mb-log-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.23-3.58"/></svg>
+            Transmit field conditions
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item active">
+          <div class="tab-icon-wrap">
+            <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <span class="tab-label">Home</span>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon-wrap">
+            <div class="bdot"></div>
+            <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.23-3.58"/></svg>
+          </div>
+          <span class="tab-label">Update</span>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon-wrap">
+            <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <span class="tab-label">Wallet</span>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon-wrap">
+            <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span class="tab-label">Me</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const map = { landing: 0, setup: 1, dashboard: 2 };
+  document.querySelectorAll('.screen-nav button')[map[id]].classList.add('active');
+}
+</script>
+</body>
+</html>
