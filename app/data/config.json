@@ -1,0 +1,18 @@
+{
+  "max_travel_distance": 5000.0,
+  "food_targets": {
+    "0": 1200,
+    "1": 600,
+    "2": 400,
+    "3": 150,
+    "4": 350,
+    "5": 200,
+    "6": 150,
+    "7": 60,
+    "8": 100,
+    "9": 200
+  },
+  "epoch_weeks": 4,
+  "inertia_weight": 50.0,
+  "overproduction_buffer": 0.25
+}
