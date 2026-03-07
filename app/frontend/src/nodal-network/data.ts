@@ -3,14 +3,14 @@ export interface FarmNode {
   name: string;
   lat: number;
   lng: number;
-  plot_size_sqft: number;
-  plot_type: "balcony" | "rooftop" | "backyard" | "community";
-  tools: "basic" | "intermediate" | "advanced";
-  budget: "low" | "medium" | "high";
-  pH: number;
-  moisture: number;
-  temperature: number;
-  humidity: number;
+  plot_size_sqft: number | null;
+  plot_type: "balcony" | "rooftop" | "backyard" | "community" | null;
+  tools: "basic" | "intermediate" | "advanced" | null;
+  budget: "low" | "medium" | "high" | null;
+  pH: number | null;
+  moisture: number | null;
+  temperature: number | null;
+  humidity: number | null;
   status: "new" | "available" | "growing";
   current_crop_id: number | null;
   cycle_end_date: string | null;
@@ -141,9 +141,9 @@ export interface NetworkEdge {
   distanceM: number;
 }
 
-export function buildNetworkEdges(): NetworkEdge[] {
+export function buildNetworkEdges(farmList?: FarmNode[]): NetworkEdge[] {
   const edges: NetworkEdge[] = [];
-  for (const farm of farms) {
+  for (const farm of (farmList ?? farms)) {
     const hub = getNearestHub(farm);
     if (hub) {
       edges.push({
