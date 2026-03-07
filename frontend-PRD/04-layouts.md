@@ -1,12 +1,32 @@
-# Screen Layouts — Kit Reference
+# Screen Layouts — Kit Reference & Agent Instructions
 
-## Source of Truth
+---
 
-The **only** design system in use is `final-kits/styles.css` + `final-kits/ui-kit-responsive.html`.
-All class names, tokens, and components below come directly from that kit.
-Do not invent new components. Do not apply a dark or "MyCelium organic" aesthetic — use the kit as-is.
+## HOW TO USE THIS DOCUMENT (READ FIRST)
 
-### Kit Token Reference
+This file is the single source of truth for all wireframe layouts.
+Multiple agents work on this in parallel — each agent owns one section.
+
+**Before doing anything:**
+1. Run `do dis` via MCP to confirm no wireframes already exist at `app/frontend/wireframes/`
+2. Read `final-kits/ui-kit-responsive.html` — understand every component available
+3. Read `final-kits/styles.css` — the token and class reference
+4. Read your assigned section below (only your section)
+5. Run `do ide` via MCP — generate 2 layout concepts, present them, wait for user to pick one
+6. Build your wireframe HTML at the path specified in your section
+
+**Output rules (all agents):**
+- One standalone HTML file per wireframe
+- Link stylesheet: `<link rel="stylesheet" href="../../../final-kits/styles.css">`
+- Also copy the inline `<style>` block from `final-kits/ui-kit-responsive.html` for responsive layout classes not in styles.css
+- Use ONLY class names that exist in the kit — no custom CSS
+- Placeholder text is fine (lorem ipsum, "Crop Name", "0.0 kg", etc.)
+- Must render correctly at 375px (mobile) AND 768px+ (desktop) — the kit handles this automatically via its media query
+
+---
+
+## KIT TOKEN REFERENCE
+
 ```
 Colors:   --bg #E8E5E0 · --bg-warm #DDD9D3 · --bg-card #F2F0EC · --bg-elev #FFFFFF
           --ink #1A1A1A · --ink-2 #6B6762 · --ink-3 #9E9A94
@@ -15,15 +35,17 @@ Fonts:    --fb Inter (body) · --fd Space Grotesk (display/headings)
 Radii:    --r-xs 2px · --r-sm 4px · --r-md 6px · --r-pill 999px
 ```
 
-### Kit Component Inventory (mobile-first)
-| Component | Class(es) |
+## KIT COMPONENT INVENTORY
+
+| Component | Classes |
 |---|---|
 | Page shell | `.shell` |
-| Sticky topbar | `.m-topbar` · `.m-topbar-logo` · `.m-topbar-name` · `.m-topbar-dot` · `.m-topbar-actions` |
+| Sticky topbar (mobile) | `.m-topbar` · `.m-topbar-logo` · `.m-topbar-name` · `.m-topbar-dot` · `.m-topbar-actions` |
+| Sticky topbar (desktop) | `.d-topbar` · `.d-topbar-logo` · `.d-topbar-name` · `.d-topbar-dot` · `.d-topbar-actions` |
 | Bottom tab bar | `.m-tabbar` · `.m-tab` · `.m-tab--on` · `.m-tab-lbl` · `.m-tab-dot` |
 | Dark hero banner | `.m-hero` · `.m-hero-eyebrow` · `.m-hero-title` · `.m-hero-sub` · `.m-hero-stats` · `.m-hero-stat` · `.m-hero-val` · `.m-hero-lbl` |
-| Stat row (2-col) | `.m-stat-row` · `.m-stat-card` · `.m-stat-val` · `.m-stat-lbl` · `.m-stat-delta` · `.delta--up` · `.delta--dn` |
-| Section wrapper | `.m-section` · `.m-section-title` |
+| Stat row | `.m-stat-row` · `.m-stat-card` · `.m-stat-val` · `.m-stat-lbl` · `.m-stat-delta` · `.delta--up` · `.delta--dn` |
+| Section | `.m-section` · `.m-section-title` |
 | Content area | `.m-content` · `.m-row` |
 | Cards | `.crd` · `.crd--elev` · `.crd--acc` · `.crd-head` · `.crd-title` · `.crd-body` · `.crd-foot` |
 | Buttons | `.btn` · `--primary` · `--accent` · `--secondary` · `--ghost` · `--full` · `--lg` · `--sm` · `--icon` |
@@ -36,447 +58,434 @@ Radii:    --r-xs 2px · --r-sm 4px · --r-md 6px · --r-pill 999px
 | Toggle | `.toggle` · `.toggle--on` · `.toggle__k` |
 | Toast | `.toast` · `.toast--s` · `.toast--e` |
 | Overline label | `.overline` |
+| Desktop grid layouts | `.two-col` · `.three-col` · `.feature-r` · `.feature-r-side` · `.sidebar-layout` |
+| Desktop panels | `.big-panel` · `.small-panel` · `.wide-panel` · `.icon-card` · `.icon-card-grid` |
+| Desktop sidebar | `.sidebar` · `.nav-row` · `.nav-row--on` |
+| Visibility helpers | `.m-only` (hidden on desktop) · `.d-only` (hidden on mobile) |
 
 ---
 
-## Screen 1 — Suggestions
+## NAVIGATION — 3 TABS (ALL AUTHENTICATED SCREENS)
 
-### 1a. Entry — Method Select
+The app has **3 main tabs** in the bottom nav (mobile) and top nav (desktop):
 
-```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .m-topbar-logo                      │
-│     [logo svg] .m-topbar-name         │
-│     .m-topbar-dot                     │
-│   .m-topbar-actions                   │
-│     .btn.btn--secondary.btn--sm       │  ← "Sign in"
-│                                       │
-│ .m-hero                               │
-│   .m-hero-eyebrow  "Get started"      │
-│   .m-hero-title    "What should       │
-│                     you grow?"        │
-│   .m-hero-sub      [subtitle copy]    │
-│                                       │
-│ .m-section                            │
-│   .m-content                          │
-│     .crd.crd--elev  ← AR Scan card   │
-│       .li-icon.li-icon--acc [cam svg] │
-│       .crd-title  "Scan with AR"      │
-│       .crd-body   [description]       │
-│     .crd.crd--elev  ← Photo card     │
-│       .li-icon [photo svg]            │
-│       .crd-title  "Upload a photo"    │
-│     .crd.crd--elev  ← Manual card    │
-│       .li-icon [pencil svg]           │
-│       .crd-title  "Enter size manually"│
-└───────────────────────────────────────┘
-```
+| Tab | Icon | Screens covered |
+|---|---|---|
+| **My Farm** | seedling/plant | Dashboard, Cycle Update |
+| **My Food** | basket/bowl | Wallet, Food Manager, Delivery |
+| **Suggestions** | sparkle/search | Suggestions entry, form, results |
 
-**Notes:**
-- AR card hidden (not broken) if WebXR unavailable — use `display:none` conditional
-- Tapping any card navigates into 1b
+Suggestions tab is public (no auth required). My Farm and My Food require auth.
 
----
-
-### 1b. Suggestions Form
-
-```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--sm  ← back     │
-│   .m-topbar-name  "Your plot: 48 sq ft"│
-│                                       │
-│ .m-section                            │
-│   .m-content                          │
-│                                       │
-│     .overline  "Plot type"            │
-│     .input (select/dropdown)          │
-│                                       │
-│     .overline  "Sunlight"             │
-│     .input  placeholder "hrs/day"     │
-│                                       │
-│     .overline  "Water access"         │
-│     .input (select)                   │
-│                                       │
-│     .overline  "Tools"                │
-│     [row of .chip / .chip--active]    │
-│                                       │
-│     .overline  "Budget"               │
-│     .input (select)                   │
-│                                       │
-│     .overline  "Soil type (optional)" │
-│     .input (select)                   │
-│                                       │
-│     .btn.btn--accent.btn--full.btn--lg│
-│       "Find my crops"                 │
-└───────────────────────────────────────┘
+```html
+<!-- Bottom tabbar — mobile -->
+<div class="m-tabbar m-only">
+  <button class="m-tab m-tab--on">
+    <svg><!-- plant icon --></svg>
+    <span class="m-tab-lbl">My Farm</span>
+    <span class="m-tab-dot"></span>
+  </button>
+  <button class="m-tab">
+    <svg><!-- basket icon --></svg>
+    <span class="m-tab-lbl">My Food</span>
+    <span class="m-tab-dot"></span>
+  </button>
+  <button class="m-tab">
+    <svg><!-- sparkle icon --></svg>
+    <span class="m-tab-lbl">Suggestions</span>
+    <span class="m-tab-dot"></span>
+  </button>
+</div>
 ```
 
 ---
 
-### 1c. Results
+---
+## AGENT A — MY FARM TAB
+### Assigned files:
+- `app/frontend/wireframes/01-my-farm-dashboard.html`
+- `app/frontend/wireframes/02-my-farm-cycle-update.html`
 
+### Instructions for Agent A:
+1. Read this section only (§My Farm)
+2. Read `final-kits/ui-kit-responsive.html` fully
+3. Run `do dis` via MCP
+4. Run `do ide` via MCP — propose 2 layout concepts for the dashboard, wait for user selection
+5. Then build both wireframe files
+
+---
+
+### Frame 01 — My Farm: Dashboard
+
+**Route:** `/dashboard` — default screen after login
+
+**Content blocks (in order):**
+- Topbar: MyCelium logo + avatar button
+- Hero banner: current cycle info (cycle number, date range, crop assigned)
+- Risk banner: warning toast — only rendered if risk flags exist
+- Task list: each task shows toggle + title + subtitle (tool + time)
+- Yield stat: expected yield at bottom
+- 3-tab bottom nav (My Farm active)
+
+**Layout spec:**
 ```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--sm  ← back     │
-│   .m-topbar-name  "Your top crops"    │
-│                                       │
-│ [sticky strip]                        │
-│   .btn.btn--accent.btn--full          │
-│     "Join the network"                │
-│                                       │
-│ .m-section  ← crop card #1           │
-│   .m-content                          │
-│     .crd.crd--acc                     │
-│       .crd-head                       │
-│         .crd-title  "#1  Spinach"     │
-│         .badge.badge--success  "87%"  │
-│       .crd-body                       │
-│         "Matches pH · Low water"      │
-│         "~1.2 kg / cycle"             │
-│       .crd-foot                       │
-│         .btn.btn--secondary.btn--sm   │
-│           "Learn more"                │
-│                                       │
-│ .m-section  ← crop card #2           │
-│   .m-content                          │
-│     .crd  (same structure)            │
-│                                       │
-│ [repeated for 3–5+ cards]             │
-│                                       │
-│   .btn.btn--accent.btn--full          │
-│     "Join the network"   ← bottom CTA│
-└───────────────────────────────────────┘
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar                           .d-topbar
+  logo · name · dot · avatar          logo · name · dot · [nav links] · avatar
+
+.m-hero (dark panel)                .feature-r
+  eyebrow: "Cycle 3"                  .big-panel (left — hero/cycle info)
+  title: "Mar 7 – Mar 21"               eyebrow, title, sub, stats
+  sub: "Spinach · Zone A"             .feature-r-side (right — tasks + yield)
+  stats: crop / target / zone           .crd task list
+                                        .m-stat-card yield
+
+[.toast.toast--e if risk flag]      [.wide-panel--dark risk banner if flags]
+
+.m-section "Your tasks"
+  .m-content
+    .li (toggle + title + sub)      .table-panel or .crd for task list
+    .li ...
+    .li ...
+
+.m-stat-row (1 stat)
+  .m-stat-card "Expected yield"
+
+.m-tabbar (My Farm active)          [no tabbar — desktop uses topbar nav]
+```
+
+**States to show in wireframe:**
+- Active cycle (primary state — what to build)
+- Empty state: `.m-content` with `.overline` "Your first instructions are being prepared"
+
+---
+
+### Frame 02 — My Farm: Cycle Update
+
+**Route:** `/update` — accessed via Update tab
+
+**Content blocks:**
+- Topbar: back button + "Log update"
+- Cycle header: cycle number + day progress
+- Section: Conditions today (soil moisture, temperature, notes)
+- Section: Task progress (checklist with skip option)
+- Section: End of cycle (log yield — shown only near cycle end)
+- 3-tab bottom nav (My Farm active — Update is within My Farm tab)
+
+**Layout spec:**
+```
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar                           .d-topbar
+  back btn · "Log update"
+
+.m-section                          .two-col
+  title: "Cycle 3 · Day 6 of 14"     left: conditions form
+                                      right: task checklist
+.m-section "Conditions today"
+  .m-content
+    .overline "Soil moisture"       .crd--elev for each section
+    .m-row [.input] [cam .btn]
+    .overline "Temperature"
+    .m-row [.input] [location .btn]
+    .overline "Notes (optional)"
+    .input
+    .btn--primary--full "Sync conditions"
+
+.m-section "Task progress"
+  .m-content
+    .li [.toggle] title [skip .btn]
+    .li [.toggle] title [skip .btn]
+    .li [.toggle] title [skip .btn]
+    .btn--secondary--full "Save progress"
+
+.m-section "End of cycle?" (conditional)
+  .m-content
+    .btn--accent--full "Log final yield"
+
+.m-tabbar (My Farm active)
 ```
 
 ---
 
-## Screen 2 — Onboarding
+---
+## AGENT B — SUGGESTIONS + ONBOARDING
+### Assigned files:
+- `app/frontend/wireframes/03-suggestions-entry.html`
+- `app/frontend/wireframes/04-suggestions-form.html`
+- `app/frontend/wireframes/05-suggestions-results.html`
+- `app/frontend/wireframes/06-onboarding-step.html`
+- `app/frontend/wireframes/07-onboarding-review.html`
 
-### 2a. Step Layout (consistent across all 5 steps)
+### Instructions for Agent B:
+1. Read this section only (§Suggestions and §Onboarding)
+2. Read `final-kits/ui-kit-responsive.html` fully
+3. Run `do dis` via MCP
+4. Run `do ide` via MCP — propose 2 layout concepts for the suggestions entry, wait for user selection
+5. Then build all 5 wireframe files
 
+---
+
+### Frame 03 — Suggestions: Entry / Method Select
+
+**Route:** `/suggestions` — public, no auth
+
+**Content blocks:**
+- Topbar: logo + "Sign in" button
+- Hero: headline "What should you grow?" + subtitle
+- 3 method cards: AR Scan / Upload Photo / Enter Manually
+- Suggestions tab active in bottom nav (or standalone — no auth nav)
+
+**Layout spec:**
 ```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--icon  ← close  │
-│   .m-topbar-name  "Step 2 of 5"       │
-│                                       │
-│ .m-section                            │
-│   .m-content                          │
-│     .phead                            │
-│       span  "Soil — Physical"         │
-│       span  "2 / 5"                   │
-│     .pbar                             │
-│       .pbar-fill  [width: 40%]        │
-│                                       │
-│     .overline  "Soil texture"         │
-│     .input (select)                   │
-│                                       │
-│     .overline  "Soil depth (cm)"      │
-│     .input  type=number               │
-│                                       │
-│     .overline  "Drainage"             │
-│     .input (select)                   │
-│                                       │
-│ [sticky bottom bar]                   │
-│   .m-row                              │
-│     .btn.btn--secondary  "Back"       │
-│     .btn.btn--primary    "Continue"   │
-└───────────────────────────────────────┘
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar                           .d-topbar
+  logo · name · "Sign in" .btn        logo + sign in
+
+.m-hero                             .big-panel (hero left)
+  eyebrow "Get started"
+  title "What should you grow?"
+  sub [copy]
+
+.m-section                          .three-col (method cards)
+  .m-content
+    .crd--elev  AR Scan              .icon-card each method
+      .li-icon--acc [cam icon]
+      .crd-title
+      .crd-body
+    .crd--elev  Upload Photo
+    .crd--elev  Enter Manually
 ```
 
 ---
 
-### 2b. OCR Capture (inline — appears when camera icon tapped)
+### Frame 04 — Suggestions: Form
 
+**Route:** `/suggestions/form`
+
+**Content blocks:**
+- Topbar: back + "Your plot: 48 sq ft"
+- Form fields: plot type, sunlight, water access, tools (chips), budget, soil type
+- Submit button
+
+**Layout spec:**
 ```
-┌─ .crd.crd--elev ──────────────────────┐
-│ .crd-head                             │
-│   .crd-title  "Soil pH"               │
-│   .btn.btn--ghost.btn--icon  [cam svg]│
-│ .input  value="6.8"  ← pre-filled     │
-│                                       │
-│ [photo thumbnail  100% width]         │
-│ .overline  "We read: 6.8 — looks right?"│
-│                                       │
-│ .crd-foot                             │
-│   .btn.btn--secondary.btn--sm  "Edit" │
-│   .btn.btn--primary.btn--sm  "Confirm"│
-└───────────────────────────────────────┘
-```
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar back · plot size          .d-topbar
 
----
-
-### 2c. Review Step
-
-```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .m-topbar-name  "Review your farm"  │
-│                                       │
-│ .m-section  ← Plot Basics            │
-│   .m-content                          │
-│     .li                               │
-│       .li-title   "Plot Basics"       │
-│       .li-sub     "Backyard · 120 sq ft · GPS set"│
-│       .li-right                       │
-│         .btn.btn--ghost.btn--sm "Edit"│
-│                                       │
-│ .m-section  ← Soil Physical          │
-│   .m-content  (same .li structure)    │
-│     .li-sub  "Loam · 30cm · Well-drained"│
-│                                       │
-│ .m-section  ← Soil Chemistry         │
-│   .m-content                          │
-│     .li-sub  "pH 6.8 · N/P/K not entered"│
-│     .badge.badge--info  "Optional"    │
-│                                       │
-│ .m-section  ← Climate & Water        │
-│   .m-content                          │
-│     .li-sub  "6hrs sun · Irrigation available"│
-│                                       │
-│ .m-section  ← Resources              │
-│   .m-content                          │
-│     .li-sub  "Spade, Watering can · $20–50/mo"│
-│                                       │
-│   .btn.btn--accent.btn--full.btn--lg  │
-│     "Join the network"                │
-└───────────────────────────────────────┘
+.m-section                          .two-col
+  .m-content                          left: form fields
+    .overline + .input (×5)           right: .crd--elev summary/preview
+    chip row for tools
+    .btn--accent--full "Find my crops"
 ```
 
 ---
 
-## Screen 3 — Dashboard
+### Frame 05 — Suggestions: Results
 
+**Route:** `/suggestions/results`
+
+**Content blocks:**
+- Topbar: back + "Your top crops"
+- Sticky CTA: "Join the network"
+- Ranked crop cards (min 5)
+- Repeated CTA at bottom
+
+**Layout spec:**
 ```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .m-topbar-logo                      │
-│     [logo] .m-topbar-name  .m-topbar-dot│
-│   .m-topbar-actions                   │
-│     .btn.btn--ghost.btn--icon [avatar]│
-│                                       │
-│ .m-hero  ← cycle header               │
-│   .m-hero-eyebrow  "Cycle 3"          │
-│   .m-hero-title    "Mar 7 – Mar 21"   │
-│   .m-hero-stats                       │
-│     .m-hero-stat  val="Spinach"  lbl="crop"│
-│     .m-hero-stat  val="1.2 kg"   lbl="target"│
-│     .m-hero-stat  val="Zone A"   lbl="zone"│
-│                                       │
-│ [risk banner — only if flags present] │
-│   .toast.toast--e                     │
-│     ⚠ "RISK: Frost likely Mar 9"      │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "Your tasks"      │
-│   .m-content                          │
-│     .li  ← task 1 (pending)          │
-│       .toggle  (unchecked)            │
-│       .li-title   "Thin seedlings by Mar 9"│
-│       .li-sub     "Scissors · ~20 min"│
-│                                       │
-│     .li  ← task 2 (done)             │
-│       .toggle.toggle--on              │
-│       .li-title   "Water every 2 days"│
-│       .li-icon    [can svg]           │
-│                                       │
-│     .li  ← task 3                    │
-│       .toggle                         │
-│       .li-title   "Harvest when leaves >5cm"│
-│       .li-sub     "Mar 18–21 · Basket"│
-│                                       │
-│ .m-stat-row  (1 col, full width)      │
-│   .m-stat-card                        │
-│     .m-stat-val  "~1.1 kg"            │
-│     .m-stat-lbl  "Expected yield"     │
-│                                       │
-│ .m-tabbar                             │
-│   .m-tab.m-tab--on  lbl="Home"        │
-│   .m-tab             lbl="Update"     │
-│   .m-tab             lbl="Wallet"     │
-│   .m-tab             lbl="Me"         │
-└───────────────────────────────────────┘
-```
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar back · "Your top crops"   .d-topbar
 
-**Notes:**
-- Risk banner uses `.toast.toast--e` rendered as a full-width block above the task section, not a floating toast
-- Task toggles are shallow — full logging is in Screen 4
-- Badge on Update `.m-tab` when new bundle arrives: add `.badge.badge--accent` with count
+[sticky strip] .btn--accent--full   [sticky sidebar or top bar CTA]
 
----
+.m-section (×5 cards)               .two-col or .three-col crop cards
+  .crd--acc
+    .crd-head
+      .crd-title "#1 Spinach"
+      .badge--success "87%"
+    .crd-body reason tags · yield
+    .crd-foot .btn--secondary "Learn more"
 
-## Screen 4 — Cycle Update
-
-```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--sm  ← back     │
-│   .m-topbar-name  "Log update"        │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "Cycle 3 · Day 6 of 14"│
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "Conditions today"│
-│   .m-content                          │
-│     .overline  "Soil moisture"        │
-│     .m-row                            │
-│       .input  type=number             │
-│       .btn.btn--ghost.btn--icon [cam] │  ← OCR
-│                                       │
-│     .overline  "Temperature (°C)"     │
-│     .m-row                            │
-│       .input  type=number             │
-│       .btn.btn--ghost.btn--sm         │
-│         "Use my location"             │
-│                                       │
-│     .overline  "Notes (optional)"     │
-│     .input (textarea style)           │
-│                                       │
-│     .btn.btn--primary.btn--full       │
-│       "Sync conditions"               │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "Task progress"   │
-│   .m-content                          │
-│     .li  ← task with actions         │
-│       .toggle.toggle--on              │
-│       .li-title  "Thin seedlings"     │
-│                                       │
-│     .li                               │
-│       .toggle                         │
-│       .li-title  "Water every 2 days" │
-│       .li-right                       │
-│         .btn.btn--ghost.btn--sm "Skip"│
-│                                       │
-│     .li                               │
-│       .toggle                         │
-│       .li-title  "Harvest"            │
-│       .li-right                       │
-│         .btn.btn--ghost.btn--sm "Skip"│
-│                                       │
-│     .btn.btn--secondary.btn--full     │
-│       "Save progress"                 │
-│                                       │
-│ .m-section  ← shown near cycle end   │
-│   .m-section-title  "End of cycle?"  │
-│   .m-content                          │
-│     .btn.btn--accent.btn--full        │
-│       "Log final yield"               │
-│                                       │
-│ .m-tabbar  (Update tab active)        │
-└───────────────────────────────────────┘
+.btn--accent--full "Join the network"
 ```
 
 ---
 
-## Screen 5 — Wallet & Delivery
+### Frame 06 — Onboarding: Step Template
 
-### 5a. Wallet Home
+**Route:** `/onboarding/step-N` (reused for all 5 steps)
 
+**Content blocks:**
+- Topbar: close (×) + "Step N of 5"
+- Progress bar
+- Step title + fields (vary per step)
+- Sticky footer: Back + Continue buttons
+
+**Layout spec:**
 ```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--sm  ← back     │
-│   .m-topbar-name  "Wallet"            │
-│                                       │
-│ .m-hero                               │
-│   .m-hero-eyebrow  "Hub Currency"     │
-│   .m-hero-title    "142 HC"           │
-│   .m-hero-sub      "Your balance"     │
-│                                       │
-│ .m-section                            │
-│   .m-content                          │
-│     .btn.btn--accent.btn--full.btn--lg│
-│       "Log a delivery"                │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "History"         │
-│   .m-content                          │
-│     .li                               │
-│       .li-icon.li-icon--acc  "+"      │
-│       .li-title  "+ 40 HC  Spinach delivery"│
-│       .li-sub    "Mar 6 · Hub North"  │
-│       .li-right                       │
-│         .badge.badge--success "Confirmed"│
-│                                       │
-│     .li                               │
-│       .li-icon.li-icon--acc  "+"      │
-│       .li-title  "+ 35 HC  Kale delivery"│
-│       .li-sub    "Feb 21 · Hub North" │
-│       .li-right                       │
-│         .badge.badge--success "Confirmed"│
-│                                       │
-│     .li                               │
-│       .li-icon  "…"                   │
-│       .li-title  "Spinach delivery"   │
-│       .li-sub    "Mar 7 · Awaiting hub"│
-│       .li-right                       │
-│         .badge.badge--accent "Pending"│
-│                                       │
-│ .m-tabbar  (Wallet tab active)        │
-└───────────────────────────────────────┘
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar × · "Step 2 of 5"         .d-topbar step indicator
+
+.m-section                          .two-col
+  .m-content                          left: .crd--elev form
+    .phead + .pbar                    right: .crd progress + step summary
+      .pbar-fill [40%]
+    .overline + .input (fields vary)
+    [OCR cam button where applicable]
+
+[sticky footer]                     [inline footer in card]
+  .m-row
+    .btn--secondary "Back"
+    .btn--primary "Continue"
+```
+
+**Build step 2 (Soil Physical) as the example instance:**
+fields: soil texture (select), soil depth (number), drainage (select)
+
+---
+
+### Frame 07 — Onboarding: Review
+
+**Route:** `/onboarding/review`
+
+**Content blocks:**
+- Topbar: "Review your farm"
+- One `.li` row per completed section, each with Edit button
+- Submit button
+
+**Layout spec:**
+```
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar "Review your farm"        .d-topbar
+
+.m-section ×5 (one per step)        .crd--elev with all sections listed
+  .m-content
+    .li
+      .li-title section name
+      .li-sub   values summary
+      .li-right .btn--ghost "Edit"
+
+.btn--accent--full--lg "Join the network"
 ```
 
 ---
 
-### 5b. Log Delivery Flow
+---
+## AGENT C — MY FOOD TAB
+### Assigned files:
+- `app/frontend/wireframes/08-my-food-wallet.html`
+- `app/frontend/wireframes/09-my-food-delivery.html`
 
+### Instructions for Agent C:
+1. Read this section only (§My Food)
+2. Read `final-kits/ui-kit-responsive.html` fully
+3. Run `do dis` via MCP
+4. Run `do ide` via MCP — propose 2 layout concepts for the wallet home, wait for user selection
+5. Then build both wireframe files
+
+---
+
+### Frame 08 — My Food: Wallet Home
+
+**Route:** `/food` — default My Food tab
+
+**Content blocks:**
+- Topbar: "My Food"
+- Hero: Hub Currency balance (prominent)
+- CTA: "Log a delivery"
+- Food manager section: what you're growing this cycle, expected harvest
+- Transaction history: earn/spend list
+- 3-tab bottom nav (My Food active)
+
+**Layout spec:**
 ```
-┌─ .shell ──────────────────────────────┐
-│ .m-topbar                             │
-│   .btn.btn--ghost.btn--sm  ← back     │
-│   .m-topbar-name  "Log delivery"      │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "Which hub?"      │
-│   .m-content                          │
-│     [map embed — 100% width, 200px h] │
-│     — or —                            │
-│     .li  Hub North  0.4 km  [select]  │
-│     .li  Hub East   1.1 km            │
-│                                       │
-│ .m-section                            │
-│   .m-section-title  "What are you delivering?"│
-│   .m-content                          │
-│     .overline  "Crop"                 │
-│     .input (select — Spinach, Kale…)  │
-│                                       │
-│     .overline  "Quantity (kg)"        │
-│     .input  type=number               │
-│                                       │
-│     .overline  "Photo (optional)"     │
-│     .btn.btn--secondary.btn--full     │
-│       "Attach photo"                  │
-│                                       │
-│     .btn.btn--accent.btn--full.btn--lg│
-│       "Submit delivery"               │
-└───────────────────────────────────────┘
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar "My Food"                 .d-topbar
+
+.m-hero                             .feature-r
+  eyebrow "Hub Currency"              .big-panel balance + CTA (left)
+  title "142 HC"                      .feature-r-side food summary (right)
+  sub "Your balance"
+
+.m-section                          .two-col
+  .m-content
+    .btn--accent--full "Log a delivery"
+
+.m-section "What you're growing"    .crd current cycle crop info
+  .m-content
+    .m-stat-row
+      .m-stat-card crop name
+      .m-stat-card target yield
+      .m-stat-card days remaining
+
+.m-section "History"                .table-panel transaction history
+  .m-content
+    .li (×3)
+      .li-icon--acc "+"
+      .li-title "+ 40 HC  Spinach"
+      .li-sub date · hub
+      .li-right .badge--success "Confirmed"
+    .li (pending)
+      .li-right .badge--accent "Pending"
+
+.m-tabbar (My Food active)
 ```
 
 ---
 
-## Global Patterns
+### Frame 09 — My Food: Log Delivery
 
-### Bottom Tab Bar (all authenticated screens)
+**Route:** `/food/delivery`
+
+**Content blocks:**
+- Topbar: back + "Log delivery"
+- Hub select: map or sorted list
+- Delivery form: crop, quantity, photo
+- Submit button
+
+**Layout spec:**
 ```
-.m-tabbar
-  .m-tab             icon + lbl="Home"
-  .m-tab  [badge?]   icon + lbl="Update"   ← badge if new bundle
-  .m-tab.m-tab--on   icon + lbl="Wallet"   ← active example
-  .m-tab             icon + lbl="Me"
+MOBILE                              DESKTOP (768px+)
+─────────────────────────────       ────────────────────────────────────────
+.m-topbar back · "Log delivery"     .d-topbar
+
+.m-section "Which hub?"             .two-col
+  .m-content                          left: map + hub list
+    [map placeholder 100% × 180px]    right: delivery form
+    .li Hub North  0.4km [select]
+    .li Hub East   1.1km
+
+.m-section "What are you delivering?"
+  .m-content
+    .overline "Crop"
+    .input (select)
+    .overline "Quantity (kg)"
+    .input type=number
+    .overline "Photo (optional)"
+    .btn--secondary--full "Attach photo"
+    .btn--accent--full--lg "Submit delivery"
 ```
-Active tab: `.m-tab--on` — fills icon + label to `--ink`, shows `.m-tab-dot` in accent.
 
-### Loading State
-Every async screen shows a placeholder using `.m-stat-card` with empty `.m-stat-val` text replaced by a shimmer `background: linear-gradient(...)` animation. No silent waits.
+---
 
-### Toast Feedback
-On successful sync: `.toast.toast--s` — "Saved" — displayed briefly at bottom above tabbar.
-On error: `.toast.toast--e` — user-readable message + retry `.btn.btn--ghost.btn--sm`.
+## GLOBAL WIREFRAME PATTERNS
 
-### Empty State
-`.m-content` with centered `.overline` label + `.crd` containing muted copy. Never a blank screen.
+### Loading state
+`.m-stat-card` with `.m-stat-val` containing "—" and muted `.m-stat-lbl`. No blank screens.
+
+### Error state
+`.toast.toast--e` full-width block + `.btn--ghost--sm "Retry"` inline.
+
+### Empty state
+`.m-content` → `.crd` with centered `.overline` label + muted body copy.
+
+### Success feedback
+`.toast.toast--s` positioned above tabbar.
