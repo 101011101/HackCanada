@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment (never commit API keys or secrets)
+.env
+.env.local
+.env.*.local
+
+# Build / cache
+dist/
+.next/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
