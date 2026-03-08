@@ -22,6 +22,7 @@ interface StepClimateDraft {
 interface StepResourcesDraft {
   tools: 'basic' | 'intermediate' | 'advanced';
   budget: 'low' | 'medium' | 'high';
+  max_delivery_distance_m: number | null;  // null = network default (5 km)
 }
 
 const DEFAULT_PLOT_BASICS: PlotBasicsDraft = {
@@ -35,7 +36,7 @@ const DEFAULT_PLOT_BASICS: PlotBasicsDraft = {
 
 const DEFAULT_SOIL: StepSoilDraft = { pH: 7.0, moisture: 50 };
 const DEFAULT_CLIMATE: StepClimateDraft = { temperature: 20, humidity: 50 };
-const DEFAULT_RESOURCES: StepResourcesDraft = { tools: 'basic', budget: 'low' };
+const DEFAULT_RESOURCES: StepResourcesDraft = { tools: 'basic', budget: 'low', max_delivery_distance_m: null };
 
 export default function Setup({ onComplete: _onComplete }: SetupProps) {
   const navigate = useNavigate();
@@ -66,6 +67,7 @@ export default function Setup({ onComplete: _onComplete }: SetupProps) {
           sunlight_hours: plotBasics.sunlight_hours,
           tools:          resources.tools,
           budget:         resources.budget,
+          max_delivery_distance_m: resources.max_delivery_distance_m,
           pH:             soil.pH,
           moisture:       soil.moisture,
           temperature:    climate.temperature,
@@ -343,6 +345,32 @@ export default function Setup({ onComplete: _onComplete }: SetupProps) {
                     style={{ textTransform: 'capitalize' }}
                   >
                     {b}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Delivery Radius
+              </span>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>
+                How far are you willing to travel to deliver to a hub? Your nearest hub is always primary.
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([
+                  { label: '1 km', value: 1000 },
+                  { label: '2 km', value: 2000 },
+                  { label: '3 km', value: 3000 },
+                  { label: '5 km', value: null },
+                ] as { label: string; value: number | null }[]).map(({ label, value }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className={`btn btn--sm ${resources.max_delivery_distance_m === value ? 'btn--primary' : 'btn--secondary'}`}
+                    onClick={() => setResources({ ...resources, max_delivery_distance_m: value })}
+                  >
+                    {label}{value === null ? ' (default)' : ''}
                   </button>
                 ))}
               </div>

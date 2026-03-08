@@ -100,6 +100,7 @@ export interface NewFarmRequest {
   temperature: number;
   humidity: number;
   preferred_crop_ids: number[];
+  max_delivery_distance_m?: number | null;
 }
 
 export interface ReadingEntryResponse {
