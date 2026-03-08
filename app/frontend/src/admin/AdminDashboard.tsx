@@ -18,8 +18,9 @@ import Charts from "./Charts";
 import Instructions from "./Instructions";
 import AdminLedger from "./AdminLedger";
 import MyHubAdminView from "./MyHubAdminView";
+import HubManager from "./HubManager";
 
-type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger" | "myhub";
+type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger" | "myhub" | "hub-manager";
 
 // ── Sidebar nav icons (inline SVG as JSX) ───────────────────────────────────
 
@@ -430,9 +431,14 @@ export default function AdminDashboard() {
           {!sidebarCollapsed && <>Ledger <span style={S.navDot(activePage === "ledger")} /></>}
         </button>
 
-        <div style={S.sectionLabel}>Hub</div>
+        <div style={S.sectionLabel(sidebarCollapsed)}>Hub</div>
         <button style={S.navItem(activePage === "myhub")} onClick={() => setActivePage("myhub")}>
-          <IconHub /> MyHub <span style={S.navDot(activePage === "myhub")} />
+          <IconHub />
+          {!sidebarCollapsed && <>MyHub <span style={S.navDot(activePage === "myhub")} /></>}
+        </button>
+        <button style={S.navItem(activePage === "hub-manager")} onClick={() => setActivePage("hub-manager")}>
+          <IconHub />
+          {!sidebarCollapsed && <>Hub Manager <span style={S.navDot(activePage === "hub-manager")} /></>}
         </button>
 
         <div style={S.sectionLabel(sidebarCollapsed)}>Infrastructure</div>
@@ -560,7 +566,9 @@ export default function AdminDashboard() {
 
         {/* Scrollable content */}
         <div style={S.scrollContent}>
-          {activePage === "myhub" ? (
+          {activePage === "hub-manager" ? (
+            <HubManager hubList={hubList} hubRouting={hubRouting} crops={crops} onRefresh={loadAll} />
+          ) : activePage === "myhub" ? (
             <MyHubAdminView />
           ) : activePage === "data-info" ? (
             <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
@@ -602,6 +610,7 @@ export default function AdminDashboard() {
                 <div style={S.mapClip}>
                   <NetworkMapCore
                     farmList={farmList}
+                    hubList={hubList}
                     edges={edges}
                     callbacks={callbacks}
                     panelMode={panelMode}

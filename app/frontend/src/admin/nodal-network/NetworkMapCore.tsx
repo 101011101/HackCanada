@@ -7,7 +7,6 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 import {
-  hubs,
   getCrop,
   getEffectiveCropId,
   haversine,
@@ -106,7 +105,7 @@ function farmHoverHtml(farm: FarmNode): string {
   </div>`;
 }
 
-function farmInfoHtml(farm: FarmNode, withActions: boolean): string {
+function farmInfoHtml(farm: FarmNode, withActions: boolean, hubList: HubNode[]): string {
   const cropId = getEffectiveCropId(farm);
   const crop = cropId != null ? getCrop(cropId) : null;
   const statusColor = STATUS_COLOR[farm.status] ?? T.ink3;
@@ -114,7 +113,7 @@ function farmInfoHtml(farm: FarmNode, withActions: boolean): string {
   let nearestHubName = "";
   let nearestHubDist = 0;
   let bestD = Infinity;
-  for (const h of hubs) {
+  for (const h of hubList) {
     const d = haversine(farm.lat, farm.lng, h.lat, h.lng);
     if (d < bestD) { bestD = d; nearestHubName = h.name; nearestHubDist = d; }
   }
@@ -201,10 +200,11 @@ export interface NetworkCallbacks {
 
 // ── Imperative layer ────────────────────────────────────────────────────────
 
-function NetworkLayer({ farmList, edges, callbacks }: {
+function NetworkLayer({ farmList, edges, callbacks, hubList }: {
   farmList: FarmNode[];
   edges: NetworkEdge[];
   callbacks: React.RefObject<NetworkCallbacks>;
+  hubList: HubNode[];
 }) {
   const map = useMap();
 
@@ -215,7 +215,7 @@ function NetworkLayer({ farmList, edges, callbacks }: {
     (window as any).__mcl_delete = (id: number) => callbacks.current?.onDeleteFarm(id);
 
     const farmById = new globalThis.Map(farmList.map(f => [f.id, f]));
-    const hubById = new globalThis.Map(hubs.map(h => [h.id, h]));
+    const hubById = new globalThis.Map(hubList.map(h => [h.id, h]));
 
     const hoverInfoWindow = new google.maps.InfoWindow({ disableAutoPan: true });
     const clickInfoWindow = new google.maps.InfoWindow();
@@ -273,7 +273,7 @@ function NetworkLayer({ farmList, edges, callbacks }: {
       });
       marker.addListener("click", () => {
         hoverInfoWindow.close();
-        clickInfoWindow.setContent(farmInfoHtml(farm, true));
+        clickInfoWindow.setContent(farmInfoHtml(farm, true, hubList));
         clickInfoWindow.open(map, marker);
         clickedOpen = true;
       });
@@ -283,7 +283,7 @@ function NetworkLayer({ farmList, edges, callbacks }: {
 
     clickInfoWindow.addListener("closeclick", () => { clickedOpen = false; });
 
-    for (const hub of hubs) {
+    for (const hub of hubList) {
       const isCritical = hub.priority === "critical";
       const color = isCritical ? T.error : T.info;
       const label = isCritical ? "!" : "H";
@@ -378,6 +378,7 @@ function PinpointCursor({ active }: { active: boolean }) {
 
 export interface NetworkMapCoreProps {
   farmList: FarmNode[];
+  hubList: HubNode[];
   edges: NetworkEdge[];
   callbacks: React.RefObject<NetworkCallbacks>;
   panelMode: PanelMode;
@@ -386,7 +387,7 @@ export interface NetworkMapCoreProps {
 }
 
 export default function NetworkMapCore({
-  farmList, edges, callbacks, panelMode, onMapClick, onRightClick,
+  farmList, hubList, edges, callbacks, panelMode, onMapClick, onRightClick,
 }: NetworkMapCoreProps) {
   const apiKey = getMapApiKey();
   const mapId = getMapId();
@@ -446,7 +447,7 @@ export default function NetworkMapCore({
           gestureHandling="greedy"
           disableDefaultUI={false}
         >
-          <NetworkLayer farmList={visibleFarms} edges={visibleEdges} callbacks={callbacks} />
+          <NetworkLayer farmList={visibleFarms} hubList={hubList} edges={visibleEdges} callbacks={callbacks} />
           {panelMode === "add-pinpoint" && <MapClickHandler onMapClick={onMapClick} />}
           <MapRightClickHandler onRightClick={onRightClick} />
           <PinpointCursor active={panelMode === "add-pinpoint"} />
