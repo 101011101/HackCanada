@@ -106,6 +106,7 @@ export default function GroceriesSheet({
   const q = parseFloat(quantity);
   const validQty = !Number.isNaN(q) && q > 0;
   const insufficient = cost != null && balance < cost;
+  const canSubmit = validQty && cropId !== "" && !submitting;
 
   return (
     <BottomSheet open={open} onClose={onClose} title="My Groceries">
@@ -125,8 +126,11 @@ export default function GroceriesSheet({
         <select
           disabled={cropsLoading}
           className="input"
-          value={cropId === "" ? "" : cropId}
-          onChange={(e) => setCropId(e.target.value ? Number(e.target.value) : "")}
+          value={cropId === "" ? "" : String(cropId)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setCropId(v === "" ? "" : Number(v));
+          }}
         >
           <option value="">{cropsLoading ? "Loading crops…" : "Select a crop…"}</option>
           {crops.map((c) => (
@@ -154,6 +158,11 @@ export default function GroceriesSheet({
           <div className="sheet-currency-val sheet-currency-val--cost">{cost} HC</div>
         </div>
       )}
+      {insufficient && canSubmit && (
+        <p style={{ fontSize: 12, color: "var(--error)", marginBottom: 12 }}>
+          Your balance ({balance} HC) is less than the estimated cost ({cost} HC). Reduce quantity or add balance.
+        </p>
+      )}
       {error && (
         <p style={{ fontSize: 12, color: "var(--error)", marginBottom: 12 }}>{error}</p>
       )}
@@ -165,11 +174,17 @@ export default function GroceriesSheet({
           type="button"
           className="btn btn--groceries btn--lg btn--full"
           onClick={handleSubmit}
-          disabled={!validQty || cropId === "" || submitting || insufficient}
+          disabled={!canSubmit}
+          title={!canSubmit ? "Select a crop and enter a quantity (e.g. 2.5) to request" : undefined}
         >
           {submitting ? "Submitting…" : "Request Groceries"}
         </button>
       </div>
+      {!canSubmit && !submitting && (
+        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8 }}>
+          Select a crop and enter quantity (kg) to enable the button.
+        </p>
+      )}
     </BottomSheet>
   );
 }

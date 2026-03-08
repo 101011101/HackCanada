@@ -18,7 +18,10 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
         tabIndex={0}
         aria-label="Close"
       />
-      <div className={`bottom-sheet ${open ? "open" : ""}`}>
+      <div
+        className={`bottom-sheet ${open ? "open" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sheet-handle" />
         <div className="sheet-title">{title}</div>
         <div className="sheet-body">{children}</div>

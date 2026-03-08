@@ -64,35 +64,37 @@ export default function TicketList({
         ) : (
           requests.map((req) => {
             const options = getHubOptions(req, hubList);
+            const instructionsContent =
+              req.status === "options_ready" && options.length > 0 && onSelectHub ? (
+                <div>
+                  <label className="input-label" style={{ marginBottom: 4, display: "block" }}>Choose hub</label>
+                  <select
+                    className="input"
+                    onChange={(e) => {
+                      const id = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(id)) onSelectHub(req.id, id);
+                    }}
+                  >
+                    <option value="">Select hub…</option>
+                    {options.map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : req.status === "matched" && req.hub_id ? (
+                `Drop off at ${hubNames[req.hub_id] ?? `Hub #${req.hub_id}`}.`
+              ) : (
+                ""
+              );
+
             return (
               <div key={req.id}>
                 <TicketItem
                   title={getTitle(req, cropNames)}
                   subtitle={getSubtitle(req, hubNames)}
-                  instructions={
-                    req.status === "matched" && req.hub_id
-                      ? `Drop off at ${hubNames[req.hub_id] ?? `Hub #${req.hub_id}`}.`
-                      : ""
-                  }
+                  instructions={instructionsContent}
                   status={mapStatus(req.status)}
                 />
-                {req.status === "options_ready" && options.length > 0 && onSelectHub && (
-                  <div style={{ marginTop: 8, marginLeft: 0, paddingLeft: 0 }}>
-                    <label className="input-label" style={{ marginBottom: 4 }}>Choose hub</label>
-                    <select
-                      className="input"
-                      onChange={(e) => {
-                        const id = parseInt(e.target.value, 10);
-                        if (!Number.isNaN(id)) onSelectHub(req.id, id);
-                      }}
-                    >
-                      <option value="">Select hub…</option>
-                      {options.map((h) => (
-                        <option key={h.id} value={h.id}>{h.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
                 {req.status === "matched" && onConfirm && (
                   <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
                     <input

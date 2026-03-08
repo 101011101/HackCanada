@@ -3,7 +3,7 @@ export type TicketStatus = "pending" | "approved" | "completed";
 interface TicketItemProps {
   title: string;
   subtitle: string;
-  instructions: string;
+  instructions?: React.ReactNode;
   status: TicketStatus;
   icon?: React.ReactNode;
 }
@@ -64,7 +64,7 @@ export default function TicketItem({ title, subtitle, instructions, status, icon
         <div className="ticket__title">{title}</div>
         <div className="ticket__sub">{subtitle}</div>
         <div className="ticket__instructions">
-          {instructions ? (
+          {instructions !== undefined && instructions !== "" ? (
             instructions
           ) : (
             <span className="ticket__instructions-placeholder">Pending instructions</span>

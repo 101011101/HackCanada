@@ -12,6 +12,17 @@ import DonationsSheet from "@/components/myfood/DonationsSheet";
 
 const POLL_INTERVAL_MS = 30_000;
 
+/** Demo nodes with varied HC and request statuses (data in app/data/farms.json & requests.json). */
+const DEMO_NODES = [
+  { id: 0, label: "Node 0", hc: 25 },
+  { id: 1, label: "Node 1", hc: 10 },
+  { id: 2, label: "Node 2", hc: 50 },
+  { id: 3, label: "Node 3", hc: 0 },
+  { id: 4, label: "Node 4", hc: 5 },
+  { id: 5, label: "Node 5", hc: 100 },
+  { id: 8, label: "Node 8", hc: 30 },
+] as const;
+
 export default function MyFoodPage() {
   const { nodeId, setNodeId } = useNodeId();
   const [balance, setBalance] = useState<BalanceResponse | null>(null);
@@ -121,6 +132,19 @@ export default function MyFoodPage() {
     <div className="shell">
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <MobileTopbar />
+        <div className="m-content" style={{ padding: "8px 20px 12px", gap: 8, flexDirection: "row", flexWrap: "wrap", alignItems: "center", borderBottom: "1px solid var(--border-lt)", background: "var(--bg-elev)" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-3)", marginRight: 8 }}>User</span>
+          {DEMO_NODES.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              className={`btn ${nodeId === n.id ? "btn--accent" : "btn--secondary"} btn--sm`}
+              onClick={() => setNodeId(n.id)}
+            >
+              {n.label} ({n.hc} HC)
+            </button>
+          ))}
+        </div>
         <MyFoodHero
           balance={balance?.currency_balance ?? 0}
           consumedKg={consumedKg}
