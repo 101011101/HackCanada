@@ -107,16 +107,30 @@ class Request:
     id:           int            # unique, auto-incrementing
     type:         str            # 'give' | 'receive'
     node_id:      int            # farm_id of the requesting node
-    hub_id:       int            # which hub this request is directed at
+    hub_id:       int | None     # hub the node has selected; None until selection
     crop_id:      int
     quantity_kg:  float
-    status:       str            # 'pending' | 'matched' | 'confirmed' | 'cancelled'
+    status:       str            # 'pending' | 'options_ready' | 'matched' | 'confirmed' | 'cancelled'
+    hub_options:  list[dict]     # ranked list of up to 3 viable hubs, populated by engine
     created_at:   str            # ISO datetime
-    matched_at:   str | None     # when cron job matched it
+    matched_at:   str | None     # when node selected a hub
     confirmed_at: str | None     # when hub confirmed physical exchange
 ```
 
 **`node_id`** — all nodes (farmers and community members alike) use the same `farm_id` identity. No separate community member table.
+
+**`hub_options`** — populated by the transaction engine each run. Each entry has `hub_id`, `distance_km`, and `score`. Top 3 hubs that pass hard constraints, ranked by composite score. The node picks one via `POST /requests/{id}/select-hub`. Until they do, `hub_id` remains `None` and status is `options_ready`.
+
+**`hub_id`** — `None` until the node calls `select-hub`. Set at that point and status moves to `matched`.
+
+Example `hub_options`:
+```json
+[
+  { "hub_id": 2, "distance_km": 3.1, "score": 0.87 },
+  { "hub_id": 0, "distance_km": 7.4, "score": 0.63 },
+  { "hub_id": 5, "distance_km": 9.2, "score": 0.41 }
+]
+```
 
 Example `requests.json`:
 ```json
@@ -125,10 +139,14 @@ Example `requests.json`:
     "id": 1,
     "type": "give",
     "node_id": 4,
-    "hub_id": 0,
+    "hub_id": null,
     "crop_id": 1,
     "quantity_kg": 8.0,
-    "status": "pending",
+    "status": "options_ready",
+    "hub_options": [
+      { "hub_id": 2, "distance_km": 3.1, "score": 0.87 },
+      { "hub_id": 0, "distance_km": 7.4, "score": 0.63 }
+    ],
     "created_at": "2026-03-07T10:00:00",
     "matched_at": null,
     "confirmed_at": null
@@ -141,6 +159,10 @@ Example `requests.json`:
     "crop_id": 1,
     "quantity_kg": 3.0,
     "status": "matched",
+    "hub_options": [
+      { "hub_id": 0, "distance_km": 2.0, "score": 0.91 },
+      { "hub_id": 3, "distance_km": 5.5, "score": 0.55 }
+    ],
     "created_at": "2026-03-07T11:00:00",
     "matched_at": "2026-03-07T12:00:00",
     "confirmed_at": null
@@ -213,11 +235,13 @@ Node submits receive request
 ### 3.3 Status transitions
 
 ```
-pending → matched     cron job determines conditions are met
-matched → confirmed   hub confirms physical exchange happened
-matched → pending     cron job re-queues if conditions change (inventory dropped, etc.)
-pending → cancelled   node cancels, or request expires
-matched → cancelled   node cancels before physical exchange
+pending → options_ready   engine finds ≥1 viable hub, populates hub_options
+options_ready → matched   node calls select-hub, picks from hub_options
+matched → confirmed       hub confirms physical exchange happened
+matched → pending         engine re-queues if selected hub no longer satisfies constraints
+options_ready → pending   engine re-queues if all hub_options become invalid
+pending → cancelled       node cancels, or request expires
+matched → cancelled       node cancels before physical exchange
 ```
 
 ### 3.4 Rules
@@ -445,6 +469,30 @@ Get current food stock at a hub.
 
 ---
 
+### POST `/requests/{request_id}/select-hub`
+Node selects a hub from the ranked options provided by the engine.
+
+**Request body:**
+```json
+{ "hub_id": 2 }
+```
+
+**Validation:**
+- Request must be in `options_ready` status
+- `hub_id` must be present in `hub_options`
+- Hard constraints re-checked at selection time (inventory/capacity may have changed since last engine run)
+
+**Response:**
+```json
+{
+  "status": "matched",
+  "hub_id": 2,
+  "message": "Hub selected. Proceed to Hub #2 for exchange."
+}
+```
+
+---
+
 ### GET `/ledger`
 Full ledger. Supports query params: `?node_id=4`.
 
@@ -537,23 +585,45 @@ Reuses the existing `haversine` function from `app/engine/router.py`.
 
 **Step 2 — Hub scoring**
 
-For each reachable hub, score it for this request:
+For each reachable hub, compute a composite score combining fit quality and proximity:
 
 ```
 # For a give request (deposit):
-score[h] = demand_gap[h][crop] / hub.capacity_remaining[h]
-         — prefer hubs that need this crop and have room for it
+fit_score[h] = demand_gap[h][crop] / capacity_remaining[h]
+             — prefer hubs that need this crop and have room for it
 
 # For a receive request (withdrawal):
-score[h] = hub_inventory[h][crop] / hub.local_demand[h][crop]
-         — prefer hubs that are well-stocked for this crop
+fit_score[h] = hub_inventory[h][crop] / hub.local_demand[h][crop]
+             — prefer hubs that are well-stocked for this crop
+
+# Distance component (both request types):
+distance_score[h] = 1 / max(haversine(node, h), 0.1)
+                  — closer hubs score higher; floor at 0.1km to avoid division by zero
+
+# Composite:
+score[h] = fit_score[h] * distance_score[h]
 ```
 
 `capacity_remaining[h] = hub.capacity_kg - sum(hub_inventory[h])`
 
-**Step 3 — Assignment**
+`demand_gap[h][crop] = max(hub.local_demand[h][crop] - hub_inventory[h][crop], 0)`
 
-Each request is assigned to the highest-scoring reachable hub. If no hub is reachable or no hub can satisfy the request (no inventory for receive, no capacity for give), the request stays `pending` and is retried next run.
+**Step 3 — Rank and store options**
+
+Filter reachable hubs to those passing hard constraints, score all, take top 3:
+
+```
+candidates = [h for h in reachable if hard_constraints_pass(h, request)]
+ranked = sorted(candidates, key=lambda h: score[h], reverse=True)[:3]
+```
+
+Store as `hub_options` on the request (hub_id, distance_km, score). Set status to `options_ready`.
+
+If no hub passes hard constraints, the request stays `pending` with `hub_options = []` and is retried next run.
+
+**Step 3b — Node selects a hub**
+
+Node calls `POST /requests/{id}/select-hub` with their chosen `hub_id`. Validated against current `hub_options` and re-checked against hard constraints at selection time. Sets `hub_id`, marks `matched`.
 
 **Step 4 — Price recalculation**
 
@@ -561,8 +631,9 @@ After routing, recalculate `current_rates` from network-wide inventory totals an
 
 ### 9.4 Output
 
-- Updated `status` on matched requests (`pending` → `matched`)
-- Updated `hub_id` on each request if rerouted to a better hub than originally submitted
+- Updated `status` on requests (`pending` → `options_ready`)
+- Updated `hub_options` on each request (top 3 ranked hubs)
+- `hub_id` remains `None` until node selects via `select-hub`
 - Updated `current_rates.json`
 
 ### 9.5 When it runs

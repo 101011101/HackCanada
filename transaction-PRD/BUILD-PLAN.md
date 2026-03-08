@@ -14,7 +14,7 @@ Nothing else can be built until this is done. No logic, no routes, no engine.
 - [ ] Add `crops_lifetime: dict = field(default_factory=dict)` to `FarmNode`
 - [ ] Add `base_currency_rate: float = 1.0` to `Crop`
 - [ ] Add `HubInventoryEntry` dataclass
-- [ ] Add `Request` dataclass
+- [ ] Add `Request` dataclass — include `hub_id: int | None`, `hub_options: list[dict]`, status `'options_ready'`
 - [ ] Add `LedgerEntry` dataclass
 
 ### `app/api/storage.py`
@@ -52,7 +52,11 @@ Depends on: Stage 1 complete.
   - Save to `requests.json`
 - [ ] `GET /requests` — list requests, filter by `?node_id`, `?hub_id`, `?status`, `?type`
 - [ ] `GET /requests/{request_id}` — get single request
-- [ ] `DELETE /requests/{request_id}` — cancel (only if `pending` or `matched`)
+- [ ] `DELETE /requests/{request_id}` — cancel (only if `pending`, `options_ready`, or `matched`)
+- [ ] `POST /requests/{request_id}/select-hub` — node picks a hub from `hub_options`
+  - Validates `hub_id` is in `hub_options`
+  - Re-checks hard constraints at selection time
+  - Sets `hub_id`, marks `matched`
 - [ ] `POST /requests/{request_id}/confirm` — hub confirms physical exchange
   - Accepts `actual_quantity_kg`
   - Marks request `confirmed`
@@ -87,18 +91,22 @@ Depends on: Stage 1 complete. Stage 2 confirm endpoint triggers this.
 - [ ] `run(farms, hubs, crops, config) → None` — main entry point called by cron + post-confirm
 
 **Matching logic:**
-- [ ] Load all `pending` requests from `requests.json`
-- [ ] For each pending `give` request:
+- [ ] Load all `pending` and `options_ready` requests from `requests.json`
+- [ ] For each `pending` give request:
   - Find reachable hubs using `haversine` from `app/engine/router.py`
-  - Score each reachable hub: `demand_gap[h][crop] / capacity_remaining[h]`
-  - Assign to highest-scoring hub that has capacity
-  - Mark `matched`, update `hub_id` if rerouted
-- [ ] For each pending `receive` request:
+  - Compute `fit_score[h] = demand_gap[h][crop] / capacity_remaining[h]`
+  - Compute `distance_score[h] = 1 / max(haversine(node, h), 0.1)`
+  - Compute `score[h] = fit_score[h] * distance_score[h]`
+  - Filter to hubs with capacity (`capacity_remaining >= quantity_kg`)
+  - Take top 3 by score → store as `hub_options`, mark `options_ready`
+- [ ] For each `pending` receive request:
   - Find reachable hubs
-  - Score each: `hub_inventory[h][crop] / hub.local_demand[h][crop]`
-  - Assign to highest-scoring hub that has sufficient stock AND node can afford it
-  - Mark `matched`, update `hub_id` if rerouted
-- [ ] Re-queue `matched` requests back to `pending` if conditions no longer met
+  - Compute `fit_score[h] = hub_inventory[h][crop] / hub.local_demand[h][crop]`
+  - Compute `score[h] = fit_score[h] * distance_score[h]`
+  - Filter to hubs with sufficient stock AND node can afford it
+  - Take top 3 by score → store as `hub_options`, mark `options_ready`
+- [ ] Re-check `options_ready` requests — if all `hub_options` no longer pass hard constraints, revert to `pending`
+- [ ] Re-check `matched` requests — if selected hub no longer passes hard constraints, revert to `pending`
 
 **Pricing logic:**
 - [ ] Load `hub_inventory.json` and sum per crop across all hubs → `network_supply[c]`
