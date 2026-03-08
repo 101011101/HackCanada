@@ -89,7 +89,7 @@ const AXIS_STYLE = {
 
 function CropTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; count: number; color: string } }> }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
+  const d = payload[0]!.payload;
   return (
     <div style={C.tooltip}>
       <div style={C.tooltipLabel}>{d.name}</div>
@@ -103,7 +103,7 @@ function CropTooltip({ active, payload }: { active?: boolean; payload?: Array<{ 
 
 function PhTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { bin: string; count: number } }> }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
+  const d = payload[0]!.payload;
   return (
     <div style={C.tooltip}>
       <div style={C.tooltipLabel}>pH {d.bin}</div>
@@ -117,7 +117,7 @@ function PhTooltip({ active, payload }: { active?: boolean; payload?: Array<{ pa
 
 function TempTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; temp: number } }> }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
+  const d = payload[0]!.payload;
   return (
     <div style={C.tooltip}>
       <div style={C.tooltipLabel}>{d.name}</div>
@@ -131,7 +131,7 @@ function TempTooltip({ active, payload }: { active?: boolean; payload?: Array<{ 
 
 function ScatterTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; moisture: number; humidity: number } }> }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
+  const d = payload[0]!.payload;
   return (
     <div style={C.tooltip}>
       <div style={C.tooltipLabel}>{d.name}</div>
@@ -195,10 +195,10 @@ export default function Charts({ farmList }: Props) {
       }
 
       if (f.pH != null) {
-        if (f.pH < 6.0) phBins["5.5–6.0"]++;
-        else if (f.pH < 6.5) phBins["6.0–6.5"]++;
-        else if (f.pH < 7.0) phBins["6.5–7.0"]++;
-        else phBins["7.0–7.5"]++;
+        if (f.pH < 6.0) phBins["5.5–6.0"] = (phBins["5.5–6.0"] ?? 0) + 1;
+        else if (f.pH < 6.5) phBins["6.0–6.5"] = (phBins["6.0–6.5"] ?? 0) + 1;
+        else if (f.pH < 7.0) phBins["6.5–7.0"] = (phBins["6.5–7.0"] ?? 0) + 1;
+        else phBins["7.0–7.5"] = (phBins["7.0–7.5"] ?? 0) + 1;
       }
 
       if (f.temperature != null) {

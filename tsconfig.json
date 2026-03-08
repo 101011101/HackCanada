@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["app/frontend/src/*"] }
+    "paths": { "@/*": ["src/*"] }
   },
-  "include": ["src", "app/frontend/src"]
+  "include": ["src"]
 }

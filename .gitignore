@@ -9,7 +9,12 @@ node_modules/
 # Build / cache
 dist/
 .next/
+.vite/
 *.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
 
 # OS
 .DS_Store

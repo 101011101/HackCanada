@@ -146,8 +146,8 @@ interface WeatherData {
 }
 
 function degToCompass(deg: number): string {
-  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  return dirs[Math.round(deg / 45) % 8];
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+  return dirs[Math.round(deg / 45) % 8] ?? "N";
 }
 
 function uvLabel(uv: number): string {
@@ -258,7 +258,6 @@ export default function DataInformation({ farmList, edges }: Props) {
   const optimStats = useMemo(() => {
     const assignmentCount = Object.keys(assignments).length;
     const assignedCropIds = new Set(Object.values(assignments));
-    const uniqueCrops = assignedCropIds.size;
 
     const totalDemand = hubs.reduce(
       (sum, hub) => sum + Object.values(hub.local_demand).reduce((a, b) => a + b, 0), 0

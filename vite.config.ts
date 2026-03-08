@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
     root,
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "app/frontend/src"),
+        "@": path.resolve(__dirname, "src"),
       },
     },
     define: {
