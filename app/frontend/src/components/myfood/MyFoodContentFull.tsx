@@ -126,15 +126,6 @@ export default function MyFoodContentFull({ nodeId }: MyFoodContentFullProps) {
           requests={requests}
           cropNames={cropNames}
           hubNames={hubNames}
-          onSelectHub={async (requestId, hub_id) => {
-            try {
-              await api.selectHub(requestId, hub_id);
-              refetch();
-            } catch (e) {
-              if (e instanceof api.ApiError) setError(e.detail ?? e.message ?? "Failed to select hub");
-              else setError("Failed to select hub");
-            }
-          }}
           onConfirm={async (requestId, actual_quantity_kg) => {
             try {
               await api.confirmRequest(requestId, actual_quantity_kg);

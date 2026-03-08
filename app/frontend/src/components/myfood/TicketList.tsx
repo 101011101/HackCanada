@@ -5,7 +5,6 @@ interface TicketListProps {
   requests: RequestResponse[];
   cropNames: Record<number, string>;
   hubNames: Record<number, string>;
-  onSelectHub?: (requestId: number, hub_id: number) => void;
   onConfirm?: (requestId: number, actual_quantity_kg: number) => void;
 }
 
@@ -23,7 +22,7 @@ function getTitle(req: RequestResponse, cropNames: Record<number, string>): stri
 
 function getSubtitle(req: RequestResponse, hubNames: Record<number, string>): string {
   if (req.status === "pending") return "Awaiting hub approval";
-  if (req.status === "options_ready") return "Choose a hub";
+  if (req.status === "options_ready") return "Waiting for a hub to accept";
   if (req.status === "matched") {
     const hub = req.hub_id ? hubNames[req.hub_id] : null;
     return hub ? `Approved · Drop off by ${hub}` : "Approved · Drop off at selected hub";
@@ -63,7 +62,6 @@ export default function TicketList({
   requests,
   cropNames,
   hubNames,
-  onSelectHub,
   onConfirm,
 }: TicketListProps) {
   const hubList = Object.entries(hubNames).map(([id, name]) => ({ id: Number(id), name }));
@@ -79,25 +77,14 @@ export default function TicketList({
           requests.map((req) => {
             const options = getHubOptions(req, hubList, hubNames);
             const instructionsContent =
-              req.status === "options_ready" && options.length > 0 && onSelectHub ? (
+              req.status === "options_ready" && options.length > 0 ? (
                 <div>
-                  <label className="input-label" style={{ marginBottom: 4, display: "block" }}>
-                    Choose nearest hub
-                  </label>
-                  <select
-                    className="input"
-                    onChange={(e) => {
-                      const id = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(id)) onSelectHub(req.id, id);
-                    }}
-                  >
-                    <option value="">Select hub…</option>
-                    {options.map((h, i) => (
-                      <option key={h.id} value={h.id}>
-                        {i === 0 && h.distance_km != null ? `Nearest: ${h.name} (${h.distance_km} km)` : h.name}
-                      </option>
-                    ))}
-                  </select>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)", marginBottom: 4, display: "block" }}>
+                    Sent to:
+                  </span>
+                  <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: "var(--ink-2)" }}>
+                    {options.map((h) => <li key={h.id}>{h.name}</li>)}
+                  </ul>
                 </div>
               ) : req.status === "matched" && req.hub_id ? (
                 `Drop off at ${hubNames[req.hub_id] ?? `Hub #${req.hub_id}`}.`

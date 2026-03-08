@@ -74,6 +74,12 @@ export interface SelectHubResponse {
   message: string;
 }
 
+export interface AcceptResponse {
+  status: string;
+  hub_id: number;
+  message: string;
+}
+
 export interface ConfirmResponse {
   status: string;
   currency_delta: number;
@@ -161,6 +167,13 @@ export function submitRequest(body: RequestBody) {
 
 export function selectHub(requestId: number, hub_id: number) {
   return request<SelectHubResponse>(`/requests/${requestId}/select-hub`, {
+    method: "POST",
+    body: JSON.stringify({ hub_id }),
+  });
+}
+
+export function acceptRequest(requestId: number, hub_id: number) {
+  return request<AcceptResponse>(`/requests/${requestId}/accept`, {
     method: "POST",
     body: JSON.stringify({ hub_id }),
   });

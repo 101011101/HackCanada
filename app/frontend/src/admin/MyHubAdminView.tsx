@@ -202,6 +202,19 @@ export default function MyHubAdminView() {
       .catch((e) => setError(e?.message ?? "Reject failed"));
   };
 
+  const handleAccept = (req: api.RequestResponse) => {
+    if (selectedHubId == null) return;
+    api
+      .acceptRequest(req.id, selectedHubId)
+      .then(() => {
+        if (selectedHubId != null) {
+          api.listRequests({ hub_id: selectedHubId }).then(setRequests);
+        }
+      })
+      .catch((e) => setError(e?.message ?? "Accept failed"));
+  };
+
+  const pendingCount = requests.filter((r) => r.status === "matched" || r.status === "options_ready").length;
   const matchedCount = requests.filter((r) => r.status === "matched").length;
   const confirmedCount = requests.filter((r) => r.status === "confirmed").length;
   const totalHC = useMemo(() => {
@@ -278,8 +291,8 @@ export default function MyHubAdminView() {
                   <div style={{ ...S.kpiLbl, color: "#888" }}>Total (this hub)</div>
                 </div>
                 <div style={S.kpiCard}>
-                  <div style={S.kpiVal}>{matchedCount}</div>
-                  <div style={S.kpiLbl}>Pending approval</div>
+                  <div style={S.kpiVal}>{pendingCount}</div>
+                  <div style={S.kpiLbl}>Pending acceptance</div>
                 </div>
                 <div style={S.kpiCard}>
                   <div style={S.kpiVal}>{confirmedCount}</div>
@@ -317,6 +330,7 @@ export default function MyHubAdminView() {
                       const amount = entry?.amount ?? 0;
                       const nodeName = farmMap.get(req.node_id) ?? `Node #${req.node_id}`;
                       const isMatched = req.status === "matched";
+                      const isOptionsReady = req.status === "options_ready";
                       return (
                         <tr key={req.id}>
                           <td style={{ ...S.td, fontFamily: "monospace", fontSize: 11, color: T.ink3 }}>#{req.id}</td>
@@ -336,23 +350,23 @@ export default function MyHubAdminView() {
                           <td style={S.td}>
                             <span style={S.statusBadge(req.status)}>
                               {req.status === "matched"
-                                ? "Pending"
+                                ? "Accepted"
                                 : req.status === "options_ready"
-                                  ? "Awaiting hub selection"
+                                  ? "Pending acceptance"
                                   : req.status}
                             </span>
                           </td>
                           <td style={{ ...S.td, color: T.ink3 }}>{req.created_at?.slice(0, 10) ?? "—"}</td>
                           <td style={S.td}>
-                            {isMatched ? (
+                            {isOptionsReady ? (
+                              <div style={S.actionsCell}>
+                                <button style={S.btn("accent")} onClick={() => handleAccept(req)}>Accept</button>
+                                <button style={S.btn("ghost")} onClick={() => setRejectConfirm(req.id)}>Reject</button>
+                              </div>
+                            ) : isMatched ? (
                               <div style={S.actionsCell}>
                                 <button style={S.btn("accent")} onClick={() => handleApproveOpen(req)}>Approve</button>
-                                <button
-                                  style={S.btn("ghost")}
-                                  onClick={() => setRejectConfirm(req.id)}
-                                >
-                                  Reject
-                                </button>
+                                <button style={S.btn("ghost")} onClick={() => setRejectConfirm(req.id)}>Reject</button>
                               </div>
                             ) : (
                               <span style={{ color: T.ink3, fontSize: 11 }}>—</span>
