@@ -292,7 +292,7 @@
 <div class="page">
 
   <div class="page-title">MyHub — Admin Transactions</div>
-  <div class="page-sub">Transaction history, currency ledger, crop valuations, and dispute management for the admin side of MyHub</div>
+  <div class="page-sub">Transaction history and currency ledger for hub admins. Approve or reject transactions at your hub.</div>
 
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -359,15 +359,12 @@
             <div class="content-topbar-actions">
               <span class="badge badge--success">Ledger Synced</span>
               <button class="btn btn--secondary btn--sm">Export CSV</button>
-              <button class="btn btn--accent btn--sm">Resolve Disputes</button>
             </div>
           </div>
 
           <div class="primary-tabs">
             <div class="primary-tab primary-tab--on">Transactions</div>
             <div class="primary-tab">Currency Ledger</div>
-            <div class="primary-tab">Crop Values</div>
-            <div class="primary-tab">Disputes</div>
           </div>
 
           <div class="secondary-tabs">
@@ -379,7 +376,7 @@
 
           <div class="content">
             <!-- KPI Row -->
-            <div class="kpi-row kpi-row--5" style="margin-bottom:16px">
+            <div class="kpi-row kpi-row--4" style="margin-bottom:16px">
               <div class="kpi-card kpi-card--dark">
                 <div class="kpi-val">847</div>
                 <div class="kpi-lbl">Total Transactions</div>
@@ -399,11 +396,6 @@
                 <div class="kpi-val">812</div>
                 <div class="kpi-lbl">Settled</div>
                 <div class="kpi-delta kpi-delta--up">95.9% settlement rate</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-val" style="color:var(--error)">3</div>
-                <div class="kpi-lbl">Active Disputes</div>
-                <div class="kpi-delta kpi-delta--dn">1 unresolved &gt; 48h</div>
               </div>
             </div>
 
@@ -443,6 +435,7 @@
                     <th>Hub</th>
                     <th>Status</th>
                     <th>Date</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -460,6 +453,7 @@
                     <td>Greenwood PS</td>
                     <td><span class="badge badge--success">Settled</span></td>
                     <td style="color:var(--ink-3)">Mar 7, 14:22</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0846</td>
@@ -475,6 +469,7 @@
                     <td>North Community</td>
                     <td><span class="badge badge--success">Settled</span></td>
                     <td style="color:var(--ink-3)">Mar 7, 12:05</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0845</td>
@@ -490,6 +485,12 @@
                     <td>Greenwood PS</td>
                     <td><span class="badge badge--accent">Pending</span></td>
                     <td style="color:var(--ink-3)">Mar 7, 10:41</td>
+                    <td>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="btn btn--accent btn--sm">Approve</button>
+                        <button class="btn btn--ghost btn--sm">Reject</button>
+                      </div>
+                    </td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0844</td>
@@ -505,6 +506,7 @@
                     <td>East Hub</td>
                     <td><span class="badge badge--success">Settled</span></td>
                     <td style="color:var(--ink-3)">Mar 6, 18:30</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0843</td>
@@ -520,6 +522,7 @@
                     <td>North Community</td>
                     <td><span class="badge badge--error">Disputed</span></td>
                     <td style="color:var(--ink-3)">Mar 6, 15:12</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0842</td>
@@ -535,6 +538,7 @@
                     <td>Greenwood PS</td>
                     <td><span class="badge badge--success">Settled</span></td>
                     <td style="color:var(--ink-3)">Mar 6, 09:44</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-size:11px;color:var(--ink-3)">#TXN-0841</td>
@@ -550,30 +554,10 @@
                     <td>Greenwood PS</td>
                     <td><span class="badge badge--success">Settled</span></td>
                     <td style="color:var(--ink-3)">Mar 5, 16:18</td>
+                    <td style="color:var(--ink-3);font-size:11px">—</td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-
-            <!-- Bottom row: Transaction Volume chart + Quick Stats -->
-            <div class="grid-2">
-              <div class="chart-placeholder chart-placeholder--elev">
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                  <div class="chart-title">Transaction Volume (7 Days)</div>
-                  <span class="badge badge--accent">Live</span>
-                </div>
-                <div class="chart-area"><div class="chart-area-label">Bar Chart — Daily Transaction Count</div></div>
-              </div>
-              <div class="chart-placeholder chart-placeholder--elev">
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                  <div class="chart-title">HC Circulation Over Time</div>
-                  <div style="display:flex;gap:6px">
-                    <span class="badge badge--success">Earned</span>
-                    <span class="badge badge--error">Spent</span>
-                  </div>
-                </div>
-                <div class="chart-area"><div class="chart-area-label">Area Chart — HC Earned vs Spent per Day</div></div>
-              </div>
             </div>
 
           </div>
@@ -603,8 +587,6 @@
       <div class="primary-tabs">
         <div class="primary-tab">Transactions</div>
         <div class="primary-tab primary-tab--on">Currency Ledger</div>
-        <div class="primary-tab">Crop Values</div>
-        <div class="primary-tab">Disputes</div>
       </div>
       <div class="content" style="padding-top:20px">
 
@@ -775,401 +757,10 @@
 
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
-       3. CROP VALUES TAB
+       3. TRANSACTION DETAIL — EXPANDED ROW VIEW
   ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="sec">
-    <div class="sec-label">03 — Crop Values Tab</div>
-    <div class="dash">
-      <div class="topbar">
-        <div class="topbar-left">
-          <div class="topbar-logo"><svg viewBox="0 0 32 32" fill="#fff" width="16" height="16"><path d="M6 8l8-4 8 4v8l-8 12-8-12z"/></svg></div>
-          <span class="topbar-title">MyCelium</span><span class="topbar-dot"></span>
-          <span style="font-size:11px;color:var(--ink-3);font-weight:500;margin-left:4px">MyHub — Admin</span>
-        </div>
-        <div class="topbar-right">
-          <span class="badge badge--info">Cycle #12 — Active</span>
-          <button class="btn btn--secondary btn--sm">Recalculate</button>
-        </div>
-      </div>
-      <div class="primary-tabs">
-        <div class="primary-tab">Transactions</div>
-        <div class="primary-tab">Currency Ledger</div>
-        <div class="primary-tab primary-tab--on">Crop Values</div>
-        <div class="primary-tab">Disputes</div>
-      </div>
-      <div class="content" style="padding-top:20px">
-
-        <div style="margin-bottom:20px">
-          <div class="overline" style="margin-bottom:12px">Current Crop Value Table — Cycle #12</div>
-          <div class="table-panel">
-            <table>
-              <thead>
-                <tr>
-                  <th>Crop</th>
-                  <th>Value Score (HC/kg)</th>
-                  <th>Network Demand</th>
-                  <th>Difficulty</th>
-                  <th>Scarcity</th>
-                  <th>Total Traded (kg)</th>
-                  <th>Trend</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#8e44ad;vertical-align:middle;margin-right:6px"></span>Kale</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">7.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:88%;background:var(--error)"></div></div><span style="font-size:10px;color:var(--ink-3)">High</span></div></td>
-                  <td><span class="badge badge--warn">Hard</span></td>
-                  <td><span class="badge badge--error">Scarce</span></td>
-                  <td>18.4 kg</td>
-                  <td><span class="kpi-delta kpi-delta--up" style="margin:0">+0.8</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f39c12;vertical-align:middle;margin-right:6px"></span>Peppers</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">7.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:82%;background:var(--error)"></div></div><span style="font-size:10px;color:var(--ink-3)">High</span></div></td>
-                  <td><span class="badge badge--warn">Hard</span></td>
-                  <td><span class="badge badge--accent">Moderate</span></td>
-                  <td>22.0 kg</td>
-                  <td><span class="kpi-delta kpi-delta--up" style="margin:0">+0.5</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:6px"></span>Tomato</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">6.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:70%;background:var(--accent)"></div></div><span style="font-size:10px;color:var(--ink-3)">Medium</span></div></td>
-                  <td><span class="badge badge--info">Medium</span></td>
-                  <td><span class="badge badge--info">Normal</span></td>
-                  <td>86.2 kg</td>
-                  <td><span class="kpi-delta" style="margin:0;color:var(--ink-3)">—</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#3498db;vertical-align:middle;margin-right:6px"></span>Spinach</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">6.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:65%;background:var(--accent)"></div></div><span style="font-size:10px;color:var(--ink-3)">Medium</span></div></td>
-                  <td><span class="badge badge--info">Medium</span></td>
-                  <td><span class="badge badge--info">Normal</span></td>
-                  <td>54.8 kg</td>
-                  <td><span class="kpi-delta kpi-delta--up" style="margin:0">+0.5</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#e67e22;vertical-align:middle;margin-right:6px"></span>Carrots</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">5.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:55%;background:var(--success)"></div></div><span style="font-size:10px;color:var(--ink-3)">Medium</span></div></td>
-                  <td><span class="badge badge--success">Easy</span></td>
-                  <td><span class="badge badge--info">Normal</span></td>
-                  <td>48.0 kg</td>
-                  <td><span class="kpi-delta kpi-delta--dn" style="margin:0">-0.5</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#1abc9c;vertical-align:middle;margin-right:6px"></span>Herbs</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">6.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:50%;background:var(--success)"></div></div><span style="font-size:10px;color:var(--ink-3)">Medium</span></div></td>
-                  <td><span class="badge badge--success">Easy</span></td>
-                  <td><span class="badge badge--accent">Moderate</span></td>
-                  <td>35.6 kg</td>
-                  <td><span class="kpi-delta" style="margin:0;color:var(--ink-3)">—</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#2ecc71;vertical-align:middle;margin-right:6px"></span>Lettuce</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">4.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:40%;background:var(--success)"></div></div><span style="font-size:10px;color:var(--ink-3)">Low</span></div></td>
-                  <td><span class="badge badge--success">Easy</span></td>
-                  <td><span class="badge badge--success">Abundant</span></td>
-                  <td>104.6 kg</td>
-                  <td><span class="kpi-delta kpi-delta--dn" style="margin:0">-1.0</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#27ae60;vertical-align:middle;margin-right:6px"></span>Microgreens</td>
-                  <td><span class="hc hc--neutral" style="font-size:14px">8.0</span></td>
-                  <td><div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:60px"><div class="pbar-fill" style="width:60%;background:var(--accent)"></div></div><span style="font-size:10px;color:var(--ink-3)">Medium</span></div></td>
-                  <td><span class="badge badge--warn">Hard</span></td>
-                  <td><span class="badge badge--error">Scarce</span></td>
-                  <td>8.2 kg</td>
-                  <td><span class="kpi-delta kpi-delta--up" style="margin:0">+1.5</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Value Factor Breakdown + Value Distribution chart -->
-        <div class="grid-2">
-          <div class="detail-card detail-card--elev">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div class="detail-card-title" style="margin-bottom:0">Value Calculation Weights</div>
-              <span class="badge badge--info">Cycle #12</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Network Demand</span>
-              <span class="detail-value">
-                <div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:80px"><div class="pbar-fill" style="width:40%;background:var(--accent)"></div></div><span>40%</span></div>
-              </span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Growing Difficulty</span>
-              <span class="detail-value">
-                <div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:80px"><div class="pbar-fill" style="width:25%;background:var(--info)"></div></div><span>25%</span></div>
-              </span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Yield Scarcity</span>
-              <span class="detail-value">
-                <div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:80px"><div class="pbar-fill" style="width:25%;background:var(--warn)"></div></div><span>25%</span></div>
-              </span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Nutritional Density</span>
-              <span class="detail-value">
-                <div style="display:flex;align-items:center;gap:6px"><div class="pbar" style="width:80px"><div class="pbar-fill" style="width:10%;background:var(--success)"></div></div><span>10%</span></div>
-              </span>
-            </div>
-          </div>
-          <div class="chart-placeholder chart-placeholder--elev">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="chart-title">Value Score Distribution by Crop</div>
-              <button class="btn btn--ghost btn--sm">Compare Cycles</button>
-            </div>
-            <div class="chart-area"><div class="chart-area-label">Horizontal Bar — Crop Value Scores</div></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       4. DISPUTES TAB
-  ═══════════════════════════════════════════════════════════════════════════ -->
-  <div class="sec">
-    <div class="sec-label">04 — Disputes Tab</div>
-    <div class="dash">
-      <div class="topbar">
-        <div class="topbar-left">
-          <div class="topbar-logo"><svg viewBox="0 0 32 32" fill="#fff" width="16" height="16"><path d="M6 8l8-4 8 4v8l-8 12-8-12z"/></svg></div>
-          <span class="topbar-title">MyCelium</span><span class="topbar-dot"></span>
-          <span style="font-size:11px;color:var(--ink-3);font-weight:500;margin-left:4px">MyHub — Admin</span>
-        </div>
-        <div class="topbar-right">
-          <span class="badge badge--error">3 Open Disputes</span>
-          <button class="btn btn--accent btn--sm">Review Next</button>
-        </div>
-      </div>
-      <div class="primary-tabs">
-        <div class="primary-tab">Transactions</div>
-        <div class="primary-tab">Currency Ledger</div>
-        <div class="primary-tab">Crop Values</div>
-        <div class="primary-tab primary-tab--on">Disputes</div>
-      </div>
-      <div class="content" style="padding-top:20px">
-
-        <!-- Dispute KPIs -->
-        <div class="kpi-row kpi-row--4" style="margin-bottom:20px">
-          <div class="kpi-card" style="background:var(--error)">
-            <div class="kpi-val" style="color:#fff">3</div>
-            <div class="kpi-lbl" style="color:rgba(255,255,255,0.6)">Open Disputes</div>
-            <div class="kpi-delta" style="color:rgba(255,255,255,0.5)">1 urgent (&gt; 48h)</div>
-          </div>
-          <div class="kpi-card kpi-card--elev">
-            <div class="kpi-val">18</div>
-            <div class="kpi-lbl">Total Disputes (All Time)</div>
-            <div class="kpi-delta" style="color:var(--ink-3)">2.1% dispute rate</div>
-          </div>
-          <div class="kpi-card kpi-card--elev">
-            <div class="kpi-val">14</div>
-            <div class="kpi-lbl">Resolved</div>
-            <div class="kpi-delta kpi-delta--up">93% resolved &lt; 24h</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-val">1</div>
-            <div class="kpi-lbl">Voided Transactions</div>
-            <div class="kpi-delta" style="color:var(--ink-3)">0.1% void rate</div>
-          </div>
-        </div>
-
-        <!-- Active Disputes Table -->
-        <div class="table-panel" style="margin-bottom:20px">
-          <div class="table-header">
-            <div class="table-title">Active Disputes — Awaiting Resolution</div>
-            <span class="badge badge--error">Action Required</span>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Transaction</th><th>Giver</th><th>Receiver</th><th>Crop / Qty</th><th>Issue</th><th>Filed</th><th>Age</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0843</td>
-                <td style="font-weight:500">Farm #04 — Leila</td>
-                <td style="font-weight:500">Farm #19 — Oren</td>
-                <td><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#8e44ad;vertical-align:middle;margin-right:4px"></span>Kale · 1.5 kg</td>
-                <td><span class="badge badge--warn">Quality Issue</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Mar 6, 15:12</td>
-                <td><span style="color:var(--error);font-weight:600;font-size:11px">52h</span></td>
-                <td><button class="btn btn--accent btn--sm">Resolve</button></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0839</td>
-                <td style="font-weight:500">Farm #12 — Tomás</td>
-                <td style="font-weight:500">Farm #06 — Priya</td>
-                <td><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:4px"></span>Tomato · 2.0 kg</td>
-                <td><span class="badge badge--error">Not Received</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Mar 7, 09:30</td>
-                <td><span style="color:var(--accent);font-weight:600;font-size:11px">5h</span></td>
-                <td><button class="btn btn--accent btn--sm">Resolve</button></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0837</td>
-                <td style="font-weight:500">Farm #09 — Diego</td>
-                <td style="font-weight:500">Farm #17 — Ava</td>
-                <td><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#e67e22;vertical-align:middle;margin-right:4px"></span>Carrots · 3.0 kg</td>
-                <td><span class="badge badge--accent">Qty Mismatch</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Mar 7, 11:00</td>
-                <td><span style="color:var(--ink-3);font-weight:600;font-size:11px">3h</span></td>
-                <td><button class="btn btn--accent btn--sm">Resolve</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Dispute Detail Expansion (for TXN-0843) -->
-        <div style="margin-bottom:20px">
-          <div class="overline" style="margin-bottom:12px">Dispute Detail — #TXN-0843</div>
-          <div class="grid-2">
-            <div class="detail-card detail-card--elev">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                <div class="detail-card-title" style="margin-bottom:0">Transaction Summary</div>
-                <span class="badge badge--error">Disputed</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Transaction ID</span>
-                <span class="detail-value" style="font-family:monospace;font-size:11px">#TXN-0843</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Giver</span>
-                <span class="detail-value"><span class="status-dot" style="background:var(--success)"></span>Farm #04 — Leila</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Receiver</span>
-                <span class="detail-value"><span class="status-dot" style="background:var(--error)"></span>Farm #19 — Oren</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Crop</span>
-                <span class="detail-value"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#8e44ad;vertical-align:middle;margin-right:4px"></span>Kale</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Claimed Quantity</span>
-                <span class="detail-value">1.5 kg</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Value at Stake</span>
-                <span class="detail-value"><span class="hc hc--neutral">10.5 HC</span></span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Hub</span>
-                <span class="detail-value">North Community Centre</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Created</span>
-                <span class="detail-value" style="color:var(--ink-3)">Mar 6, 13:00</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Disputed At</span>
-                <span class="detail-value" style="color:var(--error)">Mar 6, 15:12</span>
-              </div>
-            </div>
-
-            <div class="detail-card detail-card--elev">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                <div class="detail-card-title" style="margin-bottom:0">Dispute Info & Resolution</div>
-                <span class="badge badge--warn">Quality Issue</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Issue Type</span>
-                <span class="detail-value">Quality — produce was wilted</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Filed By</span>
-                <span class="detail-value">Farm #19 — Oren (receiver)</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Receiver's Note</span>
-                <span class="detail-value" style="font-weight:400;font-size:11px;max-width:200px;text-align:right">"Kale was wilted, about half unusable"</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Giver Dispute History</span>
-                <span class="detail-value" style="color:var(--success)">0 prior disputes</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Receiver Dispute History</span>
-                <span class="detail-value" style="color:var(--warn)">2 prior disputes</span>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:16px">
-                <button class="btn btn--accent btn--sm" style="flex:1">Partial Credit (50%)</button>
-                <button class="btn btn--primary btn--sm" style="flex:1">Void Transaction</button>
-                <button class="btn btn--secondary btn--sm" style="flex:1">Dismiss</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Resolved Disputes History -->
-        <div class="table-panel">
-          <div class="table-header">
-            <div class="table-title">Resolved Disputes</div>
-            <span class="badge badge--success">14 Resolved</span>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Transaction</th><th>Parties</th><th>Issue</th><th>Resolution</th><th>HC Adjusted</th><th>Resolved</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0801</td>
-                <td style="font-size:11px">Farm #11 → Farm #03</td>
-                <td><span class="badge badge--accent">Qty Mismatch</span></td>
-                <td><span class="badge badge--info">Adjusted</span></td>
-                <td><span class="hc hc--neg" style="font-size:12px">-3.0 HC</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Feb 28</td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0782</td>
-                <td style="font-size:11px">Farm #06 → Farm #15</td>
-                <td><span class="badge badge--error">Not Received</span></td>
-                <td><span class="badge badge--error">Voided</span></td>
-                <td><span class="hc hc--neutral" style="font-size:12px">0 HC</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Feb 22</td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0761</td>
-                <td style="font-size:11px">Farm #09 → Farm #02</td>
-                <td><span class="badge badge--warn">Quality Issue</span></td>
-                <td><span class="badge badge--info">Partial Credit</span></td>
-                <td><span class="hc hc--neg" style="font-size:12px">-4.2 HC</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Feb 18</td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px">#TXN-0744</td>
-                <td style="font-size:11px">Farm #14 → Farm #08</td>
-                <td><span class="badge badge--accent">Qty Mismatch</span></td>
-                <td><span class="badge badge--success">Dismissed</span></td>
-                <td><span class="hc hc--neutral" style="font-size:12px">0 HC</span></td>
-                <td style="color:var(--ink-3);font-size:11px">Feb 14</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════
-       5. TRANSACTION DETAIL EXPANDED VIEW
-  ═══════════════════════════════════════════════════════════════════════════ -->
-  <div class="sec">
-    <div class="sec-label">05 — Transaction Detail — Expanded Row View</div>
+    <div class="sec-label">03 — Transaction Detail — Expanded Row View</div>
     <div class="dash" style="padding:24px">
 
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">

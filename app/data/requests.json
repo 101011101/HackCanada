@@ -19,11 +19,8 @@
     "hub_id": null,
     "crop_id": 0,
     "quantity_kg": 3.0,
-    "status": "options_ready",
-    "hub_options": [
-      { "hub_id": 0, "hub_name": "Greenwood Public School", "distance_km": 1.2 },
-      { "hub_id": 1, "hub_name": "North Community Centre", "distance_km": 2.1 }
-    ],
+    "status": "pending",
+    "hub_options": [],
     "created_at": "2026-03-08T09:15:00",
     "matched_at": null,
     "confirmed_at": null
@@ -35,8 +32,24 @@
     "hub_id": null,
     "crop_id": 2,
     "quantity_kg": 5.0,
-    "status": "pending",
-    "hub_options": [],
+    "status": "options_ready",
+    "hub_options": [
+      {
+        "hub_id": 0,
+        "distance_km": 0.58,
+        "score": 0.0687
+      },
+      {
+        "hub_id": 1,
+        "distance_km": 1.85,
+        "score": 0.0135
+      },
+      {
+        "hub_id": 2,
+        "distance_km": 2.93,
+        "score": 0.0114
+      }
+    ],
     "created_at": "2026-03-08T10:38:35",
     "matched_at": null,
     "confirmed_at": null
@@ -58,13 +71,11 @@
     "id": 5,
     "type": "receive",
     "node_id": 1,
-    "hub_id": 1,
+    "hub_id": null,
     "crop_id": 1,
     "quantity_kg": 2.0,
-    "status": "matched",
-    "hub_options": [
-      { "hub_id": 1, "hub_name": "North Community Centre", "distance_km": 2.0 }
-    ],
+    "status": "pending",
+    "hub_options": [],
     "created_at": "2026-03-08T11:00:00",
     "matched_at": "2026-03-08T11:05:00",
     "confirmed_at": null
@@ -76,12 +87,8 @@
     "hub_id": null,
     "crop_id": 2,
     "quantity_kg": 4.0,
-    "status": "options_ready",
-    "hub_options": [
-      { "hub_id": 0, "hub_name": "Greenwood Public School", "distance_km": 0.8 },
-      { "hub_id": 1, "hub_name": "North Community Centre", "distance_km": 1.5 },
-      { "hub_id": 2, "hub_name": "East Neighbourhood Hub", "distance_km": 2.3 }
-    ],
+    "status": "pending",
+    "hub_options": [],
     "created_at": "2026-03-08T11:20:00",
     "matched_at": null,
     "confirmed_at": null
@@ -95,7 +102,11 @@
     "quantity_kg": 10.0,
     "status": "matched",
     "hub_options": [
-      { "hub_id": 0, "hub_name": "Greenwood Public School", "distance_km": 0.8 }
+      {
+        "hub_id": 0,
+        "hub_name": "Greenwood Public School",
+        "distance_km": 0.8
+      }
     ],
     "created_at": "2026-03-08T11:30:00",
     "matched_at": "2026-03-08T11:35:00",
@@ -110,7 +121,11 @@
     "quantity_kg": 3.0,
     "status": "confirmed",
     "hub_options": [
-      { "hub_id": 1, "hub_name": "North Community Centre", "distance_km": 1.0 }
+      {
+        "hub_id": 1,
+        "hub_name": "North Community Centre",
+        "distance_km": 1.0
+      }
     ],
     "created_at": "2026-03-07T14:00:00",
     "matched_at": "2026-03-07T14:10:00",
@@ -133,13 +148,11 @@
     "id": 10,
     "type": "receive",
     "node_id": 5,
-    "hub_id": 2,
+    "hub_id": null,
     "crop_id": 0,
     "quantity_kg": 5.0,
-    "status": "matched",
-    "hub_options": [
-      { "hub_id": 2, "hub_name": "East Neighbourhood Hub", "distance_km": 1.8 }
-    ],
+    "status": "pending",
+    "hub_options": [],
     "created_at": "2026-03-08T12:15:00",
     "matched_at": "2026-03-08T12:20:00",
     "confirmed_at": null
@@ -151,8 +164,24 @@
     "hub_id": null,
     "crop_id": 2,
     "quantity_kg": 2.0,
-    "status": "pending",
-    "hub_options": [],
+    "status": "options_ready",
+    "hub_options": [
+      {
+        "hub_id": 0,
+        "distance_km": 0.39,
+        "score": 0.1022
+      },
+      {
+        "hub_id": 2,
+        "distance_km": 2.49,
+        "score": 0.0134
+      },
+      {
+        "hub_id": 1,
+        "distance_km": 2.36,
+        "score": 0.0106
+      }
+    ],
     "created_at": "2026-03-08T13:00:00",
     "matched_at": null,
     "confirmed_at": null
