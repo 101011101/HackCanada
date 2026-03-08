@@ -114,6 +114,21 @@ export default function MyHubAdminView() {
   const [approveQty, setApproveQty] = useState("");
   const [approveSubmitting, setApproveSubmitting] = useState(false);
   const [rejectConfirm, setRejectConfirm] = useState<number | null>(null);
+  const [authState, setAuthState] = useState<{ hub_id: number; hub_name: string } | null>(null);
+  const [keyInput, setKeyInput] = useState('');
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [keyLoading, setKeyLoading] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+
+  useEffect(() => {
+    const storedKey  = localStorage.getItem('hub_key');
+    const storedId   = localStorage.getItem('hub_id');
+    const storedName = localStorage.getItem('hub_name');
+    if (storedKey && storedId && storedName) {
+      setAuthState({ hub_id: Number(storedId), hub_name: storedName });
+      setSelectedHubId(Number(storedId));
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([api.getHubs(), api.getFarms(), api.getCrops()])
@@ -189,6 +204,33 @@ export default function MyHubAdminView() {
       .finally(() => setApproveSubmitting(false));
   };
 
+  const handleKeySubmit = async () => {
+    if (!keyInput.trim()) return;
+    setKeyLoading(true);
+    setKeyError(null);
+    try {
+      const result = await authHub(keyInput.trim());
+      localStorage.setItem('hub_key', keyInput.trim());
+      localStorage.setItem('hub_id', String(result.hub_id));
+      localStorage.setItem('hub_name', result.hub_name);
+      setAuthState({ hub_id: result.hub_id, hub_name: result.hub_name });
+      setSelectedHubId(result.hub_id);
+    } catch {
+      setKeyError('Invalid key. Please try again.');
+    } finally {
+      setKeyLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('hub_key');
+    localStorage.removeItem('hub_id');
+    localStorage.removeItem('hub_name');
+    setAuthState(null);
+    setKeyInput('');
+    setKeyError(null);
+  };
+
   const handleReject = (requestId: number) => {
     api
       .cancelRequest(requestId)
@@ -223,6 +265,54 @@ export default function MyHubAdminView() {
     return sum;
   }, [nodeBalances]);
 
+  const demoToggle = (
+    <button
+      onClick={() => setDemoMode(d => !d)}
+      style={{
+        position: "fixed", bottom: 20, right: 20, zIndex: 999,
+        background: demoMode ? T.accent : T.bgElev,
+        color: demoMode ? "#fff" : T.ink3,
+        border: `1.5px solid ${demoMode ? T.accent : T.border}`,
+        borderRadius: T.rSm, fontFamily: T.fb, fontSize: 11, fontWeight: 600,
+        padding: "6px 14px", cursor: "pointer", transition: "all .15s",
+        boxShadow: T.shSm,
+      }}
+    >
+      {demoMode ? "Demo ON" : "Demo OFF"}
+    </button>
+  );
+
+  if (!authState && !demoMode) {
+    return (
+      <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: T.bg }}>
+        <div style={S.modal}>
+          <div style={S.modalTitle}>Hub Access</div>
+          <p style={{ fontSize: 13, color: T.ink2, marginBottom: 16 }}>Enter your hub key to access your hub's data.</p>
+          <div style={S.modalRow}>
+            <label style={S.modalLabel}>Hub Key</label>
+            <input
+              type="text"
+              placeholder="hub-key-..."
+              style={S.modalInput}
+              value={keyInput}
+              onChange={e => setKeyInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleKeySubmit()}
+            />
+          </div>
+          {keyError && <p style={{ fontSize: 12, color: T.error, marginBottom: 8, marginTop: -4 }}>{keyError}</p>}
+          <div style={S.modalActions}>
+            <button style={S.btn("accent")} onClick={handleKeySubmit} disabled={keyLoading}>
+              {keyLoading ? 'Verifying…' : 'Access Hub'}
+            </button>
+          </div>
+        </div>
+      </div>
+      {demoToggle}
+      </>
+    );
+  }
+
   if (error) {
     return (
       <div style={S.content}>
@@ -252,22 +342,22 @@ export default function MyHubAdminView() {
           <div style={S.topbarActions}>
             <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>Ledger Synced</span>
             <button style={S.btn("secondary")}>Export CSV</button>
+            <button style={S.btn("ghost")} onClick={handleSignOut}>Sign out</button>
           </div>
         </div>
 
         <div style={S.hubSelect}>
           <span style={S.hubSelectLabel}>Hub:</span>
-          <select
-            style={S.hubSelectSelect}
-            value={selectedHubId ?? ""}
-            onChange={(e) => setSelectedHubId(Number(e.target.value))}
-          >
-            {hubs.map((h) => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
-          {selectedHubId != null && (
-            <span style={{ fontSize: 12, color: T.ink3 }}>Transactions at {hubName}</span>
+          {demoMode ? (
+            <select
+              style={S.hubSelectSelect}
+              value={selectedHubId ?? ""}
+              onChange={e => setSelectedHubId(Number(e.target.value))}
+            >
+              {hubs.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+            </select>
+          ) : (
+            <span style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{authState.hub_name}</span>
           )}
         </div>
 
@@ -517,6 +607,7 @@ export default function MyHubAdminView() {
           </div>
         </div>
       )}
+      {demoToggle}
     </>
   );
 }

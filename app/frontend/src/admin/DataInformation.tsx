@@ -5,6 +5,7 @@ import {
   type NetworkEdge,
 } from "./nodal-network/data";
 import type { Crop, ReportResponse } from "./services/api";
+import { getHubKeys, generateHubKey } from "./services/api";
 import { T } from "./nodal-network/tokens";
 
 // ── Style constants ─────────────────────────────────────────────────────────
@@ -334,6 +335,21 @@ export default function DataInformation({ farmList, edges, hubs, crops, assignme
 
   useEffect(() => { fetchWeather(); }, [fetchWeather]);
 
+  // ── Hub keys ──
+  const [hubKeys, setHubKeys] = useState<Record<string, string>>({});
+  const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    getHubKeys().then(setHubKeys).catch(() => {});
+  }, []);
+
+  const handleRegenerateKey = (hubId: number) => {
+    generateHubKey(hubId).then(({ key }) => {
+      setHubKeys(prev => ({ ...prev, [String(hubId)]: key }));
+      setRevealedKeys(prev => new Set([...prev, hubId]));
+    }).catch(console.error);
+  };
+
   // ── "Last sync" timer ──
   const [syncAgo, setSyncAgo] = useState("just now");
 
@@ -531,6 +547,7 @@ export default function DataInformation({ farmList, edges, hubs, crops, assignme
                 <th style={D.th}>Connected</th>
                 <th style={D.th}>Top Demand</th>
                 <th style={D.th}>Fill Rate</th>
+                <th style={D.th}>Key</th>
               </tr>
             </thead>
             <tbody>
@@ -558,6 +575,45 @@ export default function DataInformation({ farmList, edges, hubs, crops, assignme
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 600 }}>{fillRate}%</span>
                     </div>
+                  </td>
+                  <td style={D.td}>
+                    {(() => {
+                      const key = hubKeys[String(hub.id)];
+                      const revealed = revealedKeys.has(hub.id);
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontFamily: "monospace", fontSize: 11, color: T.ink2 }}>
+                            {key ? (revealed ? key : "••••••••••••") : "—"}
+                          </span>
+                          {key && (
+                            <button
+                              onClick={() => setRevealedKeys(prev => {
+                                const next = new Set(prev);
+                                revealed ? next.delete(hub.id) : next.add(hub.id);
+                                return next;
+                              })}
+                              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: T.ink3, padding: "2px 4px" }}
+                            >
+                              {revealed ? "hide" : "show"}
+                            </button>
+                          )}
+                          {key && (
+                            <button
+                              onClick={() => navigator.clipboard.writeText(key)}
+                              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: T.ink3, padding: "2px 4px" }}
+                            >
+                              copy
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleRegenerateKey(hub.id)}
+                            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: T.accent, padding: "2px 4px" }}
+                          >
+                            {key ? "regen" : "generate"}
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
