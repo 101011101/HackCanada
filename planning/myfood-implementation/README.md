@@ -1,7 +1,7 @@
 # MyFood Implementation
 
-This directory holds the MyFood consumer-app implementation plan, API plan, and gap analysis.
+This directory holds the MyFood consumer-app implementation plan and gap analysis.
 
-- **FULL-PLAN.md** — Fully finished plan: exact steps to do (Phase 0 backend through Phase 5 polish). Use this to execute.
-- **GAP-ANALYSIS.md** — Gap analysis: what is missing in backend, frontend, data, docs, and product.
-- **IMPLEMENTATION.md** — Implementation document (API plan + phases + gaps) for reference.
+- **FULL-PLAN.md** — Full implementation plan: backend is done (`app/backend/api/`); Phases 1–5 are frontend-only (API doc, identity, service layer, shell/layout, tickets, sheets, polish). Use this to execute.
+- **GAP-ANALYSIS.md** — Gap analysis (backend was missing before merge; frontend gaps remain until Phases 1–5 are done).
+- **IMPLEMENTATION.md** — Reference doc (API plan + phases + gaps).

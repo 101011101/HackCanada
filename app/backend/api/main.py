@@ -31,11 +31,28 @@ app.add_middleware(
     allow_origins=[
         'http://localhost:3000', 'http://127.0.0.1:3000',
         'http://localhost:8080', 'http://127.0.0.1:8080',
+        'http://localhost:5173', 'http://127.0.0.1:5173',
+        'http://localhost:5174', 'http://127.0.0.1:5174',
+        'http://localhost:5175', 'http://127.0.0.1:5175',
+        'http://localhost:5176', 'http://127.0.0.1:5176',
         'null',  # file:// origin
     ],
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+@app.get("/")
+def root():
+    """Root redirects to API docs so opening 127.0.0.1:8000 in browser works."""
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        '<title>MyCelium API</title></head><body>'
+        '<h1>MyCelium API</h1><p>Backend is running.</p>'
+        '<p><a href="/docs">Open API docs (Swagger)</a></p>'
+        '<p>Use the <strong>frontend</strong> at <a href="http://localhost:5173/">http://localhost:5173</a> '
+        '(or 5174, 5175, 5176 if that port is in use).</p></body></html>'
+    )
 
 app.include_router(optimize.router)
 app.include_router(nodes.router)
