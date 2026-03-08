@@ -398,7 +398,9 @@
     "status": "new",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 0.0,
+    "crops_on_hand": {}
   },
   {
     "id": 21,
@@ -991,12 +993,9 @@
       3
     ],
     "preferred_crop_ids": [
-      4,
-      0,
-      1,
-      7,
+      2,
       5,
-      2
+      4
     ],
     "currency_balance": 108.75,
     "crops_on_hand": {

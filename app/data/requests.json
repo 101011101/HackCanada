@@ -497,15 +497,18 @@
     "hub_options": [
       {
         "hub_id": 1,
-        "hub_name": "North Community Centre"
+        "distance_km": 1.5,
+        "score": 0.16
       },
       {
         "hub_id": 0,
-        "hub_name": "Greenwood Public School"
+        "distance_km": 1.0,
+        "score": 0.2
       },
       {
         "hub_id": 2,
-        "hub_name": "East Neighbourhood Hub"
+        "distance_km": 2.0,
+        "score": 0.12
       }
     ],
     "created_at": "2026-03-08T13:49:40",
@@ -523,15 +526,18 @@
     "hub_options": [
       {
         "hub_id": 1,
-        "hub_name": "North Community Centre"
+        "distance_km": 1.5,
+        "score": 0.16
       },
       {
         "hub_id": 0,
-        "hub_name": "Greenwood Public School"
+        "distance_km": 1.0,
+        "score": 0.2
       },
       {
         "hub_id": 2,
-        "hub_name": "East Neighbourhood Hub"
+        "distance_km": 2.0,
+        "score": 0.12
       }
     ],
     "created_at": "2026-03-08T13:51:31",
@@ -549,15 +555,18 @@
     "hub_options": [
       {
         "hub_id": 1,
-        "hub_name": "North Community Centre"
+        "distance_km": 1.5,
+        "score": 0.16
       },
       {
         "hub_id": 0,
-        "hub_name": "Greenwood Public School"
+        "distance_km": 1.0,
+        "score": 0.2
       },
       {
         "hub_id": 2,
-        "hub_name": "East Neighbourhood Hub"
+        "distance_km": 2.0,
+        "score": 0.12
       }
     ],
     "created_at": "2026-03-08T13:53:43",
