@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bug Report — HackCanada Frontend</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#E8E5E0;--bg-warm:#DDD9D3;--bg-card:#F2F0EC;--bg-elev:#FFFFFF;
+      --ink:#1A1A1A;--ink-2:#6B6762;--ink-3:#9E9A94;--inv:#F2F0EC;
+      --accent:#E8913A;--accent-bg:rgba(232,145,58,0.12);
+      --border:#D1CDC7;--border-lt:#E2DFD9;
+      --success:#4CAF50;--error:#D94F4F;--info:#5B8DEF;
+      --warn:#D97706;--warn-bg:rgba(217,119,6,0.10);
+      --r-xs:2px;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-pill:999px;
+      --sh-sm:0 1px 3px rgba(26,26,26,0.06);--sh-md:0 4px 12px rgba(26,26,26,0.08);--sh-lg:0 8px 24px rgba(26,26,26,0.12);
+      --fb:'Inter',system-ui,sans-serif;--fd:'Space Grotesk',system-ui,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:16px;-webkit-font-smoothing:antialiased;}
+    body{font-family:var(--fb);background:var(--bg);color:var(--ink);line-height:1.5;padding:32px 20px 80px;}
+
+    /* ── LAYOUT ── */
+    .page{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:32px;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:var(--ink);border-radius:var(--r-lg);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+    .topbar-left{display:flex;align-items:center;gap:12px;}
+    .topbar-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .topbar-title{font-family:var(--fd);font-size:18px;font-weight:700;color:#fff;}
+    .topbar-sub{font-size:12px;color:var(--ink-3);margin-top:2px;}
+    .topbar-meta{font-size:11px;color:rgba(255,255,255,0.35);text-align:right;line-height:1.6;}
+
+    /* ── BADGE ── */
+    .badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--r-xs);letter-spacing:0.06em;text-transform:uppercase;}
+    .badge--critical{background:rgba(217,79,79,0.14);color:var(--error);}
+    .badge--high{background:var(--warn-bg);color:var(--warn);}
+    .badge--medium{background:rgba(91,141,239,0.12);color:var(--info);}
+    .badge--success{background:rgba(76,175,80,0.12);color:var(--success);}
+
+    /* ── BUG CARD ── */
+    .bug-card{background:var(--bg-elev);border-radius:var(--r-lg);box-shadow:var(--sh-md);overflow:hidden;}
+
+    .bug-header{padding:20px 24px 18px;border-bottom:1px solid var(--border-lt);display:flex;align-items:flex-start;gap:14px;}
+    .bug-number{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--border);line-height:1;flex-shrink:0;margin-top:2px;}
+    .bug-header-body{flex:1;min-width:0;}
+    .bug-title{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:8px;}
+    .bug-badges{display:flex;flex-wrap:wrap;gap:6px;}
+
+    .bug-body{padding:24px;display:flex;flex-direction:column;gap:24px;}
+
+    /* ── SECTION ── */
+    .section-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;}
+    .section-text{font-size:14px;color:var(--ink-2);line-height:1.65;}
+
+    /* ── CAUSE BOX ── */
+    .cause-box{background:var(--bg-card);border:1.5px solid var(--border-lt);border-radius:var(--r-md);padding:16px 18px;}
+    .cause-box p{font-size:14px;color:var(--ink);line-height:1.65;}
+    .cause-box strong{color:var(--ink);font-weight:600;}
+
+    /* ── FILE LIST ── */
+    .file-list{display:flex;flex-direction:column;gap:8px;}
+    .file-item{display:flex;align-items:baseline;gap:10px;background:var(--bg-card);border:1px solid var(--border-lt);border-radius:var(--r-sm);padding:10px 14px;}
+    .file-path{font-family:'SF Mono','Fira Code','Menlo',monospace;font-size:12px;color:var(--info);flex:1;min-width:0;word-break:break-all;}
+    .file-role{font-size:11px;color:var(--ink-3);flex-shrink:0;}
+
+    /* ── CODE BLOCK ── */
+    .code-block{background:#1A1A1A;border-radius:var(--r-md);overflow:hidden;}
+    .code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .code-filename{font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);font-family:'SF Mono','Fira Code','Menlo',monospace;}
+    .code-tag{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:var(--r-xs);}
+    .code-tag--bug{background:rgba(217,79,79,0.25);color:#f87171;}
+    .code-tag--fix{background:rgba(76,175,80,0.20);color:#86efac;}
+    pre{margin:0;padding:16px;overflow-x:auto;font-family:'SF Mono','Fira Code','Menlo',monospace;font-size:12.5px;line-height:1.7;color:#e2e8f0;}
+    .hl-bad{background:rgba(217,79,79,0.20);color:#fca5a5;}
+    .hl-good{background:rgba(76,175,80,0.18);color:#86efac;}
+    .hl-neutral{color:rgba(255,255,255,0.35);}
+    .ln{color:rgba(255,255,255,0.18);user-select:none;display:inline-block;width:28px;text-align:right;margin-right:14px;}
+
+    /* ── FIX BOX ── */
+    .fix-box{border:1.5px solid rgba(76,175,80,0.30);border-radius:var(--r-md);overflow:hidden;}
+    .fix-label{background:rgba(76,175,80,0.10);padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--success);border-bottom:1.5px solid rgba(76,175,80,0.20);}
+    .fix-content{padding:14px 16px;}
+    .fix-content p{font-size:13.5px;color:var(--ink-2);line-height:1.65;}
+    .fix-content p + p{margin-top:10px;}
+    .fix-content strong{color:var(--ink);font-weight:600;}
+    .fix-content code{font-family:'SF Mono','Fira Code','Menlo',monospace;font-size:12px;background:var(--bg-warm);padding:1px 5px;border-radius:var(--r-xs);}
+
+    /* ── DIVIDER ── */
+    hr{border:none;border-top:1px solid var(--border-lt);}
+
+    /* ── SUMMARY ROW ── */
+    .summary-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .summary-card{background:var(--bg-elev);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-sm);}
+    .summary-card-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;}
+    .summary-card-val{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--ink);line-height:1.2;}
+    .summary-card-sub{font-size:12px;color:var(--ink-3);margin-top:3px;}
+
+    @media(max-width:500px){
+      .summary-row{grid-template-columns:1fr;}
+      .bug-header{flex-direction:column;gap:10px;}
+      .bug-number{font-size:20px;}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── TOPBAR ── -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <div>
+        <div class="topbar-title">Frontend Bug Report</div>
+        <div class="topbar-sub">HackCanada — Two-crop selection regression</div>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      2 bugs · 2 files<br>
+      Triggered by selecting 2 crops
+    </div>
+  </div>
+
+  <!-- ── SUMMARY CARDS ── -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="summary-card-label">Bug 1</div>
+      <div class="summary-card-val">Duplicate React Key</div>
+      <div class="summary-card-sub">CropPickerSheet → BottomSheet · Frontend</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-label">Bug 2</div>
+      <div class="summary-card-val">Tasks API Over-returns</div>
+      <div class="summary-card-sub">GET /nodes/{id}/tasks · Backend</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       BUG 1 — DUPLICATE REACT KEY
+       ════════════════════════════════════════════════════════════ -->
+  <div class="bug-card">
+    <div class="bug-header">
+      <div class="bug-number">01</div>
+      <div class="bug-header-body">
+        <div class="bug-title">Duplicate React key warning in CropPickerSheet</div>
+        <div class="bug-badges">
+          <span class="badge badge--high">High</span>
+          <span class="badge badge--medium">Frontend · React</span>
+          <span class="badge badge--medium">UI Corruption</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bug-body">
+
+      <!-- SYMPTOM -->
+      <div>
+        <div class="section-label">Symptom</div>
+        <div class="cause-box">
+          <p>React console warning: <strong>"Encountered two children with the same key <code style="font-family:monospace;font-size:13px;">1</code>. Keys should be unique so that components maintain their identity across updates."</strong> The CropPickerSheet renders incorrectly — React cannot distinguish between the two crop rows, causing state confusion on re-renders (wrong checkmark positions, potential flicker).</p>
+        </div>
+      </div>
+
+      <!-- ROOT CAUSE -->
+      <div>
+        <div class="section-label">Root Cause</div>
+        <div class="cause-box">
+          <p>
+            <strong>File:</strong> <code style="font-family:monospace;font-size:12.5px;">app/frontend/src/user/components/sheets/CropPickerSheet.tsx</code>, <strong>line 64</strong>.
+          </p>
+          <p style="margin-top:10px;">
+            The <code style="font-family:monospace;font-size:12.5px;">bundles.map()</code> uses <code style="font-family:monospace;font-size:12.5px;">key={bundle.crop_id}</code>. The <code style="font-family:monospace;font-size:12.5px;">crop_id</code> values in <code style="font-family:monospace;font-size:12.5px;">BundleResponse</code> come from <code style="font-family:monospace;font-size:12.5px;">CROP_TASKS</code> keys in the backend, which are zero-based integers (0, 1, 2 …). When two crops are assigned, the <code style="font-family:monospace;font-size:12.5px;">bundles</code> array returned by <code style="font-family:monospace;font-size:12.5px;">GET /nodes/{farm_id}</code> contains two <code style="font-family:monospace;font-size:12.5px;">BundleResponse</code> objects. If the farm was assigned crop index 1 (Lettuce) as both its first and second slot (or any two crops that share a <code style="font-family:monospace;font-size:12.5px;">crop_id</code>), the key collision fires.
+          </p>
+          <p style="margin-top:10px;">
+            The real issue is more subtle: <strong>the key is <code style="font-family:monospace;font-size:12.5px;">crop_id</code>, not <code style="font-family:monospace;font-size:12.5px;">farm_id + crop_id</code></strong>. For a single-farm user the <code style="font-family:monospace;font-size:12.5px;">farm_id</code> is always the same, so if the engine ever assigns the same <code style="font-family:monospace;font-size:12.5px;">crop_id</code> twice (a known bug in the multi-slot greedy path where <code style="font-family:monospace;font-size:12.5px;">modified[already] = 0.0</code> only blocks already-assigned indices within the same call — not across calls), the picker will have two rows with the same key.
+          </p>
+          <p style="margin-top:10px;">
+            More practically: the <code style="font-family:monospace;font-size:12.5px;">bundles</code> array is fed directly from <code style="font-family:monospace;font-size:12.5px;">nodeState.data</code> which comes from <code style="font-family:monospace;HackCanada font-size:12.5px;">GET /nodes/{id}</code>. That endpoint loops over <code style="font-family:monospace;font-size:12.5px;">assignments[farm_id]</code> which is a list of crop <em>indices</em>. If the greedy algorithm placed the same crop index twice in the list (which the deduplication logic in <code style="font-family:monospace;font-size:12.5px;">_greedy_assign</code> is supposed to prevent, but does not prevent across two <em>separate</em> <code style="font-family:monospace;font-size:12.5px;">preferred_crop_ids</code> calls), two bundles with identical <code style="font-family:monospace;font-size:12.5px;">crop_id</code> appear in the array and both render with <code style="font-family:monospace;font-size:12.5px;">key=1</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- AFFECTED FILES -->
+      <div>
+        <div class="section-label">Affected Files</div>
+        <div class="file-list">
+          <div class="file-item">
+            <span class="file-path">app/frontend/src/user/components/sheets/CropPickerSheet.tsx</span>
+            <span class="file-role">line 64 — the key</span>
+          </div>
+          <div class="file-item">
+            <span class="file-path">app/frontend/src/user/pages/Dashboard.tsx</span>
+            <span class="file-role">line 47 — bundles fed from nodeState</span>
+          </div>
+          <div class="file-item">
+            <span class="file-path">app/backend/api/routes/nodes.py</span>
+            <span class="file-role">line 273 — bundle construction loop</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUGGY CODE -->
+      <div>
+        <div class="section-label">Buggy Code</div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename">CropPickerSheet.tsx — lines 62–80</span>
+            <span class="code-tag code-tag--bug">Bug</span>
+          </div>
+          <pre><span class="hl-neutral"><span class="ln">62</span>{bundles.map(bundle => (</span>
+<span class="hl-bad"><span class="ln">63</span>  &lt;div</span>
+<span class="hl-bad"><span class="ln">64</span>    key={bundle.crop_id}   {/* ← crop_id is NOT guaranteed unique per farm */}</span>
+<span class="hl-bad"><span class="ln">65</span>    className="crop-option"</span>
+<span class="hl-neutral"><span class="ln">66</span>    role="button"</span>
+<span class="hl-neutral"><span class="ln">67</span>    tabIndex={0}</span>
+<span class="hl-neutral"><span class="ln">68</span>    onClick={() =&gt; { onSelect(bundle.crop_id); onClose(); }}</span>
+<span class="hl-neutral"><span class="ln">69</span>    onKeyDown={(e) =&gt; { if (e.key === 'Enter') { onSelect(bundle.crop_id); onClose(); } }}</span>
+<span class="hl-neutral"><span class="ln">70</span>  &gt;</span>
+<span class="hl-neutral"><span class="ln">  </span>  ...</span>
+<span class="hl-neutral"><span class="ln">80</span>))};</span></pre>
+        </div>
+      </div>
+
+      <!-- THE FIX -->
+      <div class="fix-box">
+        <div class="fix-label">Minimal Fix</div>
+        <div class="fix-content">
+          <p>Change the <code>key</code> prop on line 64 from <code>bundle.crop_id</code> to a composite of <code>farm_id</code> and <code>crop_id</code>:</p>
+          <p><strong>Before:</strong> <code>key={bundle.crop_id}</code></p>
+          <p><strong>After:&nbsp;&nbsp;</strong> <code>key={`${bundle.farm_id}-${bundle.crop_id}`}</code></p>
+          <p style="margin-top:12px;">This makes the key unique even if the same crop appears twice on the same farm. It also future-proofs multi-farm UIs. No other component changes are needed — the <code>onSelect</code> callback already uses <code>bundle.crop_id</code>, which remains correct.</p>
+          <p>A deeper fix would also deduplicate the assignments list in the backend's <code>_greedy_assign</code> function (<code>nodes.py</code> line 64) before saving, ensuring a farm cannot be assigned the same crop index twice — but that is a separate backend concern and not strictly required to silence the React warning.</p>
+        </div>
+      </div>
+
+    </div><!-- /bug-body -->
+  </div><!-- /bug-card -->
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       BUG 2 — TASKS API OVER-RETURNS
+       ════════════════════════════════════════════════════════════ -->
+  <div class="bug-card">
+    <div class="bug-header">
+      <div class="bug-number">02</div>
+      <div class="bug-header-body">
+        <div class="bug-title">GET /nodes/{id}/tasks returns 100+ tasks when two crops are selected</div>
+        <div class="bug-badges">
+          <span class="badge badge--critical">Critical</span>
+          <span class="badge badge--medium">Backend · Python</span>
+          <span class="badge badge--medium">Data Correctness</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bug-body">
+
+      <!-- SYMPTOM -->
+      <div>
+        <div class="section-label">Symptom</div>
+        <div class="cause-box">
+          <p>After the user selects two crops on the Suggestions page and is redirected to the Dashboard, <code style="font-family:monospace;font-size:12.5px;">GET /nodes/23/tasks</code> returns a massive array — well over 100 items. The Dashboard task list renders every task from every crop in the system, not just the two chosen ones.</p>
+        </div>
+      </div>
+
+      <!-- ROOT CAUSE -->
+      <div>
+        <div class="section-label">Root Cause</div>
+        <div class="cause-box">
+          <p>
+            <strong>File:</strong> <code style="font-family:monospace;font-size:12.5px;">app/backend/api/routes/nodes.py</code>, <strong>lines 410–411</strong>.
+          </p>
+          <p style="margin-top:10px;">
+            The task endpoint reads the farm's assignment from <code style="font-family:monospace;font-size:12.5px;">assignments.json</code> via <code style="font-family:monospace;font-size:12.5px;">storage.load_assignments()</code>. That function (<code style="font-family:monospace;font-size:12.5px;">storage.py</code> line 68–74) applies a <strong>migration shim</strong> that converts the old scalar format to a list: <code style="font-family:monospace;font-size:12.5px;">v if isinstance(v, list) else [v]</code>. This is fine for existing farms.
+          </p>
+          <p style="margin-top:10px;">
+            The problem is in <code style="font-family:monospace;font-size:12.5px;">add_node</code> (<code style="font-family:monospace;font-size:12.5px;">nodes.py</code> line 147–148). The greedy assignment returns <code style="font-family:monospace;font-size:12.5px;">assigned</code>, which is a <strong>list of crop array indices</strong> (0-based positions into the <code style="font-family:monospace;font-size:12.5px;">crops</code> list). These indices are the same as crop IDs only because <code style="font-family:monospace;font-size:12.5px;">crops[0].id == 0</code>, <code style="font-family:monospace;font-size:12.5px;">crops[1].id == 1</code>, etc. That accidental alignment holds for the seed data, but it means <code style="font-family:monospace;font-size:12.5px;">assignments[str(new_id)] = assigned</code> stores <strong>indices, not IDs</strong>.
+          </p>
+          <p style="margin-top:10px;">
+            When two crops are selected via <code style="font-family:monospace;font-size:12.5px;">preferred_crop_ids</code>, the greedy algorithm fills two slots. With 10 crops in the system and a large plot, <code style="font-family:monospace;font-size:12.5px;">num_slots</code> can be much larger than 2. The code on line 55–68 runs <code style="font-family:monospace;font-size:12.5px;">for slot in range(num_slots)</code> and appends a crop index for <em>every slot</em>. For a 200 sqft plot with <code style="font-family:monospace;font-size:12.5px;">min_slot_sqft=20</code> that is 10 slots, each assigning a crop index. The assignments list ends up as e.g. <code style="font-family:monospace;font-size:12.5px;">[1, 3, 0, 5, 2, 1, 3, 0, 5, 2]</code> — 10 entries, not 2.
+          </p>
+          <p style="margin-top:10px;">
+            Back in <code style="font-family:monospace;font-size:12.5px;">get_farm_tasks</code> (<code style="font-family:monospace;font-size:12.5px;">nodes.py</code> line 410), <code style="font-family:monospace;font-size:12.5px;">crop_ids = assignments.get(str(farm_id))</code> returns this full 10-element list. The loop on line 422 iterates over every entry and fetches all tasks for that crop. Because the list contains duplicates (same crop index 3 times), <strong>each crop's task list is appended multiple times</strong>. Lettuce has 6 tasks × appearing 3 times = 18 Lettuce tasks; multiply across all 10 slot assignments and you get 60–100+ task items.
+          </p>
+        </div>
+      </div>
+
+      <!-- AFFECTED FILES -->
+      <div>
+        <div class="section-label">Affected Files</div>
+        <div class="file-list">
+          <div class="file-item">
+            <span class="file-path">app/backend/api/routes/nodes.py</span>
+            <span class="file-role">lines 404–453 — get_farm_tasks endpoint</span>
+          </div>
+          <div class="file-item">
+            <span class="file-path">app/backend/api/routes/nodes.py</span>
+            <span class="file-role">lines 147–148 — assignments saved with all slot indices</span>
+          </div>
+          <div class="file-item">
+            <span class="file-path">app/backend/engine/data.py</span>
+            <span class="file-role">lines 311–393 — CROP_TASKS, 6–7 tasks per crop</span>
+          </div>
+          <div class="file-item">
+            <span class="file-path">app/frontend/src/user/components/dashboard/TaskList.tsx</span>
+            <span class="file-role">line 39 — key={task.id} — also collides (see below)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUGGY CODE -->
+      <div>
+        <div class="section-label">Buggy Code — Assignment Storage</div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename">nodes.py — add_node, lines 143–148</span>
+            <span class="code-tag code-tag--bug">Bug</span>
+          </div>
+          <pre><span class="hl-neutral"><span class="ln">143</span>farm_dicts = storage.load_farms()</span>
+<span class="hl-neutral"><span class="ln">144</span>farm_dicts.append(farm_dict)</span>
+<span class="hl-neutral"><span class="ln">145</span>storage.save_farms(farm_dicts)</span>
+<span class="hl-neutral"><span class="ln">146</span></span>
+<span class="hl-neutral"><span class="ln">147</span>assignments = storage.load_assignments()</span>
+<span class="hl-bad"><span class="ln">148</span>assignments[str(new_id)] = assigned  # ← 'assigned' is ALL slot indices, not unique crops</span></pre>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Buggy Code — Task Endpoint Reads Duplicated List</div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename">nodes.py — get_farm_tasks, lines 409–425</span>
+            <span class="code-tag code-tag--bug">Bug</span>
+          </div>
+          <pre><span class="hl-neutral"><span class="ln">409</span>assignments = storage.load_assignments()</span>
+<span class="hl-bad"><span class="ln">410</span>crop_ids    = assignments.get(str(farm_id)) or farm_dict.get('current_crop_ids') or []</span>
+<span class="hl-neutral"><span class="ln">411</span># crop_ids may be [1, 3, 0, 5, 2, 1, 3, 0, 5, 2] — 10 entries, many duplicated</span>
+<span class="hl-neutral"><span class="ln">412</span></span>
+<span class="hl-neutral"><span class="ln">420</span>items = []</span>
+<span class="hl-bad"><span class="ln">421</span>for crop_id in crop_ids:            # ← iterates ALL 10 entries, not 2 unique crops</span>
+<span class="hl-neutral"><span class="ln">422</span>    crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)</span>
+<span class="hl-neutral"><span class="ln">423</span>    crop_name = crop_dict['name'] if crop_dict else str(crop_id)</span>
+<span class="hl-neutral"><span class="ln">424</span>    for task in CROP_TASKS.get(crop_id, []):</span>
+<span class="hl-neutral"><span class="ln">425</span>        # each crop's tasks appended N times = N × tasks per crop duplicates</span>
+<span class="hl-neutral"><span class="ln">426</span>        items.append(models.TaskItem(...))</span></pre>
+        </div>
+      </div>
+
+      <!-- SECONDARY KEY COLLISION -->
+      <div>
+        <div class="section-label">Secondary Collision: TaskList key={task.id}</div>
+        <div class="cause-box">
+          <p>The task objects emitted by the backend reuse the IDs defined in <code style="font-family:monospace;font-size:12.5px;">CROP_TASKS</code>. Each crop's task list is numbered <code style="font-family:monospace;font-size:12.5px;">id: 1</code> through <code style="font-family:monospace;font-size:12.5px;">id: 6</code> (or 7) independently. When two crops are assigned, both crops have a task with <code style="font-family:monospace;font-size:12.5px;">id: 1</code>, <code style="font-family:monospace;font-size:12.5px;">id: 2</code>, etc. <code style="font-family:monospace;font-size:12.5px;">TaskList.tsx</code> line 40 uses <code style="font-family:monospace;font-size:12.5px;">key={task.id}</code>, so even if the duplicate-crop issue is fixed in the backend, <strong>a two-crop farm will still generate the same "Encountered two children with the same key" warning</strong> in TaskList — a different location than the CropPickerSheet warning but the same React error message. The task IDs are only unique <em>within</em> a crop, not <em>across</em> crops.</p>
+        </div>
+      </div>
+
+      <!-- THE FIX -->
+      <div class="fix-box">
+        <div class="fix-label">Minimal Fix</div>
+        <div class="fix-content">
+          <p><strong>Fix A — Backend (primary fix):</strong> In <code>get_farm_tasks</code> (<code>nodes.py</code> line 421), deduplicate <code>crop_ids</code> before iterating:</p>
+          <p><strong>Before:</strong> <code>for crop_id in crop_ids:</code></p>
+          <p><strong>After:&nbsp;&nbsp;</strong> <code>for crop_id in dict.fromkeys(crop_ids):&nbsp;&nbsp;# preserves order, removes duplicates</code></p>
+          <p style="margin-top:12px;">This ensures each crop's tasks are added only once regardless of how many slots in the assignment list point to the same crop. The same one-liner should also be applied in <code>get_node</code> (line 273) and <code>get_guide</code> (line 388) for consistency.</p>
+          <p style="margin-top:12px;"><strong>Fix B — Frontend (secondary fix for TaskList key collision):</strong> In <code>TaskList.tsx</code> line 40, change the key to a composite of crop and task IDs:</p>
+          <p><strong>Before:</strong> <code>key={task.id}</code></p>
+          <p><strong>After:&nbsp;&nbsp;</strong> <code>key={`${task.crop_id}-${task.id}`}</code></p>
+          <p style="margin-top:12px;">This is a defensive fix. Even with Fix A in place, the task IDs are semantically scoped to a crop (Lettuce task 1, Tomato task 1 are different tasks), so the composite key is more correct regardless.</p>
+          <p style="margin-top:12px;"><strong>Root-cause fix (optional hardening):</strong> Store only unique crop IDs in <code>assignments.json</code> at save time in <code>add_node</code> line 148: <code>assignments[str(new_id)] = list(dict.fromkeys(assigned))</code>. This prevents the duplication from ever reaching the database.</p>
+        </div>
+      </div>
+
+    </div><!-- /bug-body -->
+  </div><!-- /bug-card -->
+
+
+  <!-- ── FOOTER ── -->
+  <div style="background:var(--bg-card);border:1px solid var(--border-lt);border-radius:var(--r-lg);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div style="font-size:12px;color:var(--ink-3);line-height:1.6;">
+      <strong style="color:var(--ink);font-size:13px;">Trigger condition</strong><br>
+      Both bugs fire the moment a user selects 2+ crops on the Suggestions page and <code style="font-family:monospace;font-size:11px;">POST /nodes</code> is called with <code style="font-family:monospace;font-size:11px;">preferred_crop_ids</code> of length &ge; 2.
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <span class="badge badge--critical">2 total bugs</span>
+      <span class="badge badge--success">4 lines to fix</span>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend Fix Plan — HackCanada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens (copied from user-dashboard.html) ── */
+    :root {
+      --bg:#E8E5E0;--bg-warm:#DDD9D3;--bg-card:#F2F0EC;--bg-elev:#FFFFFF;
+      --ink:#1A1A1A;--ink-2:#6B6762;--ink-3:#9E9A94;--inv:#F2F0EC;
+      --accent:#E8913A;--accent-bg:rgba(232,145,58,0.12);
+      --border:#D1CDC7;--border-lt:#E2DFD9;
+      --success:#4CAF50;--error:#D94F4F;--info:#5B8DEF;
+      --warn:#D97706;
+      --r-xs:2px;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-xl:16px;--r-pill:999px;
+      --sh-sm:0 1px 3px rgba(26,26,26,0.06);--sh-md:0 4px 12px rgba(26,26,26,0.08);--sh-lg:0 8px 24px rgba(26,26,26,0.12);
+      --fb:'Inter',system-ui,sans-serif;--fd:'Space Grotesk',system-ui,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:16px;-webkit-font-smoothing:antialiased;}
+    body{font-family:var(--fb);background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:hidden;}
+
+    /* ── Base shared ── */
+    .badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--r-xs);letter-spacing:0.06em;text-transform:uppercase;}
+    .badge--high{background:rgba(217,79,79,0.13);color:var(--error);}
+    .badge--medium{background:rgba(217,119,6,0.13);color:var(--warn);}
+    .badge--low{background:rgba(76,175,80,0.13);color:var(--success);}
+    .badge--info{background:rgba(91,141,239,0.12);color:var(--info);}
+    .badge--done{background:rgba(76,175,80,0.13);color:var(--success);}
+
+    .overline{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);}
+
+    /* ── Layout ── */
+    .page{max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+
+    /* ── Page header ── */
+    .page-header{margin-bottom:40px;}
+    .page-header__eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .page-header__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .page-header h1{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:8px;}
+    .page-header p{font-size:14px;color:var(--ink-2);max-width:600px;line-height:1.6;}
+
+    /* ── Summary table ── */
+    .summary-card{background:var(--bg-elev);border:1.5px solid var(--border-lt);border-radius:var(--r-xl);box-shadow:var(--sh-md);padding:28px;margin-bottom:40px;}
+    .summary-card h2{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:20px;}
+    .summary-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:24px;}
+    .stat-tile{background:var(--bg-card);border:1px solid var(--border-lt);border-radius:var(--r-lg);padding:16px;}
+    .stat-tile__num{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--ink);line-height:1;}
+    .stat-tile__label{font-size:11px;color:var(--ink-3);margin-top:4px;}
+
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    thead th{text-align:left;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);padding:0 12px 10px;border-bottom:1.5px solid var(--border);}
+    tbody td{padding:11px 12px;border-bottom:1px solid var(--border-lt);vertical-align:top;color:var(--ink);}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:var(--bg-warm);}
+    .tbl-id{font-family:var(--fd);font-weight:700;font-size:12px;color:var(--ink-3);}
+    .tbl-title{font-weight:600;color:var(--ink);}
+    .tbl-files{font-size:11px;color:var(--ink-3);}
+
+    /* ── Section label ── */
+    .section-label{font-family:var(--fd);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border-lt);}
+
+    /* ── Issue cards ── */
+    .issues{display:flex;flex-direction:column;gap:20px;}
+
+    .issue-card{background:var(--bg-elev);border:1.5px solid var(--border-lt);border-radius:var(--r-xl);box-shadow:var(--sh-sm);overflow:hidden;}
+    .issue-card--high{border-left:4px solid var(--error);}
+    .issue-card--medium{border-left:4px solid var(--warn);}
+    .issue-card--low{border-left:4px solid var(--success);}
+    .issue-card--done{border-left:4px solid var(--success);opacity:0.7;}
+
+    .issue-card__header{padding:20px 24px 16px;display:flex;align-items:flex-start;gap:14px;}
+    .issue-card__num{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--ink-3);min-width:28px;padding-top:1px;}
+    .issue-card__meta{flex:1;min-width:0;}
+    .issue-card__title{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:6px;}
+    .issue-card__badges{display:flex;flex-wrap:wrap;gap:6px;}
+
+    .issue-card__body{padding:0 24px 20px 66px;display:flex;flex-direction:column;gap:16px;}
+
+    .detail-block{}
+    .detail-block__label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3);margin-bottom:5px;}
+    .detail-block__text{font-size:13px;color:var(--ink-2);line-height:1.6;}
+    .detail-block__text strong{color:var(--ink);font-weight:600;}
+
+    .files-list{display:flex;flex-wrap:wrap;gap:6px;}
+    .file-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:500;color:var(--info);background:rgba(91,141,239,0.08);border:1px solid rgba(91,141,239,0.2);border-radius:var(--r-xs);padding:2px 8px;font-family:'Menlo','Consolas',monospace;}
+
+    .fix-block{background:var(--bg-card);border:1px solid var(--border-lt);border-radius:var(--r-lg);padding:14px 16px;}
+    .fix-block__label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3);margin-bottom:8px;}
+    .fix-block__steps{list-style:none;display:flex;flex-direction:column;gap:7px;}
+    .fix-block__steps li{font-size:13px;color:var(--ink-2);line-height:1.5;padding-left:16px;position:relative;}
+    .fix-block__steps li::before{content:'→';position:absolute;left:0;color:var(--accent);font-weight:700;font-size:12px;}
+    .fix-block__steps li strong{color:var(--ink);font-weight:600;}
+    .fix-block__steps li code{font-family:'Menlo','Consolas',monospace;font-size:11px;background:var(--bg-warm);border-radius:var(--r-xs);padding:1px 4px;color:var(--ink);}
+
+    .dep-block{display:flex;align-items:flex-start;gap:8px;background:rgba(232,145,58,0.07);border:1px solid rgba(232,145,58,0.2);border-radius:var(--r-md);padding:10px 14px;}
+    .dep-block__icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+    .dep-block__text{font-size:12px;color:var(--ink-2);line-height:1.5;}
+    .dep-block__text strong{color:var(--ink);font-weight:600;}
+
+    .no-dep-block{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);}
+
+    /* ── Footer ── */
+    .footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--border-lt);font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .footer strong{color:var(--ink-2);}
+
+    @media(max-width:600px){
+      .page{padding:28px 16px 60px;}
+      .issue-card__body{padding-left:24px;}
+      .issue-card__num{display:none;}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Page Header ── -->
+  <div class="page-header">
+    <div class="page-header__eyebrow">
+      <div class="page-header__dot"></div>
+      <span class="overline">HackCanada · Frontend Fix Plan</span>
+    </div>
+    <h1>Critical Bug Fix Plan</h1>
+    <p>Structured audit of all known frontend defects. Each issue is categorised by severity, scope of change, and fix approach. Issues are ordered: high severity first, then medium, then confirmed non-issues.</p>
+  </div>
+
+  <!-- ── Summary Card ── -->
+  <div class="summary-card">
+    <h2>Plan Summary</h2>
+    <div class="summary-stats">
+      <div class="stat-tile">
+        <div class="stat-tile__num">9</div>
+        <div class="stat-tile__label">Total issues audited</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__num" style="color:var(--error)">4</div>
+        <div class="stat-tile__label">High severity</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__num" style="color:var(--warn)">3</div>
+        <div class="stat-tile__label">Medium severity</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__num" style="color:var(--success)">2</div>
+        <div class="stat-tile__label">Already resolved / non-issue</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__num">8</div>
+        <div class="stat-tile__label">Distinct files affected</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__num">~55</div>
+        <div class="stat-tile__label">Estimated lines changed</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Issue</th>
+          <th>Severity</th>
+          <th>Files</th>
+          <th>Est. Lines</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tbl-id">I-01</td>
+          <td class="tbl-title">humidity silently dropped by POST /suggestions</td>
+          <td><span class="badge badge--high">High</span></td>
+          <td class="tbl-files">models.py, suggestions.py</td>
+          <td>3</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-02</td>
+          <td class="tbl-title">FarmContext single-farm: join() silently overwrites farm</td>
+          <td><span class="badge badge--high">High</span></td>
+          <td class="tbl-files">FarmContext.tsx, Suggestions.tsx, Dashboard.tsx</td>
+          <td>~20</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-03</td>
+          <td class="tbl-title">lat/lng fallback 0,0 (Atlantic Ocean)</td>
+          <td><span class="badge badge--high">High</span></td>
+          <td class="tbl-files">AddPlotSheet.tsx</td>
+          <td>~8</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-04</td>
+          <td class="tbl-title">useAsync fires on mount — POST misuse pattern</td>
+          <td><span class="badge badge--high">High</span></td>
+          <td class="tbl-files">Suggestions.tsx</td>
+          <td>~15</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-05</td>
+          <td class="tbl-title">SuggestionItem type and getSuggestions() missing</td>
+          <td><span class="badge badge--done">Resolved</span></td>
+          <td class="tbl-files">types.ts, api.ts</td>
+          <td>0</td>
+          <td><span class="badge badge--done">Already done</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-06</td>
+          <td class="tbl-title">location.state untyped — direct nav to /suggestions</td>
+          <td><span class="badge badge--medium">Medium</span></td>
+          <td class="tbl-files">Suggestions.tsx</td>
+          <td>~5</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-07</td>
+          <td class="tbl-title">ReadingEntryResponse field mismatch</td>
+          <td><span class="badge badge--medium">Medium</span></td>
+          <td class="tbl-files">models.py (or types.ts)</td>
+          <td>~6</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-08</td>
+          <td class="tbl-title">Empty suggestions array needs explicit UX</td>
+          <td><span class="badge badge--done">Resolved</span></td>
+          <td class="tbl-files">Suggestions.tsx</td>
+          <td>0</td>
+          <td><span class="badge badge--done">Already done</span></td>
+        </tr>
+        <tr>
+          <td class="tbl-id">I-09</td>
+          <td class="tbl-title">SetupRoute blocks joined users; /suggestions unprotected</td>
+          <td><span class="badge badge--medium">Medium</span></td>
+          <td class="tbl-files">App.tsx</td>
+          <td>~4</td>
+          <td><span class="badge badge--info">Needs fix</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── HIGH SEVERITY ── -->
+  <div class="section-label">High Severity</div>
+  <div class="issues">
+
+    <!-- I-01 -->
+    <div class="issue-card issue-card--high">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-01</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">humidity silently dropped by POST /suggestions</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--high">High</span>
+            <span class="badge badge--info">Backend + Frontend</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            The user enters a humidity value in <strong>AddPlotSheet</strong>, it is passed through <code>location.state</code> to <strong>Suggestions.tsx</strong> and included in the <code>getSuggestions()</code> call body. However, <strong>backend <code>SuggestionRequest</code> has no <code>humidity</code> field</strong> — it is silently dropped at the HTTP boundary. The route handler hardcodes <code>humidity=60.0</code> for the temporary FarmNode used by the scorer. The scorer therefore always evaluates crop suitability against 60% humidity regardless of what the user reported. Crops that require low or very high humidity environments will be ranked incorrectly for every user.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (2)</div>
+          <div class="files-list">
+            <span class="file-chip">app/backend/api/models.py</span>
+            <span class="file-chip">app/backend/api/routes/suggestions.py</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — ~3 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>In <strong>models.py</strong> <code>SuggestionRequest</code> (line 63), add <code>humidity: Optional[float] = None</code> as the last optional field.</li>
+            <li>In <strong>suggestions.py</strong> (line 24), replace <code>humidity=60.0</code> with <code>humidity=req.humidity if req.humidity is not None else 60.0</code>. This preserves the default for callers that omit the field (e.g. the original Setup flow).</li>
+            <li>No frontend changes needed — <code>SuggestionsRequest</code> in <strong>types.ts</strong> and the call in <strong>Suggestions.tsx</strong> already include humidity correctly.</li>
+          </ul>
+        </div>
+
+        <div class="dep-block">
+          <div class="dep-block__icon">⚠</div>
+          <div class="dep-block__text"><strong>No blocking dependency.</strong> Backend-only change. Can be applied independently. Should be fixed before I-04 because I-04's refactor touches the same suggestion fetch path.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-02 -->
+    <div class="issue-card issue-card--high">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-02</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">FarmContext single-farm: join() silently overwrites existing farm</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--high">High</span>
+            <span class="badge badge--info">Architecture</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            A joined user who opens <strong>AddPlotSheet</strong> from the Dashboard, completes the form, and confirms crop selection in <strong>Suggestions.tsx</strong> triggers <code>join(farmId, lat, lng)</code> which overwrites <code>mycelium:farm_id</code>, <code>mycelium:farm_lat</code>, <code>mycelium:farm_lng</code> in localStorage with their <em>new</em> plot's values. Their original farm is <strong>lost without warning</strong>. The Dashboard then fetches data for the new farm only. The user cannot return to their previous farm. This breaks the "add a second plot" use case entirely. Additionally, the context stores no farm list, so there is no way to switch between farms.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Architectural decision</div>
+          <div class="detail-block__text">
+            <strong>Option A (recommended — minimal):</strong> Keep single-farm storage but show a confirmation modal before overwriting. Make the intent explicit: "This will replace your current farm. Continue?" This preserves current data shape, requires no migration, and matches hackathon scope. <br><br>
+            <strong>Option B (future):</strong> Store a farm list in localStorage and support switching. Larger refactor — out of scope for now.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (3)</div>
+          <div class="files-list">
+            <span class="file-chip">src/user/store/FarmContext.tsx</span>
+            <span class="file-chip">src/user/pages/Suggestions.tsx</span>
+            <span class="file-chip">src/user/pages/Dashboard.tsx</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — Option A — ~20 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>In <strong>FarmContext.tsx</strong>, add a boolean getter <code>hasExistingFarm</code> (alias for <code>joined</code>) and optionally rename <code>join</code> to <code>setActiveFarm</code> for intent clarity. Keep the overwrite behaviour but make it explicit.</li>
+            <li>In <strong>Suggestions.tsx</strong> <code>handleConfirm</code>, before calling <code>join()</code>, check <code>useFarm().joined</code>. If true, set a <code>confirmingSwitch</code> state flag to <code>true</code> and return. Render a small inline confirmation section: "Replace your current farm with [new farm name]? This cannot be undone." with Confirm and Cancel buttons. Only call <code>join()</code> after the user explicitly confirms.</li>
+            <li>In <strong>Dashboard.tsx</strong>, no structural change required — once the context value updates, existing <code>useAsync</code> calls re-fire on the new farmId automatically. Optionally add a toast: "Switched to [farm name]."</li>
+          </ul>
+        </div>
+
+        <div class="dep-block">
+          <div class="dep-block__icon">⚠</div>
+          <div class="dep-block__text"><strong>Soft dependency on I-04.</strong> I-04 refactors the suggestions flow; fix I-04 first, then add the confirmation gate in the same <code>handleConfirm</code> block to avoid touching the file twice.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-03 -->
+    <div class="issue-card issue-card--high">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-03</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">lat/lng fallback is 0,0 (Atlantic Ocean) for POST /nodes</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--high">High</span>
+            <span class="badge badge--info">Data Integrity</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            <strong>AddPlotSheet</strong> provides a "Use my location" GPS button but it is optional. When the user skips GPS, <code>form.lat</code> and <code>form.lng</code> remain <code>null</code>. <strong>Suggestions.tsx</strong> line 162 uses <code>formData.lat ?? 0</code> and <code>formData.lng ?? 0</code> as fallback to <code>createNode()</code>. The backend <code>NewFarmRequest</code> requires <code>lat: float</code> and <code>lng: float</code> (non-optional). So lat=0, lng=0 (the Gulf of Guinea / Atlantic Ocean) is stored for the farm node. Any geo-aware features (routing to hubs, distance calculations, regional scoring) will silently fail or produce nonsense results for all plots created without GPS.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (1)</div>
+          <div class="files-list">
+            <span class="file-chip">src/user/components/sheets/AddPlotSheet.tsx</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — ~8 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>In <strong>AddPlotSheet.tsx</strong>, pull <code>farmLat</code> and <code>farmLng</code> from <code>useFarm()</code> (already imported).</li>
+            <li>In the <code>useEffect([open, farmId])</code> block that pre-fills soil data, also pre-fill <code>form.lat</code> and <code>form.lng</code> if they are currently <code>null</code> and <code>farmLat</code>/<code>farmLng</code> are non-null: <code>setForm(prev =&gt; ({ ...prev, lat: prev.lat ?? farmLat, lng: prev.lng ?? farmLng }))</code>.</li>
+            <li>Display the pre-filled coordinates in the Location section with a label "Inherited from current farm" so the user knows where the GPS default came from. They can still override via the GPS button.</li>
+            <li>No change needed in Suggestions.tsx — the <code>?? 0</code> fallback is still acceptable as last-resort safety but will now almost never fire for joined users.</li>
+          </ul>
+        </div>
+
+        <div class="no-dep-block">
+          <span style="color:var(--success)">✓</span>
+          <span>No dependencies. Standalone change to AddPlotSheet.tsx. Apply first among the three AddPlotSheet-related fixes.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-04 -->
+    <div class="issue-card issue-card--high">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-04</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">useAsync fires on mount — architectural misuse for POST requests</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--high">High</span>
+            <span class="badge badge--info">Hook Misuse</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            <code>useAsync</code> always runs <code>fn()</code> on mount via <code>useEffect(() =&gt; { run(); }, [run])</code>. <strong>Suggestions.tsx</strong> currently uses <code>useAsync</code> to call <code>getSuggestions()</code> — a POST request — immediately on render. This works in the happy path (formData is available from router state), but causes two concrete problems:<br><br>
+            1. <strong>Race on hot-reload / React StrictMode:</strong> the effect fires twice in development, sending two simultaneous POST requests. While results are deduplicated by the counter ref, it is wasteful and confusing in DevTools.<br><br>
+            2. <strong>Architectural debt:</strong> if formData ever changes (user hits back, modifies form, returns), the suggestions re-fetch automatically via the <code>[JSON.stringify(formData)]</code> dep. This is accidentally correct but fragile. The pattern is not reusable for actual imperative POSTs (e.g. <code>createNode</code> already correctly uses plain <code>async/await</code>). Future contributors will cargo-cult this pattern.<br><br>
+            The fix does not require removing the <code>useAsync</code> call — but it should be replaced with <code>useState + useEffect</code> triggered explicitly, mirroring the pattern used in <strong>Setup.tsx</strong>.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (1)</div>
+          <div class="files-list">
+            <span class="file-chip">src/user/pages/Suggestions.tsx</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — ~15 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>Remove the <code>useAsync</code> import and the <code>suggestionsState</code> call from Suggestions.tsx.</li>
+            <li>Replace with local state: <code>const [suggestions, setSuggestions] = useState&lt;CropSuggestion[]&gt;([]);</code>, <code>const [sugLoading, setSugLoading] = useState(true);</code>, <code>const [sugError, setSugError] = useState&lt;string | null&gt;(null);</code>.</li>
+            <li>Add a single <code>useEffect</code> that checks <code>if (!formData) return;</code>, then calls <code>getSuggestions(...)</code> inside an async IIFE, sets the three state pieces, and cleans up with an <code>aborted</code> flag (or <code>AbortController</code>) to avoid state updates on unmount.</li>
+            <li>Update all references from <code>suggestionsState.loading</code> / <code>suggestionsState.error</code> / <code>suggestionsState.data</code> / <code>suggestionsState.refetch</code> to the new state variables. The <code>refetch</code> button can call a <code>fetchSuggestions()</code> function extracted from the effect.</li>
+            <li>Leave <code>useAsync</code> untouched — it remains correct for GET calls in Dashboard.tsx. Add a comment in useAsync.ts documenting it is for idempotent/GET-like fetches only.</li>
+          </ul>
+        </div>
+
+        <div class="dep-block">
+          <div class="dep-block__icon">⚠</div>
+          <div class="dep-block__text"><strong>Apply after I-01 and I-03.</strong> This refactor touches the same file as I-06, so combine I-04 and I-06 into a single edit pass on Suggestions.tsx. Also apply I-02's confirmation gate in the same pass.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /high issues -->
+
+  <!-- ── MEDIUM SEVERITY ── -->
+  <div class="section-label" style="margin-top:36px;">Medium Severity</div>
+  <div class="issues">
+
+    <!-- I-06 -->
+    <div class="issue-card issue-card--medium">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-06</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">location.state untyped — inline cast without RouterState interface</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--medium">Medium</span>
+            <span class="badge badge--info">Type Safety</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            Suggestions.tsx line 122 casts <code>location.state</code> with an inline anonymous type. No crash occurs because the null-guard fallback renders a "No plot data found" screen. However the inline cast is not exported, so other files (e.g. a future TypeScript test, or a refactored navigation helper) cannot reference the same shape. If the navigate call in AddPlotSheet is ever changed — e.g. a different key name — TypeScript will not catch the mismatch at compile time.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (1)</div>
+          <div class="files-list">
+            <span class="file-chip">src/user/pages/Suggestions.tsx</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — ~5 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>At the top of <strong>Suggestions.tsx</strong>, add: <code>interface SuggestionsRouterState &#123; formData?: AddPlotFormData &#125;</code>.</li>
+            <li>Replace the inline cast on line 122 with: <code>(location.state as SuggestionsRouterState | null)?.formData ?? null</code>.</li>
+            <li>In <strong>AddPlotSheet.tsx</strong>, import and use <code>SuggestionsRouterState</code> in the <code>navigate</code> call type parameter if using typed navigation (optional, nice-to-have).</li>
+          </ul>
+        </div>
+
+        <div class="dep-block">
+          <div class="dep-block__icon">⚠</div>
+          <div class="dep-block__text"><strong>Combine with I-04 edit pass</strong> on Suggestions.tsx. Zero standalone effort if done together.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-07 -->
+    <div class="issue-card issue-card--medium">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-07</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">ReadingEntryResponse field mismatch between backend and frontend</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--medium">Medium</span>
+            <span class="badge badge--info">Contract Mismatch</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            Backend <code>ReadingEntryResponse</code> (models.py lines 46–52) emits: <code>farm_id</code>, <code>timestamp</code>, <code>pH</code>, <code>moisture</code>, <code>temperature</code>, <code>humidity</code>. Frontend type (types.ts lines 96–104) expects: <code>id</code>, <code>node_id</code>, <code>pH</code>, <code>moisture</code>, <code>temperature</code>, <code>humidity</code>, <code>recorded_at</code>.<br><br>
+            Concrete breakage: <code>getReadings()</code> returns data where <code>id</code> is <code>undefined</code>, <code>node_id</code> is <code>undefined</code>, and <code>recorded_at</code> is <code>undefined</code>. <strong>DataTrendsChart</strong> likely uses <code>recorded_at</code> as the x-axis timestamp — if so, the chart renders with no time axis data, showing all points at x=undefined (flat or missing line). <code>postReadings()</code> response is unused beyond logging, so that side is less critical.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (1, recommended approach)</div>
+          <div class="files-list">
+            <span class="file-chip">app/backend/api/models.py</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — Option A (fix backend, keep frontend types clean) — ~6 lines</div>
+          <ul class="fix-block__steps">
+            <li>In <strong>models.py</strong> <code>ReadingEntryResponse</code>, change: <code>farm_id: int</code> → <code>node_id: int</code>, <code>timestamp: str</code> → <code>recorded_at: str</code>, and add <code>id: int</code> as the first field.</li>
+            <li>Update the route handler that constructs <code>ReadingEntryResponse</code> instances to pass the correct field names. Search for <code>ReadingEntryResponse(</code> in the backend routes to find all construction sites.</li>
+            <li>Frontend <code>types.ts</code> <code>ReadingEntryResponse</code> already has the correct shape — no frontend changes needed if backend is fixed.</li>
+          </ul>
+        </div>
+
+        <div class="no-dep-block">
+          <span style="color:var(--success)">✓</span>
+          <span>No dependencies on other issues. Backend-only change.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-09 -->
+    <div class="issue-card issue-card--medium">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-09</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">/suggestions route is publicly accessible without auth</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--medium">Medium</span>
+            <span class="badge badge--info">Routing</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+
+        <div class="detail-block">
+          <div class="detail-block__label">Impact</div>
+          <div class="detail-block__text">
+            <strong>App.tsx</strong> places <code>/suggestions</code> outside of <code>ProtectedRoute</code> (line 32), so any unauthenticated user can navigate to it. The null-guard in Suggestions.tsx handles <code>formData === null</code> gracefully — but only shows a static fallback message with a "Back to dashboard" button, which then bounces them to <code>/</code> (since they are not joined). Additionally, <strong>SetupRoute</strong> correctly redirects joined users away from <code>/setup</code> to <code>/dashboard</code>. AddPlotSheet is already invoked from Dashboard so it does not depend on the setup route — no issue there. The medium risk is a developer who deep-links to <code>/suggestions</code> in production sees a confusing fallback rather than a meaningful redirect.
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-block__label">Files affected (1)</div>
+          <div class="files-list">
+            <span class="file-chip">src/App.tsx</span>
+          </div>
+        </div>
+
+        <div class="fix-block">
+          <div class="fix-block__label">Exact fix — ~4 lines changed</div>
+          <ul class="fix-block__steps">
+            <li>Move the <code>/suggestions</code> <code>&lt;Route&gt;</code> inside the <code>&lt;Route element=&#123;&lt;ProtectedRoute /&gt;&#125;&gt;</code> block so unauthenticated users are redirected to <code>/</code>.</li>
+            <li>Alternatively (simpler), keep /suggestions public but update the null-guard fallback in Suggestions.tsx to redirect to <code>/setup</code> (for non-joined users) rather than <code>/dashboard</code>.</li>
+            <li>Recommended: Option 1 (move into ProtectedRoute). The AddPlotSheet → Suggestions flow only makes sense for joined users anyway.</li>
+          </ul>
+        </div>
+
+        <div class="no-dep-block">
+          <span style="color:var(--success)">✓</span>
+          <span>No blocking dependencies. Simple route restructure. Combine with I-04/I-06 Suggestions.tsx pass if choosing Option 2.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /medium issues -->
+
+  <!-- ── CONFIRMED RESOLVED ── -->
+  <div class="section-label" style="margin-top:36px;">Confirmed Non-Issues / Already Resolved</div>
+  <div class="issues">
+
+    <!-- I-05 -->
+    <div class="issue-card issue-card--done">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-05</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">SuggestionItem type and getSuggestions() function</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--done">Already done</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+        <div class="detail-block">
+          <div class="detail-block__text">
+            <strong>Confirmed implemented.</strong> <code>CropSuggestion</code> interface is defined in <strong>types.ts</strong> (lines 131–138). <code>SuggestionsRequest</code> interface is defined in <strong>types.ts</strong> (lines 140–149). <code>getSuggestions()</code> is defined in <strong>api.ts</strong> (lines 91–96) with correct type annotations. No action required.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I-08 -->
+    <div class="issue-card issue-card--done">
+      <div class="issue-card__header">
+        <div class="issue-card__num">I-08</div>
+        <div class="issue-card__meta">
+          <div class="issue-card__title">Empty suggestions array UX</div>
+          <div class="issue-card__badges">
+            <span class="badge badge--done">Already done</span>
+          </div>
+        </div>
+      </div>
+      <div class="issue-card__body">
+        <div class="detail-block">
+          <div class="detail-block__text">
+            <strong>Confirmed implemented.</strong> Suggestions.tsx lines 255–264 already handle the empty-array case with an explicit card: "No crop suggestions found for your conditions. Try adjusting your plot settings." with an "Adjust plot details" back button. No action required.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /done issues -->
+
+  <!-- ── Recommended Fix Order ── -->
+  <div class="summary-card" style="margin-top:40px;">
+    <h2>Recommended Fix Order</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Issue</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge--info">1st</span></td>
+          <td class="tbl-title">I-01 — humidity in SuggestionRequest</td>
+          <td class="tbl-files">Backend-only, 3 lines, unblocks correct scorer results immediately</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge--info">2nd</span></td>
+          <td class="tbl-title">I-07 — ReadingEntryResponse field mismatch</td>
+          <td class="tbl-files">Backend-only, fixes chart time axis, no frontend changes</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge--info">3rd</span></td>
+          <td class="tbl-title">I-03 — lat/lng inherit from FarmContext</td>
+          <td class="tbl-files">Frontend AddPlotSheet only, standalone, fixes data integrity</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge--info">4th</span></td>
+          <td class="tbl-title">I-04 + I-06 + I-02 — Suggestions.tsx combined pass</td>
+          <td class="tbl-files">All three touch Suggestions.tsx; batch into one edit to avoid churn</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge--info">5th</span></td>
+          <td class="tbl-title">I-09 — /suggestions route protection</td>
+          <td class="tbl-files">One-liner in App.tsx; apply last as it depends on the Suggestions guard logic being solid</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span><strong>HackCanada</strong> · Frontend Fix Plan · Generated 2026-03-08</span>
+    <span>Branch: <strong>frontend-nodeimplementation</strong></span>
+  </div>
+
+</div>
+</body>
+</html>
