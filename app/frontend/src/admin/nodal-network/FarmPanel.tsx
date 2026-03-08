@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { FarmNode } from "./data";
 import { T } from "./tokens";
+import { getSuggestions, type SuggestionItem } from "../services/api";
 
 export type PanelMode = "closed" | "add-manual" | "add-pinpoint" | "edit";
 
@@ -15,12 +17,14 @@ export interface FarmForm {
   moisture: string;
   temperature: string;
   humidity: string;
+  sunlight_hours: string;
 }
 
 export const EMPTY_FORM: FarmForm = {
   name: "", lat: "", lng: "",
   plot_size_sqft: "", plot_type: "", tools: "", budget: "",
   pH: "", moisture: "", temperature: "", humidity: "",
+  sunlight_hours: "",
 };
 
 export function farmToForm(farm: FarmNode): FarmForm {
@@ -36,19 +40,43 @@ export function farmToForm(farm: FarmNode): FarmForm {
     moisture: farm.moisture != null ? String(farm.moisture) : "",
     temperature: farm.temperature != null ? String(farm.temperature) : "",
     humidity: farm.humidity != null ? String(farm.humidity) : "",
+    sunlight_hours: farm.sunlight_hours != null ? String(farm.sunlight_hours) : "",
   };
 }
 
-export function FarmPanel({ mode, form, onFormChange, onModeChange, onSubmit, onDelete, onCancel, style }: {
+export function FarmPanel({ mode, form, farmId, onFormChange, onModeChange, onSubmit, onDelete, onCancel, style }: {
   mode: PanelMode;
   form: FarmForm;
+  farmId?: number;
   onFormChange: (f: FarmForm) => void;
   onModeChange: (m: PanelMode) => void;
   onSubmit: () => void;
-  onDelete?: () => void;
+  onDelete?: (farmId: number) => void;
   onCancel: () => void;
   style?: React.CSSProperties;
 }) {
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+
+  const handleGetSuggestions = () => {
+    const plotSqft = parseFloat(form.plot_size_sqft);
+    if (isNaN(plotSqft) || plotSqft <= 0) return;
+    setSuggestionsLoading(true);
+    getSuggestions({
+      plot_size_sqft: plotSqft,
+      plot_type: form.plot_type || 'balcony',
+      tools: form.tools || 'basic',
+      budget: form.budget || 'low',
+      pH: parseFloat(form.pH) || undefined,
+      moisture: parseFloat(form.moisture) || undefined,
+      temperature: parseFloat(form.temperature) || undefined,
+      humidity: parseFloat(form.humidity) || undefined,
+    }).then(s => {
+      setSuggestions(s);
+      setSuggestionsLoading(false);
+    }).catch(() => setSuggestionsLoading(false));
+  };
+
   if (mode === "closed") {
     return (
       <div style={{ display: "flex", gap: 8, ...style }}>
@@ -190,9 +218,42 @@ export function FarmPanel({ mode, form, onFormChange, onModeChange, onSubmit, on
         </FormField>
       </div>
 
+      {isEdit && (
+        <FormField label="Sunlight (hrs/day)">
+          <input type="number" min={0} max={24} step={0.5} value={form.sunlight_hours}
+            onChange={e => onFormChange({ ...form, sunlight_hours: e.target.value })} style={inputStyle} />
+        </FormField>
+      )}
+
+      {!isEdit && (
+        <div style={{ marginTop: 4, marginBottom: 4 }}>
+          <button onClick={handleGetSuggestions} disabled={suggestionsLoading} style={{
+            padding: "7px 14px", borderRadius: T.rSm, border: `1.5px solid ${T.border}`,
+            background: "transparent", color: T.ink, fontSize: 12, fontWeight: 600,
+            fontFamily: T.fb, cursor: "pointer",
+          }}>
+            {suggestionsLoading ? "Loading…" : "Get Crop Suggestions"}
+          </button>
+          {suggestions.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {suggestions.slice(0, 3).map(s => (
+                <div key={s.crop_id} style={{
+                  display: "flex", justifyContent: "space-between",
+                  padding: "4px 0", fontSize: 11, color: T.ink,
+                  borderBottom: `1px solid ${T.borderLt}`,
+                }}>
+                  <span style={{ fontWeight: 600 }}>{s.crop_name}</span>
+                  <span style={{ color: T.ink3 }}>{s.suitability_pct}% match</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        {isEdit && onDelete && (
-          <button onClick={onDelete} style={deleteBtnStyle}>Delete</button>
+        {isEdit && onDelete && farmId != null && (
+          <button onClick={() => onDelete(farmId)} style={deleteBtnStyle}>Delete</button>
         )}
         <button onClick={onCancel} style={secondaryBtnStyle}>Cancel</button>
         <button onClick={onSubmit} disabled={!canSubmit}

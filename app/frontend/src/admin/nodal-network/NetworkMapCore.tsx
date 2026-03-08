@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   APIProvider,
   Map,
@@ -391,6 +391,13 @@ export default function NetworkMapCore({
   const apiKey = getMapApiKey();
   const mapId = getMapId();
 
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const visibleFarms = selectedStatus === "all"
+    ? farmList
+    : farmList.filter(f => f.status === selectedStatus);
+  const visibleFarmIds = new Set(visibleFarms.map(f => f.id));
+  const visibleEdges = edges.filter(e => visibleFarmIds.has(e.farmId));
+
   if (!apiKey || apiKey.trim() === "") {
     return (
       <div style={{
@@ -439,11 +446,44 @@ export default function NetworkMapCore({
           gestureHandling="greedy"
           disableDefaultUI={false}
         >
-          <NetworkLayer farmList={farmList} edges={edges} callbacks={callbacks} />
+          <NetworkLayer farmList={visibleFarms} edges={visibleEdges} callbacks={callbacks} />
           {panelMode === "add-pinpoint" && <MapClickHandler onMapClick={onMapClick} />}
           <MapRightClickHandler onRightClick={onRightClick} />
           <PinpointCursor active={panelMode === "add-pinpoint"} />
         </Map>
+        <div style={{
+          position: "absolute", top: 10, right: 10, zIndex: 10,
+          display: "flex", gap: 4,
+          background: T.bgElev, border: `1px solid ${T.border}`,
+          borderRadius: T.rMd, padding: "4px 6px",
+        }}>
+          {(["all", "growing", "available", "new"] as const).map(status => {
+            const active = selectedStatus === status;
+            const color = status === "all" ? T.ink2 : (STATUS_COLOR[status] ?? T.ink3);
+            return (
+              <button
+                key={status}
+                onClick={() => setSelectedStatus(status)}
+                style={{
+                  padding: "3px 9px",
+                  border: active ? `1px solid ${color}` : `1px solid transparent`,
+                  borderRadius: T.rSm,
+                  background: active ? (status === "all" ? "rgba(255,255,255,0.08)" : `${color}22`) : "transparent",
+                  color: active ? (status === "all" ? T.ink : color) : T.ink3,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: T.fb,
+                  cursor: "pointer",
+                  letterSpacing: "0.03em",
+                  textTransform: "capitalize",
+                  transition: "all 0.12s",
+                }}
+              >
+                {status === "all" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </APIProvider>
   );

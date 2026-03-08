@@ -2,24 +2,23 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
-  getCrop,
-  getEffectiveCropId,
   getNearestHub,
   buildNetworkEdges,
   type FarmNode,
   type HubNode,
 } from "./nodal-network/data";
-import { getFarms, getHubs, createFarm, updateSoil, getCrops, getAssignments, getReport } from "./services/api";
+import { getFarms, getHubs, createFarm, updateSoil, getCrops, getAssignments, getReport, runOptimize, getHubRouting, computeHubRouting, deleteFarm } from "./services/api";
 import type { Crop, ReportResponse } from "./services/api";
-import { runOptimize } from "./services/api";
 import { T } from "./nodal-network/tokens";
 import NetworkMapCore, { type NetworkCallbacks } from "./nodal-network/NetworkMapCore";
 import { Legend } from "./nodal-network/Legend";
 import { FarmPanel, EMPTY_FORM, farmToForm, type PanelMode, type FarmForm } from "./nodal-network/FarmPanel";
 import DataInformation from "./DataInformation";
 import Charts from "./Charts";
+import Instructions from "./Instructions";
+import AdminLedger from "./AdminLedger";
 
-type ActivePage = "network-map" | "data-info" | "charts";
+type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger";
 
 // ── Sidebar nav icons (inline SVG as JSX) ───────────────────────────────────
 
@@ -38,20 +37,24 @@ const IconNetwork = () => (
 const IconAlerts = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><path d="M2 4h12v2L8 10 2 6V4z"/><path d="M2 6v6h12V6"/></svg>
 );
-const IconProfile = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+const IconTasks = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><rect x="2" y="2" width="12" height="12" rx="2"/><polyline points="5,8 7,10 11,6"/><line x1="5" y1="5" x2="11" y2="5"/></svg>
+);
+const IconLedger = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="11" x2="9" y2="11"/></svg>
 );
 
 // ── Style constants ─────────────────────────────────────────────────────────
 
 const S = {
-  layout: {
+  layout: (collapsed: boolean): React.CSSProperties => ({
     display: "grid",
-    gridTemplateColumns: "220px 1fr",
+    gridTemplateColumns: collapsed ? "48px 1fr" : "220px 1fr",
     height: "100vh",
     fontFamily: T.fb,
     color: T.ink,
-  } as React.CSSProperties,
+    transition: "grid-template-columns .2s",
+  }),
 
   sidebar: {
     background: T.ink,
@@ -65,7 +68,7 @@ const S = {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    padding: "0 20px 20px",
+    padding: "0 16px 20px",
     borderBottom: "1px solid #2a2a2a",
     marginBottom: 8,
   } as React.CSSProperties,
@@ -75,6 +78,8 @@ const S = {
     fontSize: 14,
     fontWeight: 700,
     color: "#fff",
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
   } as React.CSSProperties,
 
   sidebarDot: {
@@ -83,15 +88,16 @@ const S = {
     marginLeft: 3, verticalAlign: "middle",
   } as React.CSSProperties,
 
-  sectionLabel: {
+  sectionLabel: (collapsed: boolean): React.CSSProperties => ({
     fontSize: 8, fontWeight: 700, letterSpacing: "0.14em",
     textTransform: "uppercase", color: "#333",
     padding: "12px 20px 4px",
-  } as React.CSSProperties,
+    display: collapsed ? "none" : undefined,
+  }),
 
   navItem: (active: boolean): React.CSSProperties => ({
     display: "flex", alignItems: "center", gap: 10,
-    padding: "9px 20px", fontSize: 12, fontWeight: 500,
+    padding: "9px 16px", fontSize: 12, fontWeight: 500,
     color: active ? "#fff" : "#555", cursor: "pointer",
     background: active ? "rgba(255,255,255,0.06)" : "transparent",
     transition: "background .15s",
@@ -185,9 +191,13 @@ const S = {
 
   mapContainer: {
     width: "100%", height: 400,
+    position: "relative",
+  } as React.CSSProperties,
+
+  mapClip: {
+    position: "absolute", inset: 0,
     borderRadius: T.rMd, overflow: "hidden",
     border: `1px solid ${T.borderLt}`,
-    position: "relative",
   } as React.CSSProperties,
 
   tablePanel: {
@@ -244,13 +254,20 @@ export default function AdminDashboard() {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [assignments, setAssignments] = useState<Record<string, number[]>>({});
   const [report, setReport] = useState<ReportResponse | null>(null);
+  const [hubRouting, setHubRouting] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [panelMode, setPanelMode] = useState<PanelMode>("closed");
   const [form, setForm] = useState<FarmForm>({ ...EMPTY_FORM });
   const [editFarmId, setEditFarmId] = useState<number | null>(null);
   const [activePage, setActivePage] = useState<ActivePage>("network-map");
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const edges = useMemo(() => buildNetworkEdges(farmList), [farmList]);
+  useEffect(() => {
+    if (window.innerWidth < 900) setSidebarCollapsed(true);
+  }, []);
+
+  const edges = useMemo(() => buildNetworkEdges(farmList, hubRouting), [farmList, hubRouting]);
 
   const loadAll = useCallback(() => {
     setLoading(true);
@@ -260,12 +277,14 @@ export default function AdminDashboard() {
       getCrops(),
       getAssignments(),
       getReport(),
-    ]).then(([farms, hubs, cropsData, assignmentsData, reportData]) => {
+      getHubRouting(),
+    ]).then(([farms, hubs, cropsData, assignmentsData, reportData, hubRoutingData]) => {
       setFarmList(farms);
       setHubList(hubs);
       setCrops(cropsData);
       setAssignments(assignmentsData);
       setReport(reportData);
+      setHubRouting(hubRoutingData);
       setLoading(false);
     }).catch(err => {
       console.error(err);
@@ -295,8 +314,9 @@ export default function AdminDashboard() {
     setPanelMode("edit");
   }, [farmList]);
 
-  // Delete not supported (no backend endpoint)
-  callbacks.current.onDeleteFarm = useCallback((_id: number) => {}, []);
+  callbacks.current.onDeleteFarm = useCallback((id: number) => {
+    deleteFarm(id).then(loadAll).catch(console.error);
+  }, [loadAll]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     if (panelMode !== "add-pinpoint") return;
@@ -346,6 +366,12 @@ export default function AdminDashboard() {
     runOptimize().then(loadAll).catch(console.error);
   }, [loadAll]);
 
+  const handleRedrawLines = useCallback(() => {
+    computeHubRouting()
+      .then(routing => setHubRouting(routing))
+      .catch(console.error);
+  }, []);
+
   const handleCancel = useCallback(() => {
     setForm({ ...EMPTY_FORM });
     setPanelMode("closed");
@@ -368,65 +394,151 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={S.layout}>
+    <div style={S.layout(sidebarCollapsed)}>
       {/* ── Sidebar ── */}
       <div style={S.sidebar}>
         <div style={S.sidebarLogo}>
-          <svg viewBox="0 0 32 32" fill="#fff" width="18" height="18"><path d="M6 8l8-4 8 4v8l-8 12-8-12z"/></svg>
-          <div style={S.sidebarName}>MyCelium<span style={S.sidebarDot} /></div>
+          <svg viewBox="0 0 32 32" fill="#fff" width="18" height="18" style={{ flexShrink: 0 }}><path d="M6 8l8-4 8 4v8l-8 12-8-12z"/></svg>
+          {!sidebarCollapsed && <div style={S.sidebarName}>MyCelium<span style={S.sidebarDot} /></div>}
         </div>
 
-        <div style={S.sectionLabel}>Visualization</div>
+        <div style={S.sectionLabel(sidebarCollapsed)}>Visualization</div>
         <button style={S.navItem(activePage === "network-map")} onClick={() => setActivePage("network-map")}>
-          <IconMap /> Network Map <span style={S.navDot(activePage === "network-map")} />
+          <IconMap />
+          {!sidebarCollapsed && <>Network Map <span style={S.navDot(activePage === "network-map")} /></>}
         </button>
         <button style={S.navItem(activePage === "charts")} onClick={() => setActivePage("charts")}>
-          <IconChart /> Charts <span style={S.navDot(activePage === "charts")} />
+          <IconChart />
+          {!sidebarCollapsed && <>Charts <span style={S.navDot(activePage === "charts")} /></>}
         </button>
 
-        <div style={S.sectionLabel}>Data</div>
+        <div style={S.sectionLabel(sidebarCollapsed)}>Data</div>
         <button style={S.navItem(activePage === "data-info")} onClick={() => setActivePage("data-info")}>
-          <IconData /> Data Information <span style={S.navDot(activePage === "data-info")} />
+          <IconData />
+          {!sidebarCollapsed && <>Data Information <span style={S.navDot(activePage === "data-info")} /></>}
+        </button>
+        <button style={S.navItem(activePage === "instructions")} onClick={() => setActivePage("instructions")}>
+          <IconTasks />
+          {!sidebarCollapsed && <>Instructions <span style={S.navDot(activePage === "instructions")} /></>}
+        </button>
+        <button style={S.navItem(activePage === "ledger")} onClick={() => setActivePage("ledger")}>
+          <IconLedger />
+          {!sidebarCollapsed && <>Ledger <span style={S.navDot(activePage === "ledger")} /></>}
         </button>
 
-        <div style={S.sectionLabel}>Infrastructure</div>
+        <div style={S.sectionLabel(sidebarCollapsed)}>Infrastructure</div>
         <button style={S.navItem(false)}>
-          <IconNetwork /> Network Info <span style={S.navDot(false)} />
+          <IconNetwork />
+          {!sidebarCollapsed && <>Network Info <span style={S.navDot(false)} /></>}
         </button>
-        <button style={S.navItem(false)}>
-          <IconAlerts /> Alerts <span style={S.navDot(false)} />
+        <button style={S.navItem(false)} onClick={() => setAlertsOpen(o => !o)}>
+          <IconAlerts />
+          {!sidebarCollapsed && <>Alerts <span style={S.navDot(false)} /></>}
         </button>
 
         <div style={{ marginTop: "auto" }} />
 
-        <button style={{ ...S.navItem(false), marginTop: 8 }}>
-          <IconProfile /> Profile <span style={S.navDot(false)} />
+        {/* Sidebar collapse toggle */}
+        <button
+          style={{
+            ...S.navItem(false),
+            marginTop: 8,
+            justifyContent: sidebarCollapsed ? "center" : undefined,
+          }}
+          onClick={() => setSidebarCollapsed(c => !c)}
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
+            {sidebarCollapsed
+              ? <polyline points="6,4 10,8 6,12" />
+              : <polyline points="10,4 6,8 10,12" />}
+          </svg>
+          {!sidebarCollapsed && <span>Collapse</span>}
         </button>
       </div>
+
+      {/* ── Alerts slide-out panel ── */}
+      {alertsOpen && (
+        <div style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 320,
+          background: T.bgElev, zIndex: 200, boxShadow: T.shLg,
+          borderLeft: `1px solid ${T.borderLt}`,
+          display: "flex", flexDirection: "column",
+          fontFamily: T.fb,
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 20px", borderBottom: `1px solid ${T.borderLt}`,
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>Alerts</div>
+            <button
+              style={{ background: "none", border: "none", cursor: "pointer", color: T.ink3, fontSize: 18, lineHeight: 1 }}
+              onClick={() => setAlertsOpen(false)}
+            >×</button>
+          </div>
+          <div style={{ flex: 1, overflow: "auto", padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink3, marginBottom: 8 }}>
+              Overproduction Alerts
+            </div>
+            {(report?.overproduction_alerts ?? []).map((a, i) => (
+              <div key={i} style={{ background: T.bgCard, borderRadius: T.rMd, padding: "10px 12px", marginBottom: 8, fontSize: 12 }}>
+                <div style={{ fontWeight: 600, color: T.ink }}>{a.crop_name}</div>
+                <div style={{ color: T.ink3, marginTop: 4 }}>
+                  Supplied: {a.supplied_kg.toFixed(1)} kg · Target: {a.target_kg.toFixed(1)} kg
+                </div>
+                <div style={{ color: T.error, marginTop: 2 }}>
+                  Surplus ratio: {(a.surplus_ratio * 100).toFixed(1)}%
+                </div>
+              </div>
+            ))}
+
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink3, marginTop: 16, marginBottom: 8 }}>
+              Unlocking Soon
+            </div>
+            {(report?.unlocking_soon ?? []).map((u, i) => (
+              <div key={i} style={{ background: T.bgCard, borderRadius: T.rMd, padding: "10px 12px", marginBottom: 8, fontSize: 12 }}>
+                <div style={{ fontWeight: 600, color: T.ink }}>{u.farm_name}</div>
+                <div style={{ color: T.ink3, marginTop: 4 }}>{u.crop_name}</div>
+                <div style={{ color: T.info, marginTop: 2 }}>{u.days_remaining} days remaining</div>
+              </div>
+            ))}
+
+            {(report?.overproduction_alerts ?? []).length === 0 && (report?.unlocking_soon ?? []).length === 0 && (
+              <div style={{ color: T.ink3, fontSize: 12, textAlign: "center", marginTop: 40 }}>No active alerts</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Content area ── */}
       <div style={S.contentArea}>
         {/* Topbar */}
         <div style={S.topbar}>
           <div style={S.topbarTitle}>
-            {activePage === "data-info" ? "Data Information" : "Data Visualization"}
+            {activePage === "data-info" ? "Data Information"
+              : activePage === "instructions" ? "Instructions"
+              : activePage === "ledger" ? "Ledger"
+              : "Data Visualization"}
           </div>
           <span style={S.topbarSub}>Admin Dashboard</span>
           <div style={S.topbarActions}>
             {activePage === "data-info" ? (
               <>
                 <span style={S.badge(T.info, "rgba(91,141,239,0.12)")}>Live Data</span>
-                <button style={S.btn("secondary")}>Export CSV</button>
               </>
             ) : activePage === "charts" ? (
+              null
+            ) : activePage === "instructions" ? (
               <>
-                <button style={S.btn("secondary")}>Export Charts</button>
+                <span style={S.badge(T.accent, T.accentBg)}>Engine Output</span>
+                <button style={S.btn("secondary")} onClick={handleOptimize}>Run Optimization</button>
               </>
+            ) : activePage === "ledger" ? (
+              null
             ) : (
               <>
                 <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
-                <button style={S.btn("secondary")}>Export</button>
-                <button style={S.btn("accent")} onClick={handleOptimize}>Run Optimization</button>
+                <button style={S.btn("secondary")} onClick={handleRedrawLines}>Redraw Lines</button>
+                <button style={S.btn("secondary")} onClick={handleOptimize}>Run Optimization</button>
               </>
             )}
           </div>
@@ -438,6 +550,10 @@ export default function AdminDashboard() {
             <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
           ) : activePage === "charts" ? (
             <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />
+          ) : activePage === "instructions" ? (
+            <Instructions farmList={farmList} assignments={assignments} crops={crops} />
+          ) : activePage === "ledger" ? (
+            <AdminLedger />
           ) : (
             <div style={S.contentPad}>
               {/* KPI Row */}
@@ -467,14 +583,16 @@ export default function AdminDashboard() {
 
               {/* Map with overlays (Legend, FarmPanel) */}
               <div style={S.mapContainer}>
-                <NetworkMapCore
-                  farmList={farmList}
-                  edges={edges}
-                  callbacks={callbacks}
-                  panelMode={panelMode}
-                  onMapClick={handleMapClick}
-                  onRightClick={handleRightClick}
-                />
+                <div style={S.mapClip}>
+                  <NetworkMapCore
+                    farmList={farmList}
+                    edges={edges}
+                    callbacks={callbacks}
+                    panelMode={panelMode}
+                    onMapClick={handleMapClick}
+                    onRightClick={handleRightClick}
+                  />
+                </div>
 
                 <Legend
                   farmList={farmList}
@@ -488,7 +606,8 @@ export default function AdminDashboard() {
                   onFormChange={setForm}
                   onModeChange={setPanelMode}
                   onSubmit={handleSubmit}
-                  onDelete={undefined}
+                  farmId={editFarmId ?? undefined}
+                  onDelete={(id) => { deleteFarm(id).then(loadAll).catch(console.error); setPanelMode("closed"); setEditFarmId(null); }}
                   onCancel={handleCancel}
                   style={{ position: "absolute", top: 12, right: 52, zIndex: 10 }}
                 />
@@ -512,16 +631,19 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {farmList.map(farm => {
-                      const cropId = getEffectiveCropId(farm);
-                      const crop = cropId != null ? getCrop(cropId) : null;
+                      const cropIds = assignments[String(farm.id)] ?? [];
+                      const firstCrop = cropIds.length > 0 ? crops.find(c => c.id === cropIds[0]) : null;
+                      const cropLabel = cropIds.length > 0
+                        ? cropIds.map(id => crops.find(c => c.id === id)?.name ?? String(id)).join(', ')
+                        : null;
                       const hub = getNearestHub(farm);
                       return (
                         <tr key={farm.id}>
                           <td style={{ ...S.td, fontWeight: 600 }}>{farm.name}</td>
                           <td style={S.td}>{farm.plot_type ?? "—"}</td>
                           <td style={S.td}>
-                            {crop ? (
-                              <><span style={S.cropDot(crop.color)} />{crop.name}</>
+                            {cropLabel ? (
+                              <><span style={S.cropDot(firstCrop?.color ?? T.ink3)} />{cropLabel}</>
                             ) : "—"}
                           </td>
                           <td style={S.td}>

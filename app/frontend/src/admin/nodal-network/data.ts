@@ -11,6 +11,7 @@ export interface FarmNode {
   moisture: number | null;
   temperature: number | null;
   humidity: number | null;
+  sunlight_hours?: number;
   status: "new" | "available" | "growing";
   current_crop_id: number | null;
   cycle_end_date: string | null;
@@ -141,16 +142,38 @@ export interface NetworkEdge {
   distanceM: number;
 }
 
-export function buildNetworkEdges(farmList?: FarmNode[]): NetworkEdge[] {
+export function buildNetworkEdges(
+  farmList?: FarmNode[],
+  hubRouting?: Record<string, number[]>,
+): NetworkEdge[] {
   const edges: NetworkEdge[] = [];
+  const hubById = new Map(hubs.map(h => [h.id, h]));
+
   for (const farm of (farmList ?? farms)) {
-    const hub = getNearestHub(farm);
-    if (hub) {
-      edges.push({
-        farmId: farm.id,
-        hubId: hub.id,
-        distanceM: haversine(farm.lat, farm.lng, hub.lat, hub.lng),
-      });
+    const routedHubIds = hubRouting?.[String(farm.id)];
+
+    if (routedHubIds && routedHubIds.length > 0) {
+      // API-driven: draw one edge per assigned hub
+      for (const hubId of routedHubIds) {
+        const hub = hubById.get(hubId);
+        if (hub) {
+          edges.push({
+            farmId: farm.id,
+            hubId: hub.id,
+            distanceM: haversine(farm.lat, farm.lng, hub.lat, hub.lng),
+          });
+        }
+      }
+    } else {
+      // Fallback: client-side nearest-hub (backward compat)
+      const hub = getNearestHub(farm);
+      if (hub) {
+        edges.push({
+          farmId: farm.id,
+          hubId: hub.id,
+          distanceM: haversine(farm.lat, farm.lng, hub.lat, hub.lng),
+        });
+      }
     }
   }
   return edges;

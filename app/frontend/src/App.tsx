@@ -24,6 +24,7 @@ function SetupRoute() {
   return <Setup onComplete={() => navigate('/dashboard')} />;
 }
 
+
 export default function App() {
   return (
     <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)' }} />}>
