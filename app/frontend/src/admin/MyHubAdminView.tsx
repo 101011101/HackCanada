@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import * as api from "@/services/myfood-api";
-import { T } from "@/nodal-network/tokens";
+import { T } from "./nodal-network/tokens";
 
 type MyHubTab = "transactions" | "ledger";
 

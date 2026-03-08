@@ -1,1 +1,1502 @@
-[]
+[
+  {
+    "id": 0,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-23T08:34:00",
+    "pH": 6.1,
+    "moisture": 50.0,
+    "temperature": 15.0,
+    "humidity": 55.0
+  },
+  {
+    "id": 1,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-24T08:34:00",
+    "pH": 6.2,
+    "moisture": 51.2,
+    "temperature": 15.4,
+    "humidity": 55.8
+  },
+  {
+    "id": 2,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-25T08:34:00",
+    "pH": 6.2,
+    "moisture": 52.5,
+    "temperature": 15.8,
+    "humidity": 56.5
+  },
+  {
+    "id": 3,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-26T08:34:00",
+    "pH": 6.3,
+    "moisture": 53.8,
+    "temperature": 16.2,
+    "humidity": 57.2
+  },
+  {
+    "id": 4,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-27T08:34:00",
+    "pH": 6.3,
+    "moisture": 55.0,
+    "temperature": 16.7,
+    "humidity": 58.0
+  },
+  {
+    "id": 5,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-02-28T08:34:00",
+    "pH": 6.4,
+    "moisture": 56.2,
+    "temperature": 17.1,
+    "humidity": 58.8
+  },
+  {
+    "id": 6,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-01T08:34:00",
+    "pH": 6.4,
+    "moisture": 57.5,
+    "temperature": 17.5,
+    "humidity": 59.5
+  },
+  {
+    "id": 7,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-02T08:34:00",
+    "pH": 6.5,
+    "moisture": 58.8,
+    "temperature": 17.9,
+    "humidity": 60.2
+  },
+  {
+    "id": 8,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-03T08:34:00",
+    "pH": 6.6,
+    "moisture": 60.0,
+    "temperature": 18.3,
+    "humidity": 61.0
+  },
+  {
+    "id": 9,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-04T08:34:00",
+    "pH": 6.6,
+    "moisture": 61.2,
+    "temperature": 18.8,
+    "humidity": 61.8
+  },
+  {
+    "id": 10,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-05T08:34:00",
+    "pH": 6.7,
+    "moisture": 62.5,
+    "temperature": 19.2,
+    "humidity": 62.5
+  },
+  {
+    "id": 11,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-06T08:34:00",
+    "pH": 6.7,
+    "moisture": 63.8,
+    "temperature": 19.6,
+    "humidity": 63.2
+  },
+  {
+    "id": 12,
+    "farm_id": 49,
+    "crop_id": 1,
+    "recorded_at": "2026-03-07T08:34:00",
+    "pH": 6.8,
+    "moisture": 65.0,
+    "temperature": 20.0,
+    "humidity": 64.0
+  },
+  {
+    "id": 13,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-23T08:40:00",
+    "pH": 5.8,
+    "moisture": 40.0,
+    "temperature": 18.0,
+    "humidity": 50.0
+  },
+  {
+    "id": 14,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-24T08:40:00",
+    "pH": 5.9,
+    "moisture": 41.2,
+    "temperature": 18.5,
+    "humidity": 50.8
+  },
+  {
+    "id": 15,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-25T08:40:00",
+    "pH": 5.9,
+    "moisture": 42.5,
+    "temperature": 19.0,
+    "humidity": 51.5
+  },
+  {
+    "id": 16,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-26T08:40:00",
+    "pH": 6.0,
+    "moisture": 43.8,
+    "temperature": 19.5,
+    "humidity": 52.2
+  },
+  {
+    "id": 17,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-27T08:40:00",
+    "pH": 6.0,
+    "moisture": 45.0,
+    "temperature": 20.0,
+    "humidity": 53.0
+  },
+  {
+    "id": 18,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-02-28T08:40:00",
+    "pH": 6.1,
+    "moisture": 46.2,
+    "temperature": 20.5,
+    "humidity": 53.8
+  },
+  {
+    "id": 19,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-01T08:40:00",
+    "pH": 6.2,
+    "moisture": 47.5,
+    "temperature": 21.0,
+    "humidity": 54.5
+  },
+  {
+    "id": 20,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-02T08:40:00",
+    "pH": 6.2,
+    "moisture": 48.8,
+    "temperature": 21.5,
+    "humidity": 55.2
+  },
+  {
+    "id": 21,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-03T08:40:00",
+    "pH": 6.3,
+    "moisture": 50.0,
+    "temperature": 22.0,
+    "humidity": 56.0
+  },
+  {
+    "id": 22,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-04T08:40:00",
+    "pH": 6.3,
+    "moisture": 51.2,
+    "temperature": 22.5,
+    "humidity": 56.8
+  },
+  {
+    "id": 23,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-05T08:40:00",
+    "pH": 6.4,
+    "moisture": 52.5,
+    "temperature": 23.0,
+    "humidity": 57.5
+  },
+  {
+    "id": 24,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-06T08:40:00",
+    "pH": 6.4,
+    "moisture": 53.8,
+    "temperature": 23.5,
+    "humidity": 58.2
+  },
+  {
+    "id": 25,
+    "farm_id": 49,
+    "crop_id": 7,
+    "recorded_at": "2026-03-07T08:40:00",
+    "pH": 6.5,
+    "moisture": 55.0,
+    "temperature": 24.0,
+    "humidity": 59.0
+  },
+  {
+    "id": 26,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-02-23T09:05:00",
+    "pH": 6.2,
+    "moisture": 60.0,
+    "temperature": 20.0,
+    "humidity": 60.0
+  },
+  {
+    "id": 27,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-02-25T09:05:00",
+    "pH": 6.3,
+    "moisture": 62.3,
+    "temperature": 20.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 28,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-02-27T09:05:00",
+    "pH": 6.4,
+    "moisture": 64.7,
+    "temperature": 21.7,
+    "humidity": 63.0
+  },
+  {
+    "id": 29,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-03-01T09:05:00",
+    "pH": 6.6,
+    "moisture": 67.0,
+    "temperature": 22.5,
+    "humidity": 64.5
+  },
+  {
+    "id": 30,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-03-03T09:05:00",
+    "pH": 6.7,
+    "moisture": 69.3,
+    "temperature": 23.3,
+    "humidity": 66.0
+  },
+  {
+    "id": 31,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-03-05T09:05:00",
+    "pH": 6.8,
+    "moisture": 71.7,
+    "temperature": 24.2,
+    "humidity": 67.5
+  },
+  {
+    "id": 32,
+    "farm_id": 101,
+    "crop_id": 0,
+    "recorded_at": "2026-03-07T09:05:00",
+    "pH": 6.9,
+    "moisture": 74.0,
+    "temperature": 25.0,
+    "humidity": 69.0
+  },
+  {
+    "id": 33,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-23T09:47:00",
+    "pH": 6.1,
+    "moisture": 50.0,
+    "temperature": 15.0,
+    "humidity": 55.0
+  },
+  {
+    "id": 34,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-24T09:47:00",
+    "pH": 6.2,
+    "moisture": 51.2,
+    "temperature": 15.4,
+    "humidity": 55.8
+  },
+  {
+    "id": 35,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-25T09:47:00",
+    "pH": 6.2,
+    "moisture": 52.5,
+    "temperature": 15.8,
+    "humidity": 56.5
+  },
+  {
+    "id": 36,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-26T09:47:00",
+    "pH": 6.3,
+    "moisture": 53.8,
+    "temperature": 16.2,
+    "humidity": 57.2
+  },
+  {
+    "id": 37,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-27T09:47:00",
+    "pH": 6.3,
+    "moisture": 55.0,
+    "temperature": 16.7,
+    "humidity": 58.0
+  },
+  {
+    "id": 38,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-02-28T09:47:00",
+    "pH": 6.4,
+    "moisture": 56.2,
+    "temperature": 17.1,
+    "humidity": 58.8
+  },
+  {
+    "id": 39,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-01T09:47:00",
+    "pH": 6.4,
+    "moisture": 57.5,
+    "temperature": 17.5,
+    "humidity": 59.5
+  },
+  {
+    "id": 40,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-02T09:47:00",
+    "pH": 6.5,
+    "moisture": 58.8,
+    "temperature": 17.9,
+    "humidity": 60.2
+  },
+  {
+    "id": 41,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-03T09:47:00",
+    "pH": 6.6,
+    "moisture": 60.0,
+    "temperature": 18.3,
+    "humidity": 61.0
+  },
+  {
+    "id": 42,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-04T09:47:00",
+    "pH": 6.6,
+    "moisture": 61.2,
+    "temperature": 18.8,
+    "humidity": 61.8
+  },
+  {
+    "id": 43,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-05T09:47:00",
+    "pH": 6.7,
+    "moisture": 62.5,
+    "temperature": 19.2,
+    "humidity": 62.5
+  },
+  {
+    "id": 44,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-06T09:47:00",
+    "pH": 6.7,
+    "moisture": 63.8,
+    "temperature": 19.6,
+    "humidity": 63.2
+  },
+  {
+    "id": 45,
+    "farm_id": 102,
+    "crop_id": 1,
+    "recorded_at": "2026-03-07T09:47:00",
+    "pH": 6.8,
+    "moisture": 65.0,
+    "temperature": 20.0,
+    "humidity": 64.0
+  },
+  {
+    "id": 46,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-23T09:49:00",
+    "pH": 6.2,
+    "moisture": 58.0,
+    "temperature": 15.0,
+    "humidity": 60.0
+  },
+  {
+    "id": 47,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-24T09:49:00",
+    "pH": 6.3,
+    "moisture": 59.1,
+    "temperature": 15.4,
+    "humidity": 60.8
+  },
+  {
+    "id": 48,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-25T09:49:00",
+    "pH": 6.4,
+    "moisture": 60.2,
+    "temperature": 15.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 49,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-26T09:49:00",
+    "pH": 6.5,
+    "moisture": 61.2,
+    "temperature": 16.2,
+    "humidity": 62.2
+  },
+  {
+    "id": 50,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-27T09:49:00",
+    "pH": 6.5,
+    "moisture": 62.3,
+    "temperature": 16.7,
+    "humidity": 63.0
+  },
+  {
+    "id": 51,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-02-28T09:49:00",
+    "pH": 6.6,
+    "moisture": 63.4,
+    "temperature": 17.1,
+    "humidity": 63.8
+  },
+  {
+    "id": 52,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-01T09:49:00",
+    "pH": 6.7,
+    "moisture": 64.5,
+    "temperature": 17.5,
+    "humidity": 64.5
+  },
+  {
+    "id": 53,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-02T09:49:00",
+    "pH": 6.8,
+    "moisture": 65.6,
+    "temperature": 17.9,
+    "humidity": 65.2
+  },
+  {
+    "id": 54,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-03T09:49:00",
+    "pH": 6.9,
+    "moisture": 66.7,
+    "temperature": 18.3,
+    "humidity": 66.0
+  },
+  {
+    "id": 55,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-04T09:49:00",
+    "pH": 7.0,
+    "moisture": 67.8,
+    "temperature": 18.8,
+    "humidity": 66.8
+  },
+  {
+    "id": 56,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-05T09:49:00",
+    "pH": 7.0,
+    "moisture": 68.8,
+    "temperature": 19.2,
+    "humidity": 67.5
+  },
+  {
+    "id": 57,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-06T09:49:00",
+    "pH": 7.1,
+    "moisture": 69.9,
+    "temperature": 19.6,
+    "humidity": 68.2
+  },
+  {
+    "id": 58,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-07T09:49:00",
+    "pH": 7.2,
+    "moisture": 71.0,
+    "temperature": 20.0,
+    "humidity": 69.0
+  },
+  {
+    "id": 59,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-23T09:51:00",
+    "pH": 6.0,
+    "moisture": 35.0,
+    "temperature": 20.0,
+    "humidity": 54.0
+  },
+  {
+    "id": 60,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-24T09:51:00",
+    "pH": 6.1,
+    "moisture": 36.2,
+    "temperature": 20.4,
+    "humidity": 54.8
+  },
+  {
+    "id": 61,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-25T09:51:00",
+    "pH": 6.1,
+    "moisture": 37.5,
+    "temperature": 20.8,
+    "humidity": 55.7
+  },
+  {
+    "id": 62,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-26T09:51:00",
+    "pH": 6.2,
+    "moisture": 38.8,
+    "temperature": 21.2,
+    "humidity": 56.5
+  },
+  {
+    "id": 63,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-27T09:51:00",
+    "pH": 6.3,
+    "moisture": 40.0,
+    "temperature": 21.7,
+    "humidity": 57.3
+  },
+  {
+    "id": 64,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-02-28T09:51:00",
+    "pH": 6.3,
+    "moisture": 41.2,
+    "temperature": 22.1,
+    "humidity": 58.2
+  },
+  {
+    "id": 65,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-01T09:51:00",
+    "pH": 6.4,
+    "moisture": 42.5,
+    "temperature": 22.5,
+    "humidity": 59.0
+  },
+  {
+    "id": 66,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-02T09:51:00",
+    "pH": 6.5,
+    "moisture": 43.8,
+    "temperature": 22.9,
+    "humidity": 59.8
+  },
+  {
+    "id": 67,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-03T09:51:00",
+    "pH": 6.5,
+    "moisture": 45.0,
+    "temperature": 23.3,
+    "humidity": 60.7
+  },
+  {
+    "id": 68,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-04T09:51:00",
+    "pH": 6.6,
+    "moisture": 46.2,
+    "temperature": 23.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 69,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-05T09:51:00",
+    "pH": 6.7,
+    "moisture": 47.5,
+    "temperature": 24.2,
+    "humidity": 62.3
+  },
+  {
+    "id": 70,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-06T09:51:00",
+    "pH": 6.7,
+    "moisture": 48.8,
+    "temperature": 24.6,
+    "humidity": 63.2
+  },
+  {
+    "id": 71,
+    "farm_id": 102,
+    "crop_id": 3,
+    "recorded_at": "2026-03-07T09:51:00",
+    "pH": 6.8,
+    "moisture": 50.0,
+    "temperature": 25.0,
+    "humidity": 64.0
+  },
+  {
+    "id": 72,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-23T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.0,
+    "temperature": 30.5,
+    "humidity": 35.5
+  },
+  {
+    "id": 73,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-24T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.4,
+    "temperature": 30.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 74,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-25T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.4,
+    "temperature": 30.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 75,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-26T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.9,
+    "temperature": 30.5,
+    "humidity": 35.5
+  },
+  {
+    "id": 76,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-27T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.5,
+    "temperature": 30.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 77,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-02-28T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.6,
+    "temperature": 30.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 78,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-01T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.2,
+    "temperature": 30.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 79,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-02T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.5,
+    "temperature": 30.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 80,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-03T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.3,
+    "temperature": 30.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 81,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-04T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.8,
+    "temperature": 30.4,
+    "humidity": 35.4
+  },
+  {
+    "id": 82,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-05T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.5,
+    "temperature": 30.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 83,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-06T10:15:00",
+    "pH": 5.2,
+    "moisture": 26.8,
+    "temperature": 30.4,
+    "humidity": 35.4
+  },
+  {
+    "id": 84,
+    "farm_id": 103,
+    "crop_id": 4,
+    "recorded_at": "2026-03-07T10:15:00",
+    "pH": 5.2,
+    "moisture": 27.3,
+    "temperature": 30.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 85,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-23T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.0,
+    "temperature": 29.5,
+    "humidity": 35.5
+  },
+  {
+    "id": 86,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-24T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.4,
+    "temperature": 29.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 87,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-25T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.4,
+    "temperature": 29.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 88,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-26T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.9,
+    "temperature": 29.5,
+    "humidity": 35.5
+  },
+  {
+    "id": 89,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-27T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.5,
+    "temperature": 29.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 90,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-02-28T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.6,
+    "temperature": 29.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 91,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-01T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.2,
+    "temperature": 29.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 92,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-02T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.5,
+    "temperature": 29.7,
+    "humidity": 35.7
+  },
+  {
+    "id": 93,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-03T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.3,
+    "temperature": 29.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 94,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-04T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.8,
+    "temperature": 29.4,
+    "humidity": 35.4
+  },
+  {
+    "id": 95,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-05T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.5,
+    "temperature": 29.3,
+    "humidity": 35.3
+  },
+  {
+    "id": 96,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-06T10:17:00",
+    "pH": 5.1,
+    "moisture": 28.8,
+    "temperature": 29.4,
+    "humidity": 35.4
+  },
+  {
+    "id": 97,
+    "farm_id": 103,
+    "crop_id": 5,
+    "recorded_at": "2026-03-07T10:17:00",
+    "pH": 5.2,
+    "moisture": 29.3,
+    "temperature": 29.6,
+    "humidity": 35.6
+  },
+  {
+    "id": 98,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-23T11:00:00",
+    "pH": 6.2,
+    "moisture": 60.0,
+    "temperature": 20.0,
+    "humidity": 60.0
+  },
+  {
+    "id": 99,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-24T11:00:00",
+    "pH": 6.3,
+    "moisture": 61.2,
+    "temperature": 20.4,
+    "humidity": 60.8
+  },
+  {
+    "id": 100,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-25T11:00:00",
+    "pH": 6.3,
+    "moisture": 62.3,
+    "temperature": 20.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 101,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-26T11:00:00",
+    "pH": 6.4,
+    "moisture": 63.5,
+    "temperature": 21.2,
+    "humidity": 62.2
+  },
+  {
+    "id": 102,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-27T11:00:00",
+    "pH": 6.4,
+    "moisture": 64.7,
+    "temperature": 21.7,
+    "humidity": 63.0
+  },
+  {
+    "id": 103,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-02-28T11:00:00",
+    "pH": 6.5,
+    "moisture": 65.8,
+    "temperature": 22.1,
+    "humidity": 63.8
+  },
+  {
+    "id": 104,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-01T11:00:00",
+    "pH": 6.6,
+    "moisture": 67.0,
+    "temperature": 22.5,
+    "humidity": 64.5
+  },
+  {
+    "id": 105,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-02T11:00:00",
+    "pH": 6.6,
+    "moisture": 68.2,
+    "temperature": 22.9,
+    "humidity": 65.2
+  },
+  {
+    "id": 106,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-03T11:00:00",
+    "pH": 6.7,
+    "moisture": 69.3,
+    "temperature": 23.3,
+    "humidity": 66.0
+  },
+  {
+    "id": 107,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-04T11:00:00",
+    "pH": 6.7,
+    "moisture": 70.5,
+    "temperature": 23.8,
+    "humidity": 66.8
+  },
+  {
+    "id": 108,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-05T11:00:00",
+    "pH": 6.8,
+    "moisture": 71.7,
+    "temperature": 24.2,
+    "humidity": 67.5
+  },
+  {
+    "id": 109,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-06T11:00:00",
+    "pH": 6.8,
+    "moisture": 72.8,
+    "temperature": 24.6,
+    "humidity": 68.2
+  },
+  {
+    "id": 110,
+    "farm_id": 104,
+    "crop_id": 0,
+    "recorded_at": "2026-03-07T11:00:00",
+    "pH": 6.9,
+    "moisture": 74.0,
+    "temperature": 25.0,
+    "humidity": 69.0
+  },
+  {
+    "id": 111,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-23T11:04:00",
+    "pH": 6.2,
+    "moisture": 58.0,
+    "temperature": 15.0,
+    "humidity": 60.0
+  },
+  {
+    "id": 112,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-24T11:04:00",
+    "pH": 6.3,
+    "moisture": 59.1,
+    "temperature": 15.4,
+    "humidity": 60.8
+  },
+  {
+    "id": 113,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-25T11:04:00",
+    "pH": 6.4,
+    "moisture": 60.2,
+    "temperature": 15.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 114,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-26T11:04:00",
+    "pH": 6.5,
+    "moisture": 61.2,
+    "temperature": 16.2,
+    "humidity": 62.2
+  },
+  {
+    "id": 115,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-27T11:04:00",
+    "pH": 6.5,
+    "moisture": 62.3,
+    "temperature": 16.7,
+    "humidity": 63.0
+  },
+  {
+    "id": 116,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-02-28T11:04:00",
+    "pH": 6.6,
+    "moisture": 63.4,
+    "temperature": 17.1,
+    "humidity": 63.8
+  },
+  {
+    "id": 117,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-01T11:04:00",
+    "pH": 6.7,
+    "moisture": 64.5,
+    "temperature": 17.5,
+    "humidity": 64.5
+  },
+  {
+    "id": 118,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-02T11:04:00",
+    "pH": 6.8,
+    "moisture": 65.6,
+    "temperature": 17.9,
+    "humidity": 65.2
+  },
+  {
+    "id": 119,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-03T11:04:00",
+    "pH": 6.9,
+    "moisture": 66.7,
+    "temperature": 18.3,
+    "humidity": 66.0
+  },
+  {
+    "id": 120,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-04T11:04:00",
+    "pH": 7.0,
+    "moisture": 67.8,
+    "temperature": 18.8,
+    "humidity": 66.8
+  },
+  {
+    "id": 121,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-05T11:04:00",
+    "pH": 7.0,
+    "moisture": 68.8,
+    "temperature": 19.2,
+    "humidity": 67.5
+  },
+  {
+    "id": 122,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-06T11:04:00",
+    "pH": 7.1,
+    "moisture": 69.9,
+    "temperature": 19.6,
+    "humidity": 68.2
+  },
+  {
+    "id": 123,
+    "farm_id": 104,
+    "crop_id": 2,
+    "recorded_at": "2026-03-07T11:04:00",
+    "pH": 7.2,
+    "moisture": 71.0,
+    "temperature": 20.0,
+    "humidity": 69.0
+  },
+  {
+    "id": 124,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-23T14:36:00",
+    "pH": 6.0,
+    "moisture": 35.0,
+    "temperature": 20.0,
+    "humidity": 54.0
+  },
+  {
+    "id": 125,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-24T14:36:00",
+    "pH": 6.1,
+    "moisture": 36.2,
+    "temperature": 20.4,
+    "humidity": 54.8
+  },
+  {
+    "id": 126,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-25T14:36:00",
+    "pH": 6.1,
+    "moisture": 37.5,
+    "temperature": 20.8,
+    "humidity": 55.7
+  },
+  {
+    "id": 127,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-26T14:36:00",
+    "pH": 6.2,
+    "moisture": 38.8,
+    "temperature": 21.2,
+    "humidity": 56.5
+  },
+  {
+    "id": 128,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-27T14:36:00",
+    "pH": 6.3,
+    "moisture": 40.0,
+    "temperature": 21.7,
+    "humidity": 57.3
+  },
+  {
+    "id": 129,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-02-28T14:36:00",
+    "pH": 6.3,
+    "moisture": 41.2,
+    "temperature": 22.1,
+    "humidity": 58.2
+  },
+  {
+    "id": 130,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-01T14:36:00",
+    "pH": 6.4,
+    "moisture": 42.5,
+    "temperature": 22.5,
+    "humidity": 59.0
+  },
+  {
+    "id": 131,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-02T14:36:00",
+    "pH": 6.5,
+    "moisture": 43.8,
+    "temperature": 22.9,
+    "humidity": 59.8
+  },
+  {
+    "id": 132,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-03T14:36:00",
+    "pH": 6.5,
+    "moisture": 45.0,
+    "temperature": 23.3,
+    "humidity": 60.7
+  },
+  {
+    "id": 133,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-04T14:36:00",
+    "pH": 6.6,
+    "moisture": 46.2,
+    "temperature": 23.8,
+    "humidity": 61.5
+  },
+  {
+    "id": 134,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-05T14:36:00",
+    "pH": 6.7,
+    "moisture": 47.5,
+    "temperature": 24.2,
+    "humidity": 62.3
+  },
+  {
+    "id": 135,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-06T14:36:00",
+    "pH": 6.7,
+    "moisture": 48.8,
+    "temperature": 24.6,
+    "humidity": 63.2
+  },
+  {
+    "id": 136,
+    "farm_id": 105,
+    "crop_id": 3,
+    "recorded_at": "2026-03-07T14:36:00",
+    "pH": 6.8,
+    "moisture": 50.0,
+    "temperature": 25.0,
+    "humidity": 64.0
+  },
+  {
+    "id": 137,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-23T14:38:00",
+    "pH": 6.1,
+    "moisture": 60.0,
+    "temperature": 22.0,
+    "humidity": 60.0
+  },
+  {
+    "id": 138,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-24T14:38:00",
+    "pH": 6.2,
+    "moisture": 60.8,
+    "temperature": 22.5,
+    "humidity": 60.8
+  },
+  {
+    "id": 139,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-25T14:38:00",
+    "pH": 6.2,
+    "moisture": 61.7,
+    "temperature": 23.0,
+    "humidity": 61.5
+  },
+  {
+    "id": 140,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-26T14:38:00",
+    "pH": 6.3,
+    "moisture": 62.5,
+    "temperature": 23.5,
+    "humidity": 62.2
+  },
+  {
+    "id": 141,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-27T14:38:00",
+    "pH": 6.4,
+    "moisture": 63.3,
+    "temperature": 24.0,
+    "humidity": 63.0
+  },
+  {
+    "id": 142,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-02-28T14:38:00",
+    "pH": 6.4,
+    "moisture": 64.2,
+    "temperature": 24.5,
+    "humidity": 63.8
+  },
+  {
+    "id": 143,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-01T14:38:00",
+    "pH": 6.5,
+    "moisture": 65.0,
+    "temperature": 25.0,
+    "humidity": 64.5
+  },
+  {
+    "id": 144,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-02T14:38:00",
+    "pH": 6.6,
+    "moisture": 65.8,
+    "temperature": 25.5,
+    "humidity": 65.2
+  },
+  {
+    "id": 145,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-03T14:38:00",
+    "pH": 6.6,
+    "moisture": 66.7,
+    "temperature": 26.0,
+    "humidity": 66.0
+  },
+  {
+    "id": 146,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-04T14:38:00",
+    "pH": 6.7,
+    "moisture": 67.5,
+    "temperature": 26.5,
+    "humidity": 66.8
+  },
+  {
+    "id": 147,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-05T14:38:00",
+    "pH": 6.8,
+    "moisture": 68.3,
+    "temperature": 27.0,
+    "humidity": 67.5
+  },
+  {
+    "id": 148,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-06T14:38:00",
+    "pH": 6.8,
+    "moisture": 69.2,
+    "temperature": 27.5,
+    "humidity": 68.2
+  },
+  {
+    "id": 149,
+    "farm_id": 105,
+    "crop_id": 6,
+    "recorded_at": "2026-03-07T14:38:00",
+    "pH": 6.9,
+    "moisture": 70.0,
+    "temperature": 28.0,
+    "humidity": 69.0
+  }
+]

@@ -6,13 +6,11 @@ import {
   ScatterChart, Scatter, ZAxis,
 } from "recharts";
 import {
-  crops,
-  hubs,
-  getCrop,
-  getEffectiveCropId,
   type FarmNode,
+  type HubNode,
   type NetworkEdge,
 } from "./nodal-network/data";
+import type { Crop } from "./services/api";
 import { T } from "./nodal-network/tokens";
 
 // ── Style constants ─────────────────────────────────────────────────────────
@@ -167,11 +165,16 @@ function SupplyTooltip({ active, payload, label }: { active?: boolean; payload?:
 interface Props {
   farmList: FarmNode[];
   edges: NetworkEdge[];
+  crops: Crop[];
+  assignments: Record<string, number[]>;
+  hubs: HubNode[];
 }
 
-export default function Charts({ farmList }: Props) {
+export default function Charts({ farmList, crops, assignments, hubs }: Props) {
   const chartData = useMemo(() => {
-    // -- Crop distribution --
+    const cropMap = new Map(crops.map(c => [c.id, c]));
+
+    // -- Crop distribution (count each crop slot across all farms) --
     const cropCounts = new Map<number, number>();
     // -- pH histogram bins --
     const phBins: Record<string, number> = {
@@ -181,16 +184,19 @@ export default function Charts({ farmList }: Props) {
     const tempData: { name: string; temp: number }[] = [];
     // -- Scatter data --
     const scatterData: { moisture: number; humidity: number; name: string }[] = [];
-    // -- Supply per crop --
+    // -- Supply per crop (divide sqft across multi-crop farms) --
     const supplyPerCrop = new Map<number, number>();
 
     for (const f of farmList) {
-      const cropId = getEffectiveCropId(f);
-      if (cropId != null) {
+      const cropIds = assignments[String(f.id)] ?? [];
+      const n = cropIds.length || 1;
+      const sqftPer = (f.plot_size_sqft ?? 0) / n;
+
+      for (const cropId of cropIds) {
         cropCounts.set(cropId, (cropCounts.get(cropId) ?? 0) + 1);
-        const crop = getCrop(cropId);
-        if (crop && f.plot_size_sqft) {
-          supplyPerCrop.set(cropId, (supplyPerCrop.get(cropId) ?? 0) + crop.base_yield_per_sqft * f.plot_size_sqft);
+        const crop = cropMap.get(cropId);
+        if (crop) {
+          supplyPerCrop.set(cropId, (supplyPerCrop.get(cropId) ?? 0) + crop.base_yield_per_sqft * sqftPer);
         }
       }
 
@@ -220,10 +226,11 @@ export default function Charts({ farmList }: Props) {
 
     const phHistogram = Object.entries(phBins).map(([bin, count]) => ({ bin, count }));
 
-    // -- Supply vs Demand --
+    // -- Supply vs Demand (use live hubs prop) --
     const totalDemandPerCrop = new Map<number, number>();
     for (const hub of hubs) {
-      for (const [cropIdStr, qty] of Object.entries(hub.local_demand)) {
+      const demand = (hub as { local_demand?: Record<string, number> }).local_demand ?? {};
+      for (const [cropIdStr, qty] of Object.entries(demand)) {
         const cid = Number(cropIdStr);
         totalDemandPerCrop.set(cid, (totalDemandPerCrop.get(cid) ?? 0) + qty);
       }
@@ -237,7 +244,7 @@ export default function Charts({ farmList }: Props) {
     });
 
     return { cropDistribution, phHistogram, tempData, scatterData, supplyDemand };
-  }, [farmList]);
+  }, [farmList, crops, assignments, hubs]);
 
   return (
     <div style={C.content}>
@@ -286,7 +293,7 @@ export default function Charts({ farmList }: Props) {
       <div style={C.grid2}>
         {/* Temperature Over Time */}
         <div style={C.chartCard}>
-          <div style={C.chartTitle}>Temperature Over Time</div>
+          <div style={C.chartTitle}>Temperature by Farm</div>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={chartData.tempData} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.borderLt} vertical={false} />

@@ -142,11 +142,13 @@ def compute_risk_flags(farm: FarmNode, assigned_crops: list) -> list:
         add('drought', f'Soil moisture {farm.moisture:.0f}% is critically low.', 'high')
 
     # Soil pH drift — outside crop optimal_pH range by more than 0.5
-    for crop in assigned_crops:
-        lo, hi = crop.optimal_pH
-        if farm.pH < lo - 0.5 or farm.pH > hi + 0.5:
-            add('soil_ph', f'Soil pH {farm.pH:.1f} is outside optimal range for {crop.name} ({lo}–{hi}).', 'medium')
-            break  # one pH flag is enough
+    # Skip if pH is outside the physically valid range (guards against corrupted data)
+    if 0 <= farm.pH <= 14:
+        for crop in assigned_crops:
+            lo, hi = crop.optimal_pH
+            if farm.pH < lo - 0.5 or farm.pH > hi + 0.5:
+                add('soil_ph', f'Soil pH {farm.pH:.1f} is outside optimal range for {crop.name} ({lo}–{hi}).', 'medium')
+                break  # one pH flag is enough
 
     return flags
 

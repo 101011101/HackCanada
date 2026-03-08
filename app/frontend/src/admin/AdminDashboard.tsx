@@ -1,22 +1,24 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
-  farms as initialFarms,
-  hubs,
   getCrop,
   getEffectiveCropId,
   getNearestHub,
   buildNetworkEdges,
   type FarmNode,
+  type HubNode,
 } from "./nodal-network/data";
+import { getFarms, getHubs, createFarm, updateSoil, getCrops, getAssignments, getReport } from "./services/api";
+import type { Crop, ReportResponse } from "./services/api";
+import { runOptimize } from "./services/api";
 import { T } from "./nodal-network/tokens";
 import NetworkMapCore, { type NetworkCallbacks } from "./nodal-network/NetworkMapCore";
 import { Legend } from "./nodal-network/Legend";
 import { FarmPanel, EMPTY_FORM, farmToForm, type PanelMode, type FarmForm } from "./nodal-network/FarmPanel";
 import DataInformation from "./DataInformation";
 import Charts from "./Charts";
-import MyHubAdminView from "./admin/MyHubAdminView";
+import MyHubAdminView from "./MyHubAdminView";
 
 type ActivePage = "network-map" | "data-info" | "charts" | "myhub";
 
@@ -241,14 +243,41 @@ const S = {
 // ── Main dashboard component ────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const [farmList, setFarmList] = useState<FarmNode[]>(() => [...initialFarms]);
+  const [farmList, setFarmList] = useState<FarmNode[]>([]);
+  const [hubList, setHubList] = useState<HubNode[]>([]);
+  const [crops, setCrops] = useState<Crop[]>([]);
+  const [assignments, setAssignments] = useState<Record<string, number[]>>({});
+  const [report, setReport] = useState<ReportResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [panelMode, setPanelMode] = useState<PanelMode>("closed");
   const [form, setForm] = useState<FarmForm>({ ...EMPTY_FORM });
   const [editFarmId, setEditFarmId] = useState<number | null>(null);
   const [activePage, setActivePage] = useState<ActivePage>("network-map");
-  const nextId = useRef(Math.max(...initialFarms.map(f => f.id)) + 1);
 
   const edges = useMemo(() => buildNetworkEdges(farmList), [farmList]);
+
+  const loadAll = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      getFarms(),
+      getHubs(),
+      getCrops(),
+      getAssignments(),
+      getReport(),
+    ]).then(([farms, hubs, cropsData, assignmentsData, reportData]) => {
+      setFarmList(farms);
+      setHubList(hubs);
+      setCrops(cropsData);
+      setAssignments(assignmentsData);
+      setReport(reportData);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   const parseOrNull = (v: string): number | null => {
     if (v.trim() === "") return null;
@@ -270,13 +299,8 @@ export default function AdminDashboard() {
     setPanelMode("edit");
   }, [farmList]);
 
-  callbacks.current.onDeleteFarm = useCallback((id: number) => {
-    if (!confirm("Delete this farm?")) return;
-    setFarmList(prev => prev.filter(f => f.id !== id));
-    setPanelMode("closed");
-    setEditFarmId(null);
-    setForm({ ...EMPTY_FORM });
-  }, []);
+  // Delete not supported (no backend endpoint)
+  callbacks.current.onDeleteFarm = useCallback((_id: number) => {}, []);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     if (panelMode !== "add-pinpoint") return;
@@ -294,50 +318,37 @@ export default function AdminDashboard() {
     if (isNaN(lat) || isNaN(lng) || !form.name.trim()) return;
 
     if (panelMode === "edit" && editFarmId != null) {
-      setFarmList(prev => prev.map(f => {
-        if (f.id !== editFarmId) return f;
-        return {
-          ...f,
-          name: form.name.trim(),
-          plot_size_sqft: parseOrNull(form.plot_size_sqft),
-          plot_type: (form.plot_type || null) as FarmNode["plot_type"],
-          tools: (form.tools || null) as FarmNode["tools"],
-          budget: (form.budget || null) as FarmNode["budget"],
-          pH: parseOrNull(form.pH),
-          moisture: parseOrNull(form.moisture),
-          temperature: parseOrNull(form.temperature),
-          humidity: parseOrNull(form.humidity),
-        };
-      }));
+      const pH = parseOrNull(form.pH);
+      const moisture = parseOrNull(form.moisture);
+      const temperature = parseOrNull(form.temperature);
+      const humidity = parseOrNull(form.humidity);
+      if (pH == null || moisture == null || temperature == null || humidity == null) return;
+      updateSoil(editFarmId, { pH, moisture, temperature, humidity })
+        .then(loadAll)
+        .catch(console.error);
     } else {
-      const newFarm: FarmNode = {
-        id: nextId.current++,
+      createFarm({
         name: form.name.trim(),
         lat, lng,
-        plot_size_sqft: parseOrNull(form.plot_size_sqft),
-        plot_type: (form.plot_type || null) as FarmNode["plot_type"],
-        tools: (form.tools || null) as FarmNode["tools"],
-        budget: (form.budget || null) as FarmNode["budget"],
-        pH: parseOrNull(form.pH),
-        moisture: parseOrNull(form.moisture),
-        temperature: parseOrNull(form.temperature),
-        humidity: parseOrNull(form.humidity),
-        status: "new",
-        current_crop_id: null,
-        cycle_end_date: null,
-      };
-      setFarmList(prev => [...prev, newFarm]);
+        plot_size_sqft: parseOrNull(form.plot_size_sqft) ?? 0,
+        plot_type: form.plot_type || "balcony",
+        tools: form.tools || "basic",
+        budget: form.budget || "low",
+        pH: parseOrNull(form.pH) ?? 7.0,
+        moisture: parseOrNull(form.moisture) ?? 60,
+        temperature: parseOrNull(form.temperature) ?? 20,
+        humidity: parseOrNull(form.humidity) ?? 60,
+      }).then(loadAll).catch(console.error);
     }
 
     setForm({ ...EMPTY_FORM });
     setPanelMode("closed");
     setEditFarmId(null);
-  }, [form, panelMode, editFarmId]);
+  }, [form, panelMode, editFarmId, loadAll]);
 
-  const handleDeleteFromPanel = useCallback(() => {
-    if (editFarmId == null) return;
-    callbacks.current.onDeleteFarm(editFarmId);
-  }, [editFarmId]);
+  const handleOptimize = useCallback(() => {
+    runOptimize().then(loadAll).catch(console.error);
+  }, [loadAll]);
 
   const handleCancel = useCallback(() => {
     setForm({ ...EMPTY_FORM });
@@ -351,6 +362,14 @@ export default function AdminDashboard() {
   const coveragePct = farmList.length > 0
     ? Math.round((connectedCount / farmList.length) * 100)
     : 0;
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "sans-serif", color: "#888" }}>
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div style={S.layout}>
@@ -417,7 +436,7 @@ export default function AdminDashboard() {
                 <>
                   <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
                   <button style={S.btn("secondary")}>Export</button>
-                  <button style={S.btn("accent")}>Run Optimization</button>
+                  <button style={S.btn("accent")} onClick={handleOptimize}>Run Optimization</button>
                 </>
               )}
             </div>
@@ -429,9 +448,9 @@ export default function AdminDashboard() {
           {activePage === "myhub" ? (
             <MyHubAdminView />
           ) : activePage === "data-info" ? (
-            <DataInformation farmList={farmList} edges={edges} />
+            <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
           ) : activePage === "charts" ? (
-            <Charts farmList={farmList} edges={edges} />
+            <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />
           ) : (
             <div style={S.contentPad}>
               {/* KPI Row */}
@@ -440,7 +459,7 @@ export default function AdminDashboard() {
                   <div style={S.kpiVal}>{farmList.length}</div>
                   <div style={S.kpiLbl}>Total Farms</div>
                   <div style={S.kpiDelta(T.success)}>
-                    {hubs.length} hubs · {edges.length} links
+                    {hubList.length} hubs · {edges.length} links
                   </div>
                 </div>
                 <div style={S.kpiCard}>
@@ -482,7 +501,7 @@ export default function AdminDashboard() {
                   onFormChange={setForm}
                   onModeChange={setPanelMode}
                   onSubmit={handleSubmit}
-                  onDelete={panelMode === "edit" ? handleDeleteFromPanel : undefined}
+                  onDelete={undefined}
                   onCancel={handleCancel}
                   style={{ position: "absolute", top: 12, right: 52, zIndex: 10 }}
                 />

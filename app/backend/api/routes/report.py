@@ -27,12 +27,12 @@ def _build_report() -> dict:
     saved = {int(k): v for k, v in storage.load_assignments().items()}
     assignment = []
     for i in available:
-        assignment.append(saved.get(farms[i].id, 0))
+        crop_ids = saved.get(farms[i].id)
+        assignment.append(list(crop_ids) if crop_ids else [0])
 
-    import numpy as np
     report = generate_report(
         farms, locked, available,
-        np.array(assignment, dtype=int),
+        assignment,
         crops, hubs, yield_matrix, reachability_matrix, config,
     )
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
@@ -22,10 +22,10 @@ class NewFarmRequest(BaseModel):
 
 
 class SoilUpdateRequest(BaseModel):
-    pH:          float
-    moisture:    float
+    pH:          float = Field(ge=0, le=14)
+    moisture:    float = Field(ge=0, le=100)
     temperature: float
-    humidity:    float
+    humidity:    float = Field(ge=0, le=100)
 
 
 class SoilReadingResponse(BaseModel):
@@ -37,15 +37,18 @@ class SoilReadingResponse(BaseModel):
 
 
 class ReadingEntry(BaseModel):
-    pH:          float
-    moisture:    float
+    crop_id:     int
+    pH:          float = Field(ge=0, le=14)
+    moisture:    float = Field(ge=0, le=100)
     temperature: float
-    humidity:    float
+    humidity:    float = Field(ge=0, le=100)
 
 
 class ReadingEntryResponse(BaseModel):
+    id:          int
     farm_id:     int
-    timestamp:   str
+    crop_id:     int   # 0 for averaged GET responses
+    recorded_at: str
     pH:          float
     moisture:    float
     temperature: float
@@ -60,6 +63,7 @@ class SuggestionRequest(BaseModel):
     pH:                 Optional[float] = None
     moisture:           Optional[float] = None
     temperature:        Optional[float] = None
+    humidity:           Optional[float] = None
     preferred_crop_ids: list[int]       = []
 
 
@@ -74,6 +78,11 @@ class SuggestionItem(BaseModel):
 
 class CycleEndRequest(BaseModel):
     actual_yield_kg: dict   # {str(crop_id): kg}
+
+
+class UpdateCropsRequest(BaseModel):
+    crop_ids: list[int]
+    replace:  bool = False   # True = replace current assignments; False = append & deduplicate
 
 
 class TaskItem(BaseModel):
