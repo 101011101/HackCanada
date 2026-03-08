@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toronto 3D Flythrough</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Loader */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    #loader-bar-track {
+      width: 240px; height: 4px; background: #222;
+      border-radius: 2px; overflow: hidden; margin-top: 16px;
+    }
+    #loader-bar {
+      height: 100%; width: 0%; background: #e87c2a;
+      border-radius: 2px; transition: width 0.15s ease;
+    }
+    #loader-text { font-size: 14px; letter-spacing: 0.05em; color: #888; }
+
+    /* Fullscreen canvas */
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    canvas.active { display: block; }
+
+    /* Progress bar */
+    #progress-track {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60vh;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      z-index: 100;
+    }
+    #progress-fill {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 0%;
+      background: #e87c2a;
+      border-radius: 2px;
+      transition: height 0.3s ease;
+    }
+    #progress-dots {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: background 0.3s ease, border-color 0.3s ease;
+      margin-left: -3px;
+    }
+    .progress-dot.completed {
+      background: #e87c2a;
+      border-color: #e87c2a;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loader">
+    <div id="loader-text">Loading frames…</div>
+    <div id="loader-bar-track"><div id="loader-bar"></div></div>
+  </div>
+
+  <div id="progress-track">
+    <div id="progress-fill"></div>
+    <div id="progress-dots">
+      <div class="progress-dot completed"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+  </div>
+
+  <canvas id="canvas-1"></canvas>
+  <canvas id="canvas-2"></canvas>
+  <canvas id="canvas-3"></canvas>
+  <canvas id="canvas-4"></canvas>
+  <canvas id="canvas-5"></canvas>
+
+  <script>
+    const SEQUENCES = [
+      { canvasId: "canvas-1", frameCount: 185, path: "assets/frames/frame_",  ext: ".jpg", duration: 3 },
+      { canvasId: "canvas-2", frameCount: 307, path: "assets/frames2/frame_", ext: ".jpg", duration: 5 },
+      { canvasId: "canvas-3", frameCount: 229, path: "assets/frames3/frame_", ext: ".jpg", duration: 4 },
+      { canvasId: "canvas-4", frameCount: 207, path: "assets/frames4/frame_", ext: ".jpg", duration: 3.5 },
+      { canvasId: "canvas-5", frameCount: 273, path: "assets/frames5/frame_", ext: ".jpg", duration: 4.5 },
+    ];
+
+    const pad = (n) => String(n).padStart(3, "0");
+
+    const seqData = SEQUENCES.map((seq) => {
+      const canvas = document.getElementById(seq.canvasId);
+      return {
+        ...seq,
+        canvas,
+        ctx: canvas.getContext("2d"),
+        images: new Array(seq.frameCount),
+        currentFrame: -1,
+      };
+    });
+
+    /* ── Preload ── */
+    function preloadAll() {
+      const total = SEQUENCES.reduce((s, seq) => s + seq.frameCount, 0);
+      let loaded = 0;
+      const bar = document.getElementById("loader-bar");
+      const txt = document.getElementById("loader-text");
+
+      return new Promise((resolve) => {
+        seqData.forEach((seq) => {
+          for (let i = 0; i < seq.frameCount; i++) {
+            const img = new Image();
+            img.src = `${seq.path}${pad(i)}${seq.ext}`;
+            img.onload = img.onerror = () => {
+              loaded++;
+              const pct = Math.round((loaded / total) * 100);
+              bar.style.width = pct + "%";
+              txt.textContent = `Loading frames… ${pct}%`;
+              if (loaded === total) resolve();
+            };
+            seq.images[i] = img;
+          }
+        });
+      });
+    }
+
+    function drawFrame(seq, index) {
+      index = Math.max(0, Math.min(seq.frameCount - 1, Math.round(index)));
+      if (index === seq.currentFrame) return;
+      seq.currentFrame = index;
+      const img = seq.images[index];
+      if (!img || !img.complete) return;
+      if (seq.canvas.width !== img.naturalWidth || seq.canvas.height !== img.naturalHeight) {
+        seq.canvas.width = img.naturalWidth;
+        seq.canvas.height = img.naturalHeight;
+      }
+      seq.ctx.clearRect(0, 0, seq.canvas.width, seq.canvas.height);
+      seq.ctx.drawImage(img, 0, 0);
+    }
+
+    function showCanvas(idx) {
+      seqData.forEach((s) => s.canvas.classList.remove("active"));
+      seqData[idx].canvas.classList.add("active");
+    }
+
+    /* ── Progress bar ── */
+    const progressFill = document.getElementById("progress-fill");
+    const progressDots = document.querySelectorAll(".progress-dot");
+    const totalAnims = SEQUENCES.length;
+
+    function updateProgress(stageNum, animProgress) {
+      // animProgress: 0-1 within current animation
+      // Overall: (stageNum + animProgress) / totalAnims
+      const overall = ((stageNum + (animProgress || 0)) / totalAnims) * 100;
+      progressFill.style.height = overall + "%";
+
+      // Update dots
+      progressDots.forEach((dot, i) => {
+        // dot 0 = start, dots 1-5 = end of each animation
+        if (i === 0) {
+          dot.classList.add("completed");
+        } else {
+          dot.classList.toggle("completed", i <= stageNum);
+        }
+      });
+    }
+
+    /* ── Stage system ──
+       Each scroll triggers one animation forward/backward.
+       Stage = which animation has been completed.
+       stage 0 = showing frame 0 of anim 0, nothing played yet
+       stage 1 = anim 0 finished, showing last frame of anim 0
+       etc.
+    */
+    let stage = 0;          // 0 to SEQUENCES.length
+    let busy = false;
+    let cooldown = false;
+
+    /* ── Double-scroll 2x boost ── */
+    let lastScrollTime = 0;
+    let speedMultiplier = 1;
+
+    function detectSpeed() {
+      const now = Date.now();
+      if (now - lastScrollTime < 300) {
+        speedMultiplier = 2;
+      } else {
+        speedMultiplier = 1;
+      }
+      lastScrollTime = now;
+    }
+
+    function boostIfScroll() {
+      const now = Date.now();
+      if (now - lastScrollTime < 300) {
+        speedMultiplier = 2;
+      }
+      lastScrollTime = now;
+    }
+
+    /* ── Play animation at fixed speed ── */
+    function playAnim(seqIndex, forward) {
+      return new Promise((resolve) => {
+        busy = true;
+        const seq = seqData[seqIndex];
+        showCanvas(seqIndex);
+
+        const lastFrame = seq.frameCount - 1;
+        let prevTs = null;
+        let elapsed = 0;
+
+        function tick(ts) {
+          if (prevTs === null) prevTs = ts;
+          const dt = ts - prevTs;
+          prevTs = ts;
+
+          elapsed += dt * speedMultiplier;
+          const t = Math.min(elapsed / (seq.duration * 1000), 1);
+
+          const frame = forward
+            ? Math.round(t * lastFrame)
+            : Math.round((1 - t) * lastFrame);
+
+          drawFrame(seq, frame);
+
+          // Update progress bar during animation
+          const animProg = forward ? t : 1 - t;
+          updateProgress(seqIndex, animProg);
+
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            busy = false;
+            resolve();
+          }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    /* ── Scroll handler ── */
+    async function handleScroll(direction) {
+      if (busy || cooldown) return;
+
+      // Cooldown to debounce trackpad inertia
+      cooldown = true;
+      setTimeout(() => { cooldown = false; }, 200);
+
+      detectSpeed();
+
+      if (direction > 0 && stage < seqData.length) {
+        // Scroll down → play next animation forward
+        await playAnim(stage, true);
+        stage++;
+        // Show last frame of completed anim (already showing)
+      } else if (direction < 0 && stage > 0) {
+        // Scroll up → reverse previous animation
+        stage--;
+        await playAnim(stage, false);
+        // Now showing first frame of that anim
+        // If there's a previous anim, show its last frame instead
+        if (stage > 0) {
+          showCanvas(stage - 1);
+          drawFrame(seqData[stage - 1], seqData[stage - 1].frameCount - 1);
+        }
+      }
+    }
+
+    /* ── Init ── */
+    async function init() {
+      await preloadAll();
+      document.getElementById("loader").classList.add("hidden");
+
+      // Show first frame of first animation
+      seqData.forEach((seq) => drawFrame(seq, 0));
+      showCanvas(0);
+      updateProgress(0, 0);
+
+      // Wheel
+      window.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        if (busy) {
+          boostIfScroll();
+          return;
+        }
+        handleScroll(e.deltaY);
+      }, { passive: false });
+
+      // Touch
+      let touchY = 0;
+      window.addEventListener("touchstart", (e) => {
+        touchY = e.touches[0].clientY;
+      }, { passive: true });
+
+      window.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        if (busy) return;
+        const delta = touchY - e.touches[0].clientY;
+        if (Math.abs(delta) < 20) return;
+        touchY = e.touches[0].clientY;
+        handleScroll(delta);
+      }, { passive: false });
+    }
+
+    init();
+  </script>
+</body>
+</html>
