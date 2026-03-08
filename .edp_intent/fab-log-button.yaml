@@ -1,0 +1,58 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: "Remove all log action buttons from sticky bar and hero (mobile + desktop). Replace with a single fixed orange circle FAB bottom-left with + icon, using kit tokens."
+scope:
+  allowedPaths:
+    - ".superdesign/design_iterations/ide_dashboard_concept_e.html"
+  forbiddenPaths:
+    - "app/frontend/**"
+    - "frontend-PRD/**"
+  newFiles:
+    - ".edp_intent/fab-log-button.yaml"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: ".fab renders as orange circle fixed bottom-left above tabbar"
+    given: "Mobile viewport"
+    when: "Page renders"
+    then: "52px orange circle at bottom:88px left:20px with + icon is visible"
+  - id: "AC-002"
+    description: "Mobile hero has no log action buttons"
+    given: "Mobile hero is rendered"
+    when: "Page renders"
+    then: "hero-actions div and its buttons are absent"
+  - id: "AC-003"
+    description: "Sticky bar has no log buttons"
+    given: "Sticky bar is rendered"
+    when: "Page renders"
+    then: "sticky-log-btn and sticky-reading-btn are absent; crop pill remains"
+  - id: "AC-004"
+    description: "Desktop hero has no log action buttons"
+    given: "Desktop viewport"
+    when: "Page renders"
+    then: "d-hero-actions div and its buttons are absent"
+  - id: "AC-005"
+    description: "FAB is hidden on desktop"
+    given: "Viewport >= 768px"
+    when: "Page renders"
+    then: "FAB has display:none"
+  - id: "AC-006"
+    description: "Crop selector pill in sticky bar unchanged"
+    given: "Sticky bar is rendered"
+    when: "Page renders"
+    then: "sticky-crop-btn pill is present and functional"
+  - id: "AC-007"
+    description: "Mobile tabbar unchanged"
+    given: "Mobile viewport"
+    when: "Page renders"
+    then: "Tab bar renders identically to pre-change state"
+nonGoals:
+  - "Log form or modal implementation"
+  - "Desktop FAB variant"
+  - "Tabbar changes"
+  - "Any other section modifications"
+complexityBudget:
+  maxNewFunctions: 0
+  maxNewFiles: 1
+  maxLinesOfCode: 15
+  maxDependencies: 0

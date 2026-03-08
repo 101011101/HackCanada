@@ -1,0 +1,225 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: >
+  Layer all PRD datakit variables (05-datakit.md) onto the engine as Optional fields.
+  Update scorer to handle partial data without inflating scores for data-poor farms.
+  Resolve moisture/humidity water signal overlap. Standardize N/P/K to ppm via field naming.
+  Preserve backward compatibility — zero call site changes to optimizer, scheduler,
+  router, packager, reporter, or main. Add data_completeness signal as separate function.
+
+scope:
+  allowedPaths:
+    - "app/engine/schemas.py"
+    - "app/engine/scorer.py"
+  forbiddenPaths:
+    - "app/engine/optimizer.py"
+    - "app/engine/scheduler.py"
+    - "app/engine/router.py"
+    - "app/engine/packager.py"
+    - "app/engine/reporter.py"
+    - "app/engine/main.py"
+    - "app/engine/data.py"
+  newFiles: []
+
+decisions:
+  comparabilityProblem: >
+    When a crop has an optimal range for variable X and the farm hasn't filled it in,
+    apply UNKNOWN_DEFAULT = 0.6 (slightly optimistic — farmer may just not have measured yet).
+    When neither crop nor farm has data for a variable, skip that dimension entirely.
+    Score = sum(scored_dims) / count(crop-relevant_dims).
+    This means data-poor farms are penalized via 0.6 on unknown dims — they cannot
+    outscore a data-rich farm with genuinely good readings.
+  returnTypePreservation: >
+    compute_suitability() stays -> float (3 call sites in packager.py, scorer.py, main.py).
+    data_completeness exposed via separate compute_data_completeness(farm, crop) -> float.
+    Both call shared internal _evaluate_dims(farm, crop) -> tuple[list[float], int].
+  moistureHumidityOverlap: >
+    Keep existing `moisture` field as-is (soil moisture %, currently scored).
+    Keep existing `humidity` field as-is (unused, backward compat only — do not score).
+    New fields drainage, water_availability, water_quality_ec are orthogonal — do not conflate.
+  unitStandardization: >
+    Field names encode units: nitrogen_ppm, phosphorus_ppm, potassium_ppm, salinity_ds_m,
+    water_quality_ec. No runtime unit conversion needed — enforced by naming convention.
+  zeroVsUnknown: >
+    Optional[float] = None means not measured. 0.0 means measured as zero.
+    This distinction is preserved by Python's type system — no additional code needed.
+  dataFileChanges: >
+    data.py crops do NOT need to change. All new Crop fields default to None.
+    Existing farm and crop definitions remain identical. New optimal ranges can be
+    added incrementally as agronomic data is confirmed.
+
+apiContracts:
+  - name: "_evaluate_dims"
+    type: "function"
+    visibility: "private (module-internal)"
+    params:
+      - name: "farm"
+        type: "FarmNode"
+      - name: "crop"
+        type: "Crop"
+    returns: "tuple[list[float], int]  # (scores_list, known_count)"
+    description: >
+      Shared helper. Returns list of per-dimension scores (actual or UNKNOWN_DEFAULT)
+      for every dimension the crop cares about, plus count of dims with actual farm data.
+      Hard gates (size, tools, budget) are NOT included — those are handled before calling.
+
+  - name: "compute_suitability"
+    type: "function"
+    signature: "compute_suitability(farm: FarmNode, crop: Crop) -> float"
+    change: "MODIFIED — internal logic replaced; return type and signature unchanged"
+    description: >
+      Returns 0.0 if any hard gate fails. Otherwise returns mean of _evaluate_dims scores.
+      Backward compatible — all existing call sites unaffected.
+
+  - name: "compute_data_completeness"
+    type: "function"
+    signature: "compute_data_completeness(farm: FarmNode, crop: Crop) -> float"
+    change: "NEW"
+    returns: "float in [0.0, 1.0]"
+    description: >
+      Returns fraction of crop-relevant dimensions where the farm has actual data.
+      1.0 = fully measured for this crop. 0.0 = no relevant data at all.
+      Used externally to signal confidence in the suitability score.
+
+  - name: "FarmNode"
+    type: "dataclass"
+    change: "MODIFIED — 14 new Optional fields appended after existing fields"
+    newFields:
+      # Soil Physical
+      - "soil_texture: Optional[str] = None  # 'sand'|'sandy_loam'|'loam'|'silt_loam'|'clay_loam'|'clay'"
+      - "soil_depth_cm: Optional[float] = None"
+      - "drainage: Optional[str] = None  # 'poor'|'moderate'|'well'"
+      # Soil Chemistry
+      - "organic_matter_pct: Optional[float] = None"
+      - "nitrogen_ppm: Optional[float] = None"
+      - "phosphorus_ppm: Optional[float] = None"
+      - "potassium_ppm: Optional[float] = None"
+      - "salinity_ds_m: Optional[float] = None"
+      # Climate
+      - "growing_season_days: Optional[float] = None"
+      - "rainfall_distribution: Optional[str] = None  # 'even'|'seasonal'|'monsoon'|'irregular'"
+      - "sunlight_hours_day: Optional[float] = None"
+      # Water
+      - "water_availability: Optional[str] = None  # 'none'|'rain_fed'|'irrigation'"
+      - "water_quality_ec: Optional[float] = None"
+      # Site
+      - "aspect: Optional[str] = None  # 'N'|'NE'|'E'|'SE'|'S'|'SW'|'W'|'NW'"
+
+  - name: "Crop"
+    type: "dataclass"
+    change: "MODIFIED — 12 new Optional fields appended after existing fields"
+    newFields:
+      # Soil Physical
+      - "optimal_soil_textures: Optional[tuple] = None  # tuple of accepted texture strings"
+      - "optimal_soil_depth_cm: Optional[tuple] = None  # (min_cm, max_cm)"
+      - "preferred_drainage: Optional[tuple] = None  # tuple of accepted drainage strings"
+      # Soil Chemistry
+      - "optimal_organic_matter: Optional[tuple] = None  # (min_pct, max_pct)"
+      - "optimal_nitrogen_ppm: Optional[tuple] = None"
+      - "optimal_phosphorus_ppm: Optional[tuple] = None"
+      - "optimal_potassium_ppm: Optional[tuple] = None"
+      - "optimal_salinity_ds_m: Optional[tuple] = None"
+      # Climate
+      - "optimal_growing_season_days: Optional[tuple] = None  # (min_days, max_days)"
+      - "preferred_rainfall: Optional[tuple] = None  # tuple of accepted strings"
+      - "optimal_sunlight_hours: Optional[tuple] = None  # (min_hrs, max_hrs)"
+      # Water
+      - "preferred_water_availability: Optional[tuple] = None  # tuple of accepted strings"
+      - "optimal_water_quality_ec: Optional[tuple] = None  # (min_ds_m, max_ds_m)"
+      # Site
+      - "preferred_aspects: Optional[tuple] = None  # tuple of accepted aspect strings"
+
+scorerImplementationNotes:
+  UNKNOWN_DEFAULT: 0.6
+  hardGates: ["plot_size_sqft < crop.min_sqft", "tools rank", "budget rank"]
+  continuousDims:
+    description: "Scored via existing range_score(value, low, high)"
+    pairs:
+      - [farm.pH, crop.optimal_pH]
+      - [farm.moisture, crop.optimal_moisture]
+      - [farm.temperature, crop.optimal_temp]
+      - [farm.soil_depth_cm, crop.optimal_soil_depth_cm]
+      - [farm.organic_matter_pct, crop.optimal_organic_matter]
+      - [farm.nitrogen_ppm, crop.optimal_nitrogen_ppm]
+      - [farm.phosphorus_ppm, crop.optimal_phosphorus_ppm]
+      - [farm.potassium_ppm, crop.optimal_potassium_ppm]
+      - [farm.salinity_ds_m, crop.optimal_salinity_ds_m]
+      - [farm.growing_season_days, crop.optimal_growing_season_days]
+      - [farm.sunlight_hours_day, crop.optimal_sunlight_hours]
+      - [farm.water_quality_ec, crop.optimal_water_quality_ec]
+  categoricalDims:
+    description: "Scored 1.0 if farm value in crop preferred set, else 0.0"
+    pairs:
+      - [farm.soil_texture, crop.optimal_soil_textures]
+      - [farm.drainage, crop.preferred_drainage]
+      - [farm.rainfall_distribution, crop.preferred_rainfall]
+      - [farm.water_availability, crop.preferred_water_availability]
+      - [farm.aspect, crop.preferred_aspects]
+  sizeDim:
+    description: "Always scored: min(1.0, farm.plot_size_sqft / crop.min_sqft)"
+    alwaysKnown: true
+  scoringRule: >
+    For each dim: if crop has no optimal/preferred → skip entirely.
+    If crop has optimal AND farm has value → score normally, increment known_count.
+    If crop has optimal AND farm value is None → append UNKNOWN_DEFAULT, do NOT increment known_count.
+    Final score = sum(scores) / len(scores). If no scores, return 0.5.
+
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "All 14 PRD variables representable in FarmNode"
+    given: "A FarmNode is constructed with keyword args"
+    when: "All 14 new fields are provided"
+    then: "FarmNode stores them correctly with correct types"
+
+  - id: "AC-002"
+    description: "Backward compatibility — existing FarmNode construction unchanged"
+    given: "Existing data.py farm definitions (no new fields)"
+    when: "FarmNode is instantiated"
+    then: "All new fields default to None, no errors thrown"
+
+  - id: "AC-003"
+    description: "Data-poor farm cannot outscore data-rich farm on unknown dims"
+    given: "Farm A has pH=1.0 only; Farm B has pH=1.0 and nitrogen=0.2 (bad)"
+    when: "Crop requires both pH and nitrogen"
+    then: "Farm A scores 0.8 (0.6 default on nitrogen); Farm B scores 0.6 (actual bad reading); Farm A still wins but cannot score 1.0"
+
+  - id: "AC-004"
+    description: "Zero is distinguished from Unknown"
+    given: "Farm with nitrogen_ppm=0.0 vs farm with nitrogen_ppm=None"
+    when: "compute_suitability is called"
+    then: "nitrogen=0.0 is scored via range_score; nitrogen=None gets UNKNOWN_DEFAULT"
+
+  - id: "AC-005"
+    description: "compute_suitability return type unchanged"
+    given: "All 3 existing call sites (scorer.py, packager.py, main.py)"
+    when: "compute_suitability is called"
+    then: "Returns float — no call site changes needed"
+
+  - id: "AC-006"
+    description: "compute_data_completeness returns correct ratio"
+    given: "Farm with 3 of 8 crop-relevant dims filled"
+    when: "compute_data_completeness is called"
+    then: "Returns 3/8 = 0.375"
+
+  - id: "AC-007"
+    description: "Existing engine demo runs without modification"
+    given: "main.py run_demo() with existing data.py"
+    when: "python -m app.engine.main"
+    then: "Output identical to pre-change run (scores may differ slightly from new normalization)"
+
+nonGoals:
+  - "Modifying optimizer, scheduler, router, packager, reporter, or main"
+  - "Populating agronomic optimal ranges in data.py crops"
+  - "UI or API layer changes"
+  - "Database schema migration"
+  - "Kit ordering or supply chain logic"
+  - "Removing or renaming existing FarmNode fields (moisture, humidity)"
+  - "Adding explicit dimension weights (equal weights via mean)"
+  - "Unit conversion at runtime (units enforced by field naming only)"
+
+complexityBudget:
+  maxNewFunctions: 3
+  maxNewFiles: 0
+  maxLinesOfCode: 120
+  maxDependencies: 0

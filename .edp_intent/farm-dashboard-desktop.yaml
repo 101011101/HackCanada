@@ -1,0 +1,58 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: "Desktop layout redesign: sharp hero corners, full-width two-panel task section (list + detail), three-column data section (crop selector / readings / viz), crop selector collapsed with emoji placeholders that expand on hover, General as first crop option"
+scope:
+  allowedPaths:
+    - ".superdesign/design_iterations/ide_dashboard_concept_e.html"
+  forbiddenPaths:
+    - "app/frontend/**"
+    - "frontend-PRD/**"
+  newFiles:
+    - ".edp_intent/farm-dashboard-desktop.yaml"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Hero has zero border-radius on desktop"
+    given: "Viewport >= 768px"
+    when: "Page renders"
+    then: "Hero block has sharp corners, no rounded edges"
+  - id: "AC-002"
+    description: "Tasks section spans full width with two panels"
+    given: "Viewport >= 768px"
+    when: "Dashboard renders"
+    then: "Left panel shows task list (280px), right panel shows expanded detail of selected task"
+  - id: "AC-003"
+    description: "Clicking a task row updates the detail panel"
+    given: "Task list is visible"
+    when: "User clicks a task row"
+    then: "Right panel updates to show that task's why/how/tools/actions"
+  - id: "AC-004"
+    description: "Data section is a three-column grid"
+    given: "Viewport >= 768px"
+    when: "Dashboard renders below tasks"
+    then: "Three columns visible: crop selector (180px) | readings (1fr) | visualizer (1fr)"
+  - id: "AC-005"
+    description: "Crop selector collapsed by default, expands on hover"
+    given: "Data section is rendered"
+    when: "User hovers the crop selector column"
+    then: "Pills expand to show zone and cycle sub-info; column width increases smoothly"
+  - id: "AC-006"
+    description: "General is the first crop option"
+    given: "Crop selector is visible"
+    when: "Page renders"
+    then: "First pill shows a chart emoji and label General"
+  - id: "AC-007"
+    description: "Mobile layout is unchanged"
+    given: "Viewport < 768px"
+    when: "Page renders"
+    then: "Mobile shell renders identically to pre-change state"
+nonGoals:
+  - "Mobile layout changes"
+  - "Actual data fetching or API integration"
+  - "Routing or navigation implementation"
+  - "Crop selector persistence across sessions"
+complexityBudget:
+  maxNewFunctions: 3
+  maxNewFiles: 1
+  maxLinesOfCode: 300
+  maxDependencies: 0

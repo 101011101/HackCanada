@@ -1,0 +1,58 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: "Clean up ide_dashboard_concept_e.html: remove dead CSS, fix class name mismatch, replace custom button with kit class, remove anonymous wrapper div, consolidate hex colors to kit tokens where possible in non-SVG contexts"
+scope:
+  allowedPaths:
+    - ".superdesign/design_iterations/ide_dashboard_concept_e.html"
+  forbiddenPaths:
+    - "app/frontend/**"
+    - "frontend-PRD/**"
+  newFiles:
+    - ".edp_intent/css-audit-cleanup.yaml"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "All dead CSS blocks removed"
+    given: "File is opened"
+    when: "CSS is inspected"
+    then: "No rules for .crop-selector-*, .hero-actions, .btn--hero-ghost, .sticky-log-btn, .sticky-reading-btn, .crop-opt-*, .crop-add-*, .feature-r, .feature-r-side, .two-col, .three-col, .crd, .crd--elev, .pbar-lt, .d-section-hd, .m-crop-trigger-dot, .fab, .toast exist"
+  - id: "AC-002"
+    description: "Crop option class name mismatch fixed"
+    given: "Crop picker sheet renders"
+    when: "Options are displayed"
+    then: "CSS selector matches HTML class: .crop-option-name and .crop-option-sub styled correctly"
+  - id: "AC-003"
+    description: "btn--hero-primary replaced with kit btn--accent"
+    given: "Desktop hero renders"
+    when: "Log button is visible"
+    then: "Button uses class btn btn--accent, no .btn--hero-primary CSS remains"
+  - id: "AC-004"
+    description: "active-crop class removed or given CSS"
+    given: "Crop sheet first option"
+    when: "Page renders"
+    then: "No undefined active-crop class on elements"
+  - id: "AC-005"
+    description: "Anonymous margin wrapper div removed from desktop data section"
+    given: "Desktop data card"
+    when: "Page renders"
+    then: "d-data-card has margin-bottom:28px directly; no wrapping div with inline style"
+  - id: "AC-006"
+    description: "Hard-coded #666/#444/#555/#aaa replaced with kit tokens in non-SVG CSS"
+    given: "CSS is inspected"
+    when: "Color values are audited"
+    then: "CSS rules use var(--ink-2) or var(--ink-3) instead of raw hex; SVG attribute hex values left as-is"
+  - id: "AC-007"
+    description: "Visual output unchanged"
+    given: "Both viewports"
+    when: "Page renders after cleanup"
+    then: "Mobile and desktop layouts look identical to pre-cleanup state"
+nonGoals:
+  - "Changing SVG stroke/fill attribute hex values (CSS vars not supported in attributes)"
+  - "Redesigning any layout or component"
+  - "Adding new features or styles"
+  - "Fixing the sticky bar HTML (crop pill already correct)"
+complexityBudget:
+  maxNewFunctions: 0
+  maxNewFiles: 1
+  maxLinesOfCode: 0
+  maxDependencies: 0
