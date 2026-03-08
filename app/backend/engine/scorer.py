@@ -113,6 +113,44 @@ def compute_data_completeness(farm: FarmNode, crop: Crop) -> float:
     return known / len(scores) if scores else 0.0
 
 
+def compute_risk_flags(farm: FarmNode, assigned_crops: list) -> list:
+    """
+    Returns list of {type, message, severity} risk flags for a farm
+    given its current soil readings and assigned crops.
+    """
+    flags = []
+    seen  = set()
+
+    def add(type_: str, message: str, severity: str):
+        if type_ not in seen:
+            seen.add(type_)
+            flags.append({'type': type_, 'message': message, 'severity': severity})
+
+    # Frost risk — temp at or below 2°C for crops with optimal_temp min >= 15°C
+    if farm.temperature <= 2:
+        frost_sensitive = [c for c in assigned_crops if c.optimal_temp[0] >= 15]
+        if frost_sensitive:
+            names = ', '.join(c.name for c in frost_sensitive)
+            add('frost', f'Temperature {farm.temperature}°C risks frost damage to {names}.', 'high')
+
+    # Overwatering risk
+    if farm.moisture > 85:
+        add('overwatering', f'Soil moisture {farm.moisture:.0f}% is too high — risk of root rot.', 'medium')
+
+    # Drought risk
+    if farm.moisture < 30:
+        add('drought', f'Soil moisture {farm.moisture:.0f}% is critically low.', 'high')
+
+    # Soil pH drift — outside crop optimal_pH range by more than 0.5
+    for crop in assigned_crops:
+        lo, hi = crop.optimal_pH
+        if farm.pH < lo - 0.5 or farm.pH > hi + 0.5:
+            add('soil_ph', f'Soil pH {farm.pH:.1f} is outside optimal range for {crop.name} ({lo}–{hi}).', 'medium')
+            break  # one pH flag is enough
+
+    return flags
+
+
 def build_yield_matrix(farms: list, crops: list) -> np.ndarray:
     """
     Returns float array of shape [N, M].

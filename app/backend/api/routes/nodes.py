@@ -1,18 +1,78 @@
 import dataclasses
 import numpy as np
-from fastapi import APIRouter, HTTPException
-from datetime import date
+from fastapi import APIRouter, HTTPException, Query
+from datetime import date, datetime, timezone, timedelta
 
 from app.backend.api import storage, models
 from app.backend.engine.schemas   import FarmNode
-from app.backend.engine.scorer    import build_yield_matrix, compute_suitability
+from app.backend.engine.scorer    import build_yield_matrix, compute_suitability, compute_risk_flags
 from app.backend.engine.router    import build_reachability_matrix, haversine
 from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
 from app.backend.engine.optimizer import greedy_insert
+from app.backend.engine.data      import CROP_GUIDES, CROP_TASKS
 
 router = APIRouter()
 
+
+def _now() -> str:
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec='seconds')
+
+
+def _greedy_assign(farm: FarmNode, farms, crops, hubs, config,
+                   yield_matrix, reachability_matrix) -> tuple[list[int], np.ndarray]:
+    """Shared greedy multi-slot assignment for a single farm. Returns (assigned_crop_ids, new_yield_row)."""
+    M = len(crops)
+    H = len(hubs)
+    locked, available = classify_nodes(farms, date.today())
+    locked_supply     = compute_locked_supply(farms, locked, yield_matrix, M)
+    gap_vector        = compute_gap(config, locked_supply, list(range(M)))
+    locked_hub_supply = compute_locked_supply_per_hub(
+        farms, locked, yield_matrix, hubs, reachability_matrix, M)
+
+    existing_assignments = storage.load_assignments()
+    current_hub_supply   = locked_hub_supply.copy()
+    for i in available:
+        crop_ids = existing_assignments.get(str(farms[i].id), [])
+        n = len(crop_ids) if crop_ids else 1
+        for c in crop_ids:
+            for h in range(H):
+                if reachability_matrix[i][h]:
+                    current_hub_supply[h][c] += yield_matrix[i][c] / n
+
+    new_yield_row = np.array([
+        compute_suitability(farm, crop) * crop.base_yield_per_sqft * farm.plot_size_sqft
+        for crop in crops
+    ], dtype=float)
+    new_reach_row = np.array([
+        haversine(farm.lat, farm.lng, hub.lat, hub.lng) <= config.max_travel_distance
+        for hub in hubs
+    ], dtype=bool)
+
+    num_slots      = max(1, int(farm.plot_size_sqft // config.min_slot_sqft))
+    assigned       = []
+    running_supply = current_hub_supply.copy()
+    for slot in range(num_slots):
+        modified = new_yield_row.copy()
+        for already in assigned:
+            modified[already] = 0.0
+        crop_idx = greedy_insert(
+            modified, new_reach_row, crops, hubs,
+            gap_vector, running_supply,
+            preferred_crop_ids=farm.preferred_crop_ids,
+        )
+        assigned.append(crop_idx)
+        slot_yield = new_yield_row[crop_idx] / num_slots
+        for h in range(H):
+            if new_reach_row[h]:
+                running_supply[h][crop_idx] += slot_yield
+
+    return assigned, new_yield_row, gap_vector, num_slots
+
+
+# ---------------------------------------------------------------------------
+# Balance / crops-on-hand
+# ---------------------------------------------------------------------------
 
 @router.get('/nodes/{node_id}/balance', response_model=models.BalanceResponse)
 def get_balance(node_id: int):
@@ -37,18 +97,27 @@ def update_crops_on_hand(node_id: int, body: models.CropsOnHandBody):
     crops_on_hand = farm.get('crops_on_hand', {})
     crops_on_hand[str(body.crop_id)] = body.quantity_kg
     farm['crops_on_hand'] = crops_on_hand
-    storage.save_farms(farms)
-    return {'crops_on_hand': crops_on_hand}
 
+    crops_lifetime = farm.get('crops_lifetime', {})
+    key = str(body.crop_id)
+    crops_lifetime[key] = round(crops_lifetime.get(key, 0.0) + body.quantity_kg, 4)
+    farm['crops_lifetime'] = crops_lifetime
+
+    storage.save_farms(farms)
+    return {'crops_on_hand': crops_on_hand, 'crops_lifetime': crops_lifetime}
+
+
+# ---------------------------------------------------------------------------
+# Create farm
+# ---------------------------------------------------------------------------
 
 @router.post('/nodes', response_model=list[models.BundleResponse])
 def add_node(req: models.NewFarmRequest):
     farms, crops, hubs, config = storage.load_engine_state()
-    M = len(crops)
-    H = len(hubs)
 
-    # Create new farm
     new_id   = max(f.id for f in farms) + 1
+    today    = date.today()
+    now_str  = _now()
     new_farm = FarmNode(
         id=new_id, name=req.name,
         lat=req.lat, lng=req.lng,
@@ -59,69 +128,25 @@ def add_node(req: models.NewFarmRequest):
         temperature=req.temperature, humidity=req.humidity,
         status='new',
         preferred_crop_ids=req.preferred_crop_ids,
+        cycle_start_date=today,
+        cycle_number=1,
+        joined_at=now_str,
     )
 
-    # Matrices for existing farms (needed for gap + hub supply)
     yield_matrix        = build_yield_matrix(farms, crops)
     reachability_matrix = build_reachability_matrix(farms, hubs, config.max_travel_distance)
+    assigned, new_yield_row, gap_vector, num_slots = _greedy_assign(
+        new_farm, farms, crops, hubs, config, yield_matrix, reachability_matrix)
 
-    locked, available   = classify_nodes(farms, date.today())
-    locked_supply       = compute_locked_supply(farms, locked, yield_matrix, M)
-    gap_vector          = compute_gap(config, locked_supply, list(range(M)))
-    locked_hub_supply   = compute_locked_supply_per_hub(
-        farms, locked, yield_matrix, hubs, reachability_matrix, M)
-
-    # Current hub supply = locked + already-assigned available farms
-    existing_assignments = storage.load_assignments()  # {farm_id_str: [crop_id, ...]}
-    current_hub_supply   = locked_hub_supply.copy()
-    for i in available:
-        crop_ids = existing_assignments.get(str(farms[i].id), [])
-        n = len(crop_ids) if crop_ids else 1
-        for c in crop_ids:
-            for h in range(H):
-                if reachability_matrix[i][h]:
-                    current_hub_supply[h][c] += yield_matrix[i][c] / n
-
-    # Yield row and reachability row for the new farm
-    new_yield_row = np.array([
-        compute_suitability(new_farm, crop) * crop.base_yield_per_sqft * new_farm.plot_size_sqft
-        for crop in crops
-    ], dtype=float)
-    new_reach_row = np.array([
-        haversine(new_farm.lat, new_farm.lng, hub.lat, hub.lng) <= config.max_travel_distance
-        for hub in hubs
-    ], dtype=bool)
-
-    # Multi-crop greedy assignment
-    num_slots   = max(1, int(new_farm.plot_size_sqft // config.min_slot_sqft))
-    assigned    = []
-    running_supply = current_hub_supply.copy()
-
-    for slot in range(num_slots):
-        modified_yield_row = new_yield_row.copy()
-        for already in assigned:
-            modified_yield_row[already] = 0.0
-        crop_idx = greedy_insert(
-            modified_yield_row, new_reach_row, crops, hubs,
-            gap_vector, running_supply,
-            preferred_crop_ids=new_farm.preferred_crop_ids,
-        )
-        assigned.append(crop_idx)
-        slot_yield = new_yield_row[crop_idx] / num_slots
-        for h in range(H):
-            if new_reach_row[h]:
-                running_supply[h][crop_idx] += slot_yield
-
-    # Persist
+    farm_dict = dataclasses.asdict(new_farm)
     farm_dicts = storage.load_farms()
-    farm_dicts.append(dataclasses.asdict(new_farm))
+    farm_dicts.append(farm_dict)
     storage.save_farms(farm_dicts)
 
     assignments = storage.load_assignments()
     assignments[str(new_id)] = assigned
     storage.save_assignments(assignments)
 
-    # Build response — one BundleResponse per assigned crop
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
     bundles  = []
     for c in assigned:
@@ -139,6 +164,9 @@ def add_node(req: models.NewFarmRequest):
             grow_weeks       = crop.grow_weeks,
             sqft_allocated   = sqft_per,
             preference_match = c in new_farm.preferred_crop_ids,
+            cycle_start_date = str(today),
+            cycle_number     = 1,
+            joined_at        = now_str,
             reason=(
                 f"Suitability {suitability:.0%} for {crop.name} — "
                 f"soil pH {new_farm.pH:.1f} "
@@ -147,6 +175,22 @@ def add_node(req: models.NewFarmRequest):
             ),
         ))
     return bundles
+
+
+# ---------------------------------------------------------------------------
+# Soil readings
+# ---------------------------------------------------------------------------
+
+@router.get('/nodes/{farm_id}/data', response_model=models.SoilReadingResponse)
+def get_soil_data(farm_id: int):
+    farm_dicts = storage.load_farms()
+    d = next((f for f in farm_dicts if f['id'] == farm_id), None)
+    if not d:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+    return models.SoilReadingResponse(
+        farm_id=farm_id, pH=d['pH'], moisture=d['moisture'],
+        temperature=d['temperature'], humidity=d['humidity'],
+    )
 
 
 @router.patch('/nodes/{farm_id}/data')
@@ -163,6 +207,47 @@ def update_soil(farm_id: int, req: models.SoilUpdateRequest):
     raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
 
 
+@router.post('/nodes/{farm_id}/readings', response_model=models.ReadingEntryResponse)
+def post_reading(farm_id: int, body: models.ReadingEntry):
+    farm_dicts = storage.load_farms()
+    farm = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    # Update live soil values on farm
+    farm['pH']          = body.pH
+    farm['moisture']    = body.moisture
+    farm['temperature'] = body.temperature
+    farm['humidity']    = body.humidity
+    storage.save_farms(farm_dicts)
+
+    # Append to readings log
+    entry = {
+        'farm_id':     farm_id,
+        'timestamp':   _now(),
+        'pH':          body.pH,
+        'moisture':    body.moisture,
+        'temperature': body.temperature,
+        'humidity':    body.humidity,
+    }
+    readings = storage.load_readings()
+    readings.append(entry)
+    storage.save_readings(readings)
+    return entry
+
+
+@router.get('/nodes/{farm_id}/readings', response_model=list[models.ReadingEntryResponse])
+def get_readings(farm_id: int, limit: int = Query(default=30, ge=1, le=500)):
+    readings = storage.load_readings()
+    filtered = [r for r in readings if r['farm_id'] == farm_id]
+    filtered.sort(key=lambda r: r['timestamp'])
+    return filtered[-limit:]
+
+
+# ---------------------------------------------------------------------------
+# Get node assignment
+# ---------------------------------------------------------------------------
+
 @router.get('/nodes/{farm_id}', response_model=list[models.BundleResponse])
 def get_node(farm_id: int):
     farm_dicts  = storage.load_farms()
@@ -177,7 +262,6 @@ def get_node(farm_id: int):
     crop_ids = assignments.get(str(farm_id))
 
     if not crop_ids:
-        # Fall back to locked farm's current_crop_ids
         if farm.current_crop_ids:
             crop_ids = farm.current_crop_ids
         else:
@@ -202,9 +286,194 @@ def get_node(farm_id: int):
             grow_weeks       = crop.grow_weeks,
             sqft_allocated   = sqft_per,
             preference_match = crop_id in farm.preferred_crop_ids,
+            cycle_start_date = str(farm.cycle_start_date) if farm.cycle_start_date else None,
+            cycle_number     = farm.cycle_number,
+            joined_at        = farm.joined_at,
             reason=(
                 f"Suitability {suitability:.0%} for {crop.name} — "
                 f"soil pH {farm.pH:.1f} (optimal {crop.optimal_pH[0]}–{crop.optimal_pH[1]})"
             ),
         ))
     return bundles
+
+
+# ---------------------------------------------------------------------------
+# Cycle end
+# ---------------------------------------------------------------------------
+
+@router.post('/nodes/{farm_id}/cycle-end', response_model=list[models.BundleResponse])
+def cycle_end(farm_id: int, body: models.CycleEndRequest):
+    farm_dicts = storage.load_farms()
+    farm_dict  = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm_dict:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    # Write actual yield into yield_history and crops_lifetime
+    yield_history  = farm_dict.get('yield_history', {})
+    crops_lifetime = farm_dict.get('crops_lifetime', {})
+    for crop_id_str, kg in body.actual_yield_kg.items():
+        prev = yield_history.get(crop_id_str, [])
+        prev.append(round(float(kg), 4))
+        yield_history[crop_id_str]  = prev
+        crops_lifetime[crop_id_str] = round(crops_lifetime.get(crop_id_str, 0.0) + float(kg), 4)
+
+    today = date.today()
+    farm_dict['yield_history']   = yield_history
+    farm_dict['crops_lifetime']  = crops_lifetime
+    farm_dict['cycle_number']    = farm_dict.get('cycle_number', 1) + 1
+    farm_dict['cycle_start_date'] = str(today)
+    farm_dict['cycle_end_date']  = None
+    farm_dict['status']          = 'available'
+    storage.save_farms(farm_dicts)
+
+    # Re-run greedy assignment
+    farms, crops, hubs, config = storage.load_engine_state()
+    farm = storage.dict_to_farmnode(farm_dict)
+    yield_matrix        = build_yield_matrix(farms, crops)
+    reachability_matrix = build_reachability_matrix(farms, hubs, config.max_travel_distance)
+    assigned, new_yield_row, gap_vector, num_slots = _greedy_assign(
+        farm, farms, crops, hubs, config, yield_matrix, reachability_matrix)
+
+    assignments = storage.load_assignments()
+    assignments[str(farm_id)] = assigned
+    storage.save_assignments(assignments)
+
+    sqft_per = round(farm.plot_size_sqft / num_slots, 1)
+    bundles  = []
+    for c in assigned:
+        crop        = crops[c]
+        suitability = compute_suitability(farm, crop)
+        qty_kg      = round(float(new_yield_row[c]) / num_slots, 1)
+        target      = config.food_targets.get(c, 0)
+        gap_pct     = max(0.0, gap_vector[c] / target * 100) if target > 0 else 0.0
+        bundles.append(models.BundleResponse(
+            farm_id          = farm_id,
+            farm_name        = farm.name,
+            crop_id          = crop.id,
+            crop_name        = crop.name,
+            quantity_kg      = qty_kg,
+            grow_weeks       = crop.grow_weeks,
+            sqft_allocated   = sqft_per,
+            preference_match = c in farm.preferred_crop_ids,
+            cycle_start_date = str(today),
+            cycle_number     = farm_dict['cycle_number'],
+            joined_at        = farm.joined_at,
+            reason=(
+                f"Suitability {suitability:.0%} for {crop.name} — "
+                f"network gap {gap_pct:.0f}% unfilled"
+            ),
+        ))
+    return bundles
+
+
+# ---------------------------------------------------------------------------
+# Guide
+# ---------------------------------------------------------------------------
+
+@router.get('/nodes/{farm_id}/guide')
+def get_guide(farm_id: int):
+    farm_dicts  = storage.load_farms()
+    farm_dict   = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm_dict:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    assignments = storage.load_assignments()
+    crop_ids    = assignments.get(str(farm_id)) or farm_dict.get('current_crop_ids') or []
+    if not crop_ids:
+        raise HTTPException(status_code=404,
+                            detail=f'No assignment for farm {farm_id} — run /optimize first')
+
+    crop_dicts = storage.load_crops()
+    guides = []
+    for crop_id in crop_ids:
+        crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
+        crop_name = crop_dict['name'] if crop_dict else str(crop_id)
+        guides.append({
+            'crop_id':   crop_id,
+            'crop_name': crop_name,
+            'guide':     CROP_GUIDES.get(crop_id, 'No guide available for this crop yet.'),
+        })
+    return {'farm_id': farm_id, 'guides': guides}
+
+
+# ---------------------------------------------------------------------------
+# Tasks
+# ---------------------------------------------------------------------------
+
+@router.get('/nodes/{farm_id}/tasks', response_model=list[models.TaskItem])
+def get_farm_tasks(farm_id: int):
+    farm_dicts  = storage.load_farms()
+    farm_dict   = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm_dict:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    assignments = storage.load_assignments()
+    crop_ids    = assignments.get(str(farm_id)) or farm_dict.get('current_crop_ids') or []
+    if not crop_ids:
+        raise HTTPException(status_code=404,
+                            detail=f'No assignment for farm {farm_id} — run /optimize first')
+
+    crop_dicts       = storage.load_crops()
+    cycle_start_str  = farm_dict.get('cycle_start_date')
+    cycle_start      = date.fromisoformat(cycle_start_str) if cycle_start_str else None
+    today            = date.today()
+
+    items = []
+    for crop_id in crop_ids:
+        crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
+        crop_name = crop_dict['name'] if crop_dict else str(crop_id)
+        for task in CROP_TASKS.get(crop_id, []):
+            due_date = None
+            status   = None
+            if cycle_start:
+                due     = cycle_start + timedelta(days=task['day_from_start'])
+                due_date = str(due)
+                days_out = (due - today).days
+                if days_out < 0:
+                    status = 'done'
+                elif days_out <= 7:
+                    status = 'upcoming'
+                else:
+                    status = 'future'
+            items.append(models.TaskItem(
+                id             = task['id'],
+                crop_id        = crop_id,
+                crop_name      = crop_name,
+                title          = task['title'],
+                subtitle       = task['subtitle'],
+                why            = task['why'],
+                how            = task['how'],
+                target         = task['target'],
+                tools_required = task['tools_required'],
+                day_from_start = task['day_from_start'],
+                due_date       = due_date,
+                status         = status,
+            ))
+    items.sort(key=lambda t: t.day_from_start)
+    return items
+
+
+# ---------------------------------------------------------------------------
+# Risks
+# ---------------------------------------------------------------------------
+
+@router.get('/nodes/{farm_id}/risks', response_model=list[models.RiskFlag])
+def get_risks(farm_id: int):
+    farm_dicts  = storage.load_farms()
+    farm_dict   = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm_dict:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    farm        = storage.dict_to_farmnode(farm_dict)
+    assignments = storage.load_assignments()
+    crop_ids    = assignments.get(str(farm_id)) or farm.current_crop_ids or []
+
+    if not crop_ids:
+        return []
+
+    crop_dicts = storage.load_crops()
+    assigned_crops = [
+        storage.dict_to_crop(d) for d in crop_dicts if d['id'] in crop_ids
+    ]
+    flags = compute_risk_flags(farm, assigned_crops)
+    return [models.RiskFlag(**f) for f in flags]

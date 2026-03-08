@@ -28,20 +28,92 @@ class SoilUpdateRequest(BaseModel):
     humidity:    float
 
 
+class SoilReadingResponse(BaseModel):
+    farm_id:     int
+    pH:          float
+    moisture:    float
+    temperature: float
+    humidity:    float
+
+
+class ReadingEntry(BaseModel):
+    pH:          float
+    moisture:    float
+    temperature: float
+    humidity:    float
+
+
+class ReadingEntryResponse(BaseModel):
+    farm_id:     int
+    timestamp:   str
+    pH:          float
+    moisture:    float
+    temperature: float
+    humidity:    float
+
+
+class SuggestionRequest(BaseModel):
+    plot_size_sqft:     float
+    plot_type:          str
+    tools:              str
+    budget:             str
+    pH:                 Optional[float] = None
+    moisture:           Optional[float] = None
+    temperature:        Optional[float] = None
+    preferred_crop_ids: list[int]       = []
+
+
+class SuggestionItem(BaseModel):
+    crop_id:            int
+    crop_name:          str
+    suitability_pct:    float
+    estimated_yield_kg: float
+    grow_weeks:         int
+    reason:             str
+
+
+class CycleEndRequest(BaseModel):
+    actual_yield_kg: dict   # {str(crop_id): kg}
+
+
+class TaskItem(BaseModel):
+    id:             int
+    crop_id:        int
+    crop_name:      str
+    title:          str
+    subtitle:       str
+    why:            str
+    how:            str
+    target:         str
+    tools_required: str
+    day_from_start: int
+    due_date:       Optional[str] = None
+    status:         Optional[str] = None   # 'done' | 'upcoming' | 'future'
+
+
+class RiskFlag(BaseModel):
+    type:     str
+    message:  str
+    severity: str   # 'low' | 'medium' | 'high'
+
+
 # ---------------------------------------------------------------------------
 # Responses
 # ---------------------------------------------------------------------------
 
 class BundleResponse(BaseModel):
-    farm_id:          int
-    farm_name:        str
-    crop_id:          int
-    crop_name:        str
-    quantity_kg:      float
-    grow_weeks:       int
-    reason:           str
-    preference_match: bool = False
-    sqft_allocated:   Optional[float] = None
+    farm_id:           int
+    farm_name:         str
+    crop_id:           int
+    crop_name:         str
+    quantity_kg:       float
+    grow_weeks:        int
+    reason:            str
+    preference_match:  bool           = False
+    sqft_allocated:    Optional[float] = None
+    cycle_start_date:  Optional[str]  = None
+    cycle_number:      Optional[int]  = None
+    joined_at:         Optional[str]  = None
 
 
 class LockedFarmResponse(BaseModel):

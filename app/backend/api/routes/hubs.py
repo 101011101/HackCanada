@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.backend.api import storage, models
+from app.backend.engine.data import CROP_TASKS
 
 router = APIRouter()
 
@@ -44,3 +45,28 @@ def get_hub_inventory(hub_id: int):
         total_kg    = total_kg,
         capacity_kg = hub['capacity_kg'],
     )
+
+
+@router.get('/crops/{crop_id}/tasks', response_model=list[models.TaskItem])
+def get_crop_tasks(crop_id: int):
+    tasks = CROP_TASKS.get(crop_id)
+    if tasks is None:
+        raise HTTPException(status_code=404, detail=f'No tasks found for crop {crop_id}')
+    crops     = storage.load_crops()
+    crop_dict = next((c for c in crops if c['id'] == crop_id), None)
+    crop_name = crop_dict['name'] if crop_dict else str(crop_id)
+    return [
+        models.TaskItem(
+            id             = t['id'],
+            crop_id        = crop_id,
+            crop_name      = crop_name,
+            title          = t['title'],
+            subtitle       = t['subtitle'],
+            why            = t['why'],
+            how            = t['how'],
+            target         = t['target'],
+            tools_required = t['tools_required'],
+            day_from_start = t['day_from_start'],
+        )
+        for t in tasks
+    ]

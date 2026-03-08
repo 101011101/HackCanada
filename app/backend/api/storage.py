@@ -73,6 +73,12 @@ def load_assignments() -> dict:
     except FileNotFoundError:
         return {}
 
+def load_readings() -> list[dict]:
+    try:
+        return _load('readings.json')
+    except FileNotFoundError:
+        return []
+
 
 # ---------------------------------------------------------------------------
 # Savers
@@ -102,15 +108,21 @@ def save_hubs(hubs: list[dict]) -> None:
 def save_config(config: dict) -> None:
     _save('config.json', config)
 
+def save_readings(readings: list[dict]) -> None:
+    _save('readings.json', readings)
+
 
 # ---------------------------------------------------------------------------
 # Dict → engine type converters
 # ---------------------------------------------------------------------------
 
 def dict_to_farmnode(d: dict) -> FarmNode:
-    cycle_end = None
+    cycle_end   = None
+    cycle_start = None
     if d.get('cycle_end_date'):
-        cycle_end = date.fromisoformat(d['cycle_end_date'])
+        cycle_end   = date.fromisoformat(d['cycle_end_date'])
+    if d.get('cycle_start_date'):
+        cycle_start = date.fromisoformat(d['cycle_start_date'])
     return FarmNode(
         id             = d['id'],
         name           = d['name'],
@@ -127,6 +139,9 @@ def dict_to_farmnode(d: dict) -> FarmNode:
         status         = d['status'],
         current_crop_id  = d.get('current_crop_id'),
         cycle_end_date   = cycle_end,
+        cycle_start_date = cycle_start,
+        cycle_number     = d.get('cycle_number', 1),
+        joined_at        = d.get('joined_at'),
         yield_history    = {int(k): v for k, v in d.get('yield_history', {}).items()},
         current_crop_ids = d.get('current_crop_ids', []),
         preferred_crop_ids = d.get('preferred_crop_ids', []),
@@ -232,6 +247,9 @@ def seed_if_missing() -> None:
 
     if not (DATA_DIR / 'ledger.json').exists():
         _save('ledger.json', [])
+
+    if not (DATA_DIR / 'readings.json').exists():
+        _save('readings.json', [])
 
     if not (DATA_DIR / 'hub_inventory.json').exists():
         from app.backend.engine.data import hubs as seed_hubs, crops as seed_crops

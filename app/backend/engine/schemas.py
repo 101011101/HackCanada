@@ -21,9 +21,12 @@ class FarmNode:
     temperature:     float          # celsius
     humidity:        float          # 0–100 % (stored, not scored)
     status:          str            # 'new' | 'growing' | 'available'
-    current_crop_id:  Optional[int]  = None
-    cycle_end_date:   Optional[date] = None
-    yield_history:    dict           = field(default_factory=dict)  # {crop_id: [kg, ...]}
+    current_crop_id:   Optional[int]  = None
+    cycle_end_date:    Optional[date] = None
+    cycle_start_date:  Optional[date] = None
+    cycle_number:      int            = 1
+    joined_at:         Optional[str]  = None   # ISO datetime string
+    yield_history:     dict           = field(default_factory=dict)  # {crop_id: [kg, ...]}
     # --- Multi-crop & preferences ---
     current_crop_ids:    list = field(default_factory=list)  # list[int]; populated from current_crop_id if empty
     preferred_crop_ids:  list = field(default_factory=list)  # list[int]; farmer-selected preferred crops
@@ -131,13 +134,14 @@ class Request:
     id:           int
     type:         str            # 'give' | 'receive'
     node_id:      int
-    hub_id:       int
     crop_id:      int
     quantity_kg:  float
-    status:       str            # 'pending' | 'matched' | 'confirmed' | 'cancelled'
+    status:       str            # 'pending' | 'options_ready' | 'matched' | 'confirmed' | 'cancelled'
     created_at:   str            # ISO datetime
-    matched_at:   Optional[str] = None
-    confirmed_at: Optional[str] = None
+    hub_id:       Optional[int]  = None
+    hub_options:  list           = field(default_factory=list)
+    matched_at:   Optional[str]  = None
+    confirmed_at: Optional[str]  = None
 
 
 @dataclass
