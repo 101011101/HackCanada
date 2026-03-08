@@ -178,7 +178,7 @@ interface Props {
   report: ReportResponse | null;
 }
 
-export default function DataInformation({ farmList, edges }: Props) {
+export default function DataInformation({ farmList, edges, hubs, crops, assignments, report }: Props) {
   // ── Single-pass farm aggregates ──
   const farmStats = useMemo(() => {
     const plotTypeCounts: Record<string, number> = { balcony: 0, rooftop: 0, backyard: 0, community: 0 };
@@ -223,6 +223,7 @@ export default function DataInformation({ farmList, edges }: Props) {
   // ── Hub table data ──
   const hubRows = useMemo(() => {
     const farmMap = new Map(farmList.map(f => [f.id, f]));
+    const cropMap = new Map(crops.map(c => [c.id, c]));
     const connectedPerHub = new Map<number, number>();
     const supplyPerHub = new Map<number, number>();
 
@@ -231,62 +232,59 @@ export default function DataInformation({ farmList, edges }: Props) {
 
       const farm = farmMap.get(e.farmId);
       if (!farm) continue;
-      const cropId = getEffectiveCropId(farm);
-      const crop = cropId != null ? getCrop(cropId) : null;
-      if (crop && farm.plot_size_sqft) {
-        const supply = crop.base_yield_per_sqft * farm.plot_size_sqft;
-        supplyPerHub.set(e.hubId, (supplyPerHub.get(e.hubId) ?? 0) + supply);
+      const cropIds = assignments[String(farm.id)] ?? [];
+      const n = cropIds.length || 1;
+      const sqftPer = (farm.plot_size_sqft ?? 0) / n;
+      for (const cropId of cropIds) {
+        const crop = cropMap.get(cropId);
+        if (crop) {
+          supplyPerHub.set(e.hubId, (supplyPerHub.get(e.hubId) ?? 0) + crop.base_yield_per_sqft * sqftPer);
+        }
       }
     }
 
     return hubs.map(hub => {
       const connected = connectedPerHub.get(hub.id) ?? 0;
       const totalSupply = supplyPerHub.get(hub.id) ?? 0;
-      const totalDemand = Object.values(hub.local_demand).reduce((a, b) => a + b, 0);
+      const localDemand = (hub as unknown as { local_demand: Record<string, number> }).local_demand ?? {};
+      const totalDemand = Object.values(localDemand).reduce((a, b) => a + b, 0);
       const fillRate = totalDemand > 0 ? Math.round((totalSupply / totalDemand) * 100) : 0;
 
-      const topDemand = Object.entries(hub.local_demand)
-        .map(([cropIdStr, qty]) => ({ crop: getCrop(Number(cropIdStr)), qty }))
-        .filter((d): d is { crop: NonNullable<ReturnType<typeof getCrop>>; qty: number } => d.crop != null)
+      const topDemand = Object.entries(localDemand)
+        .map(([cropIdStr, qty]) => ({ crop: cropMap.get(Number(cropIdStr)), qty }))
+        .filter((d): d is { crop: Crop; qty: number } => d.crop != null)
         .sort((a, b) => b.qty - a.qty)
         .slice(0, 2);
 
       return { hub, connected, fillRate: Math.min(fillRate, 100), topDemand };
     });
-  }, [farmList, edges]);
+  }, [farmList, edges, hubs, crops, assignments]);
 
   // ── Optimization engine stats ──
   const optimStats = useMemo(() => {
+    const cropMap = new Map(crops.map(c => [c.id, c]));
     const assignmentCount = Object.keys(assignments).length;
-    const assignedCropIds = new Set(Object.values(assignments));
+    const assignedCropIds = new Set<number>();
 
-    const totalDemand = hubs.reduce(
-      (sum, hub) => sum + Object.values(hub.local_demand).reduce((a, b) => a + b, 0), 0
-    );
-
-    let totalSupply = 0;
-    for (const [farmIdStr, cropId] of Object.entries(assignments)) {
-      const farm = farmList.find(f => f.id === Number(farmIdStr));
-      const crop = getCrop(cropId);
-      if (farm?.plot_size_sqft && crop) {
-        totalSupply += crop.base_yield_per_sqft * farm.plot_size_sqft;
-      }
+    for (const cropIds of Object.values(assignments)) {
+      for (const id of cropIds) assignedCropIds.add(id);
     }
-
     for (const farm of farmList) {
-      if (farm.status === "growing" && farm.current_crop_id != null && farm.plot_size_sqft) {
-        const crop = getCrop(farm.current_crop_id);
-        if (crop) totalSupply += crop.base_yield_per_sqft * farm.plot_size_sqft;
+      if (farm.status === "growing" && farm.current_crop_id != null) {
         assignedCropIds.add(farm.current_crop_id);
       }
     }
 
-    const supplyCoverage = totalDemand > 0 ? Math.round((totalSupply / totalDemand) * 100) : 0;
-    const allCropIds = new Set(crops.map(c => c.id));
     const supplyGaps = crops.filter(c => !assignedCropIds.has(c.id)).map(c => c.name);
 
-    return { assignmentCount, uniqueCrops: assignedCropIds.size, supplyCoverage, supplyGaps, totalCrops: allCropIds.size };
-  }, [farmList]);
+    return {
+      assignmentCount,
+      uniqueCrops: assignedCropIds.size,
+      supplyGaps,
+      totalCrops: crops.length,
+      cropMap,
+    };
+  }, [farmList, crops, assignments]);
 
   // ── Weather API ──
   const [weather, setWeather] = useState<WeatherData>(STATIC_WEATHER);
@@ -474,12 +472,16 @@ export default function DataInformation({ farmList, edges }: Props) {
           <div style={D.detailCard}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <div style={{ ...D.detailCardTitle, marginBottom: 0 }}>Optimization Engine</div>
-              <span style={D.badge(T.accent, T.accentBg)}>Last Run: 5m ago</span>
+              <span style={D.badge(T.accent, T.accentBg)}>
+                {report ? "Live" : "Loading…"}
+              </span>
             </div>
             <div style={D.detailRow}>
               <span style={D.detailLabel}>Status</span>
               <span style={D.detailValue}>
-                <span style={D.badge(T.success, "rgba(76,175,80,0.12)")}>Converged</span>
+                <span style={D.badge(report ? T.success : T.info, report ? "rgba(76,175,80,0.12)" : "rgba(91,141,239,0.12)")}>
+                  {report ? "Converged" : "Loading"}
+                </span>
               </span>
             </div>
             <div style={D.detailRow}>
@@ -487,8 +489,8 @@ export default function DataInformation({ farmList, edges }: Props) {
               <span style={D.detailValue}>{optimStats.assignmentCount} farms assigned</span>
             </div>
             <div style={D.detailRow}>
-              <span style={D.detailLabel}>Supply Coverage</span>
-              <span style={D.detailValue}>{optimStats.supplyCoverage}% of demand</span>
+              <span style={D.detailLabel}>Network Health</span>
+              <span style={D.detailValue}>{report ? `${report.network_health_pct.toFixed(1)}%` : "—"}</span>
             </div>
             <div style={D.detailRow}>
               <span style={D.detailLabel}>Crops in Rotation</span>
@@ -505,8 +507,8 @@ export default function DataInformation({ farmList, edges }: Props) {
               </span>
             </div>
             <div style={D.detailRowLast}>
-              <span style={D.detailLabel}>Next Epoch</span>
-              <span style={{ ...D.detailValue, color: T.ink3 }}>Auto in 24h</span>
+              <span style={D.detailLabel}>Total Yield</span>
+              <span style={{ ...D.detailValue, color: T.ink3 }}>{report ? `${Math.round(report.total_yield_kg)} kg` : "—"}</span>
             </div>
           </div>
         </div>
