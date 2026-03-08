@@ -157,6 +157,14 @@ def confirm_request(request_id: int, body: models.ConfirmBody):
         raise HTTPException(status_code=400, detail=f"Request already {req['status']}")
     if req['status'] != 'matched':
         raise HTTPException(status_code=400, detail=f"Request must be 'matched' before confirming (current status: '{req['status']}')")
+    if body.actual_quantity_kg > req['quantity_kg']:
+        raise HTTPException(status_code=422, detail=f"actual_quantity_kg ({body.actual_quantity_kg}) cannot exceed requested quantity ({req['quantity_kg']})")
+
+    # Validate farm exists BEFORE any state mutations (prevents partial transactions)
+    farms = storage.load_farms()
+    farm  = next((f for f in farms if f['id'] == req['node_id']), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail=f"Node {req['node_id']} not found")
 
     rates         = storage.load_current_rates()
     rate          = rates.get(str(req['crop_id']), 1.0)
@@ -180,11 +188,6 @@ def confirm_request(request_id: int, body: models.ConfirmBody):
     storage.save_hub_inventory(inventory)
 
     # Update node currency balance
-    farms = storage.load_farms()
-    farm  = next((f for f in farms if f['id'] == req['node_id']), None)
-    if not farm:
-        raise HTTPException(status_code=404, detail=f"Node {req['node_id']} not found")
-
     if req['type'] == 'give':
         farm['currency_balance'] = round(farm.get('currency_balance', 0.0) + currency_delta, 4)
         # Decrement crops_on_hand if present
@@ -305,6 +308,37 @@ def accept_request(request_id: int, body: models.AcceptBody):
         raise HTTPException(status_code=400, detail="Request must be in 'options_ready' status")
     if not any(opt['hub_id'] == body.hub_id for opt in req.get('hub_options', [])):
         raise HTTPException(status_code=400, detail=f'Hub {body.hub_id} is not listed for this request')
+
+    # Mirror same capacity/balance checks as select_hub
+    hubs_raw = storage.load_hubs()
+    hub_dict = next((h for h in hubs_raw if h['id'] == body.hub_id), None)
+    if not hub_dict:
+        raise HTTPException(status_code=404, detail=f'Hub {body.hub_id} not found')
+    hub = storage.dict_to_hub(hub_dict)
+
+    inventory = storage.load_hub_inventory()
+    inv: dict = {}
+    for e in inventory:
+        inv.setdefault(e['hub_id'], {})[e['crop_id']] = e['quantity_kg']
+
+    hub_total     = sum(inv.get(hub.id, {}).values())
+    cap_remaining = hub.capacity_kg - hub_total
+    hub_inv_crop  = inv.get(hub.id, {}).get(req['crop_id'], 0.0)
+
+    if req['type'] == 'give':
+        if cap_remaining < req['quantity_kg']:
+            raise HTTPException(status_code=400, detail='Hub no longer has capacity for this request')
+    else:
+        rates = storage.load_current_rates()
+        rate  = rates.get(str(req['crop_id']), 1.0)
+        cost  = req['quantity_kg'] * float(rate)
+        if hub_inv_crop < req['quantity_kg']:
+            raise HTTPException(status_code=400, detail='Hub no longer has sufficient stock')
+        farms = storage.load_farms()
+        farm  = next((f for f in farms if f['id'] == req['node_id']), None)
+        balance = farm.get('currency_balance', 0.0) if farm else 0.0
+        if balance < cost:
+            raise HTTPException(status_code=400, detail=f'Insufficient balance. Cost: {cost:.2f}, balance: {balance:.2f}')
 
     req['hub_id']     = body.hub_id
     req['status']     = 'matched'

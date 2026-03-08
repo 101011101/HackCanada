@@ -24,13 +24,13 @@ def get_coverage():
     locked_hub_supply   = compute_locked_supply_per_hub(
         farms, locked, yield_matrix, hubs, reachability_matrix, M)
 
-    assignments_dict    = {int(k): v for k, v in storage.load_assignments().items()}
+    assignments_dict    = {str(k): v for k, v in storage.load_assignments().items()}
 
     # Build assignment list (index-keyed) for available farms that have been assigned
     # assignments_dict values are list[int]; use first crop as primary for generate_report
     assignment_indices  = []
     for i in available:
-        crop_ids = assignments_dict.get(farms[i].id)
+        crop_ids = assignments_dict.get(str(farms[i].id))
         assignment_indices.append(list(crop_ids) if crop_ids else [0])
 
     report = generate_report(
@@ -44,7 +44,7 @@ def get_coverage():
     gap_vec = compute_gap(config, locked_supply, list(range(M)))
     bundles = []
     for i in available:
-        crop_ids = assignments_dict.get(farms[i].id)
+        crop_ids = assignments_dict.get(str(farms[i].id))
         if not crop_ids:
             continue
         sqft_per = round(farms[i].plot_size_sqft / len(crop_ids), 1)
