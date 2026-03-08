@@ -136,6 +136,8 @@ def confirm_request(request_id: int, body: models.ConfirmBody):
         raise HTTPException(status_code=404, detail=f'Request {request_id} not found')
     if req['status'] in ('confirmed', 'cancelled'):
         raise HTTPException(status_code=400, detail=f"Request already {req['status']}")
+    if req['status'] != 'matched':
+        raise HTTPException(status_code=400, detail=f"Request must be 'matched' before confirming (current status: '{req['status']}')")
 
     rates         = storage.load_current_rates()
     rate          = rates.get(str(req['crop_id']), 1.0)
