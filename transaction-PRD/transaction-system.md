@@ -452,7 +452,135 @@ Full ledger. Supports query params: `?node_id=4`.
 
 ---
 
-## 8. Storage Summary
+## 8. Dynamic Pricing
+
+### 8.1 Purpose
+
+A flat `currency_rate` per crop does not reflect reality. If the network is flooded with tomatoes, depositing more tomatoes should earn less — the signal discourages oversupply. If lettuce is scarce, depositing lettuce should earn more — the signal incentivizes it. Prices are network-wide: one rate per crop at any given time, not per-hub.
+
+### 8.2 Price calculation
+
+The transaction engine calculates a `current_rate` per crop based on network-wide supply vs. the network's target supply.
+
+```
+network_supply[c]  = sum of hub_inventory[h][c] across all hubs
+target_supply[c]   = config.food_targets[c]  (already exists)
+
+scarcity_ratio[c]  = target_supply[c] / max(network_supply[c], 0.01)
+                   — ratio > 1.0 means the network is undersupplied
+                   — ratio < 1.0 means the network is oversupplied
+
+current_rate[c]    = crop.base_currency_rate * clamp(scarcity_ratio[c], 0.25, 4.0)
+```
+
+- `base_currency_rate` — new field on `Crop`, the rate at perfect supply balance (e.g. `1.0`)
+- `clamp(0.25, 4.0)` — floor and ceiling prevent rates from collapsing to zero or spiking uncontrollably
+- At MVP: rates are recalculated each time the transaction engine runs, not in real time
+
+### 8.3 Rate storage
+
+Computed rates are stored in a new file `app/data/current_rates.json` — a simple map of crop_id → current rate.
+
+```json
+{
+  "1": 0.75,
+  "2": 1.40,
+  "3": 2.10,
+  "4": 1.00
+}
+```
+
+The confirm endpoint reads from `current_rates.json` at time of confirmation to determine the actual currency delta. The rate in effect at confirmation time is used — not the rate at submission time.
+
+### 8.4 Crop schema addition
+
+```python
+@dataclass
+class Crop:
+    # ... all existing fields unchanged ...
+    base_currency_rate: float = 1.0   # currency earned/spent per kg at balanced supply
+```
+
+---
+
+## 9. Transaction Engine
+
+### 9.1 Purpose
+
+Mirrors the farm optimizer (`app/engine/optimizer.py`) but for food distribution. Where the farm optimizer assigns crops to farms, the transaction engine assigns requests to hubs. It routes each pending request to the optimal hub and recalculates network prices.
+
+Lives at: `app/engine/transaction_engine.py`
+
+### 9.2 Inputs
+
+```
+hub_inventory[H][M]     — current kg of each crop at each hub (H hubs, M crops)
+requests[]              — all pending requests (give and receive)
+farms[]                 — for location data (lat/lng per node)
+hubs[]                  — for location, capacity, local_demand
+config                  — max_travel_distance, food_targets
+```
+
+### 9.3 What it computes
+
+**Step 1 — Reachability**
+
+For each pending request, determine which hubs the requesting node can reach:
+
+```
+reachable_hubs[request] = [h for h in hubs
+                           if haversine(node.lat, node.lng, hub.lat, hub.lng)
+                           <= config.max_travel_distance]
+```
+
+Reuses the existing `haversine` function from `app/engine/router.py`.
+
+**Step 2 — Hub scoring**
+
+For each reachable hub, score it for this request:
+
+```
+# For a give request (deposit):
+score[h] = demand_gap[h][crop] / hub.capacity_remaining[h]
+         — prefer hubs that need this crop and have room for it
+
+# For a receive request (withdrawal):
+score[h] = hub_inventory[h][crop] / hub.local_demand[h][crop]
+         — prefer hubs that are well-stocked for this crop
+```
+
+`capacity_remaining[h] = hub.capacity_kg - sum(hub_inventory[h])`
+
+**Step 3 — Assignment**
+
+Each request is assigned to the highest-scoring reachable hub. If no hub is reachable or no hub can satisfy the request (no inventory for receive, no capacity for give), the request stays `pending` and is retried next run.
+
+**Step 4 — Price recalculation**
+
+After routing, recalculate `current_rates` from network-wide inventory totals and write to `current_rates.json`.
+
+### 9.4 Output
+
+- Updated `status` on matched requests (`pending` → `matched`)
+- Updated `hub_id` on each request if rerouted to a better hub than originally submitted
+- Updated `current_rates.json`
+
+### 9.5 When it runs
+
+The transaction engine is called by the cron job. It does not run on every API call — only on schedule (same cadence as the matching cron job, e.g. every 15 minutes) and after any hub confirmation event.
+
+### 9.6 What it does not do
+
+- Does not confirm transactions
+- Does not write to `hub_inventory.json`
+- Does not write to `ledger.json`
+- Does not move currency
+
+All writes that affect balances and inventory are gated behind hub confirmation only.
+
+---
+
+## 10. Storage Summary
 
 | File | What it holds |
 |---|---|
@@ -461,6 +589,7 @@ Full ledger. Supports query params: `?node_id=4`.
 | `hub_inventory.json` | Current food stock per hub per crop — new |
 | `requests.json` | All give/receive requests — new |
 | `ledger.json` | Append-only currency movement log — new |
-| `crops.json` | Crop definitions — will need `currency_rate` field added |
+| `crops.json` | Crop definitions — will need `base_currency_rate` field added |
+| `current_rates.json` | Network-wide dynamic rate per crop — written by transaction engine |
 | `assignments.json` | Optimizer assignments — unchanged |
 | `config.json` | Network config — unchanged |
