@@ -1,7 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 
-export default function DesktopTopbar() {
+interface DesktopTopbarProps {
+  /** When provided, My Farm / My Food switch tabs in-place instead of navigating */
+  activeTab?: 'farm' | 'food';
+  onTabChange?: (tab: 'farm' | 'food') => void;
+}
+
+export default function DesktopTopbar({ activeTab, onTabChange }: DesktopTopbarProps) {
   const navigate = useNavigate();
+  const handleFarm = onTabChange ? () => onTabChange('farm') : () => navigate('/dashboard');
+  const handleFood = onTabChange ? () => onTabChange('food') : () => navigate('/wallet');
   return (
     <div className="d-topbar">
       <div className="d-topbar-logo">
@@ -15,8 +23,8 @@ export default function DesktopTopbar() {
         <span className="d-topbar-dot"></span>
       </div>
       <div className="d-topbar-actions">
-        <button className="btn btn--ghost btn--sm" onClick={() => navigate('/dashboard')} type="button">My Farm</button>
-        <button className="btn btn--ghost btn--sm" onClick={() => navigate('/wallet')} type="button">My Food</button>
+        <button className={`btn btn--ghost btn--sm${activeTab === 'farm' ? ' d-topbar-tab--on' : ''}`} onClick={handleFarm} type="button">My Farm</button>
+        <button className={`btn btn--ghost btn--sm${activeTab === 'food' ? ' d-topbar-tab--on' : ''}`} onClick={handleFood} type="button">My Food</button>
         <button className="btn btn--ghost btn--icon btn--sm" style={{ marginLeft: 8, background: 'rgba(255,255,255,0.08)' }} type="button" aria-label="Menu">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
             <line x1="3" y1="6" x2="17" y2="6"/>

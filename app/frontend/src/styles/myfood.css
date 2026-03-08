@@ -385,9 +385,14 @@
   display: flex;
   background: var(--bg-elev);
   border-top: 1px solid var(--border-lt);
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 50;
+}
+.shell:has(.m-tabbar) {
+  padding-bottom: 56px;
 }
 .m-tab {
   flex: 1;

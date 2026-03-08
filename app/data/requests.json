@@ -235,5 +235,47 @@
     "created_at": "2026-03-08T11:39:49",
     "matched_at": null,
     "confirmed_at": null
+  },
+  {
+    "id": 14,
+    "type": "receive",
+    "node_id": 105,
+    "hub_id": null,
+    "crop_id": 1,
+    "quantity_kg": 5.0,
+    "status": "pending",
+    "hub_options": [],
+    "created_at": "2026-03-08T12:35:56",
+    "matched_at": null,
+    "confirmed_at": null
+  },
+  {
+    "id": 15,
+    "type": "give",
+    "node_id": 105,
+    "hub_id": 2,
+    "crop_id": 1,
+    "quantity_kg": 1.0,
+    "status": "confirmed",
+    "hub_options": [
+      {
+        "hub_id": 0,
+        "distance_km": 0.6,
+        "score": 0.0844
+      },
+      {
+        "hub_id": 2,
+        "distance_km": 1.91,
+        "score": 0.021
+      },
+      {
+        "hub_id": 1,
+        "distance_km": 2.88,
+        "score": 0.0105
+      }
+    ],
+    "created_at": "2026-03-08T12:38:14",
+    "matched_at": "2026-03-08T12:38:48",
+    "confirmed_at": "2026-03-08T12:38:49"
   }
 ]

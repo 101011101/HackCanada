@@ -218,7 +218,8 @@
     .chart-leg-dot{width:8px;height:8px;border-radius:50%;}
 
     /* ── BOTTOM TABBAR ── */
-    .m-tabbar{display:flex;background:var(--bg-elev);border-top:1px solid var(--border-lt);position:sticky;bottom:0;z-index:50;}
+    .m-tabbar{display:flex;background:var(--bg-elev);border-top:1px solid var(--border-lt);position:fixed;left:0;right:0;bottom:0;z-index:50;}
+    .shell.m-only{padding-bottom:56px;}
     .m-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;background:transparent;border:none;cursor:pointer;color:var(--ink-3);}
     .m-tab--on{color:var(--ink);}
     .m-tab-lbl{font-size:9px;font-weight:600;letter-spacing:0.04em;}
