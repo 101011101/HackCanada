@@ -7,7 +7,7 @@ from typing import Optional
 from app.backend.api import storage, models
 from app.backend.engine.schemas   import FarmNode
 from app.backend.engine.scorer    import build_yield_matrix, compute_suitability, compute_risk_flags
-from app.backend.engine.router    import build_reachability_matrix, haversine
+from app.backend.engine.router    import build_reachability_matrix, haversine, compute_hub_routing
 from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
 from app.backend.engine.optimizer import greedy_insert
@@ -140,8 +140,10 @@ def add_node(req: models.NewFarmRequest):
         tools=req.tools, budget=req.budget,
         pH=req.pH, moisture=req.moisture,
         temperature=req.temperature, humidity=req.humidity,
+        sunlight_hours=req.sunlight_hours,
         status='new',
         preferred_crop_ids=req.preferred_crop_ids,
+        max_delivery_distance_m=req.max_delivery_distance_m,
         cycle_start_date=today,
         cycle_number=1,
         joined_at=now_str,
@@ -160,6 +162,11 @@ def add_node(req: models.NewFarmRequest):
     assignments = storage.load_assignments()
     assignments[str(new_id)] = list(dict.fromkeys(assigned))  # deduplicate crop slots
     storage.save_assignments(assignments)
+
+    # Update hub routing so the new node is immediately wired into the network
+    all_farms, _, all_hubs, all_config = storage.load_engine_state()
+    routing = compute_hub_routing(all_farms, all_hubs, all_config.max_travel_distance)
+    storage.save_hub_routing(routing)
 
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
     bundles  = []
@@ -270,6 +277,7 @@ def get_soil_data(farm_id: int):
     return models.SoilReadingResponse(
         farm_id=farm_id, pH=d['pH'], moisture=d['moisture'],
         temperature=d['temperature'], humidity=d['humidity'],
+        sunlight_hours=d.get('sunlight_hours'),
     )
 
 
@@ -282,6 +290,8 @@ def update_soil(farm_id: int, req: models.SoilUpdateRequest):
             d['moisture']    = req.moisture
             d['temperature'] = req.temperature
             d['humidity']    = req.humidity
+            if req.sunlight_hours is not None:
+                d['sunlight_hours'] = req.sunlight_hours
             storage.save_farms(farm_dicts)
             return {'status': 'ok', 'farm_id': farm_id}
     raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
@@ -596,3 +606,29 @@ def get_risks(farm_id: int):
     ]
     flags = compute_risk_flags(farm, assigned_crops)
     return [models.RiskFlag(**f) for f in flags]
+
+
+# ---------------------------------------------------------------------------
+# Delete farm node
+# ---------------------------------------------------------------------------
+
+@router.delete('/nodes/{farm_id}')
+def delete_node(farm_id: int):
+    """Remove a farm node and its assignments from the network."""
+    farm_dicts = storage.load_farms()
+    original_len = len(farm_dicts)
+    farm_dicts = [f for f in farm_dicts if f['id'] != farm_id]
+    if len(farm_dicts) == original_len:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+    storage.save_farms(farm_dicts)
+
+    assignments = storage.load_assignments()
+    assignments.pop(str(farm_id), None)
+    storage.save_assignments(assignments)
+
+    # Update hub routing to remove the deleted node
+    all_farms, _, all_hubs, all_config = storage.load_engine_state()
+    routing = compute_hub_routing(all_farms, all_hubs, all_config.max_travel_distance)
+    storage.save_hub_routing(routing)
+
+    return {'status': 'deleted', 'farm_id': farm_id}

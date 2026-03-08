@@ -230,7 +230,7 @@
     "humidity": 50.0,
     "status": "growing",
     "current_crop_id": 0,
-    "cycle_end_date": "2026-03-20",
+    "cycle_end_date": "2026-03-22",
     "yield_history": {}
   },
   {
@@ -248,7 +248,7 @@
     "humidity": 68,
     "status": "growing",
     "current_crop_id": 1,
-    "cycle_end_date": "2026-03-10",
+    "cycle_end_date": "2026-03-11",
     "yield_history": {}
   },
   {
@@ -266,7 +266,7 @@
     "humidity": 57,
     "status": "growing",
     "current_crop_id": 5,
-    "cycle_end_date": "2026-03-15",
+    "cycle_end_date": "2026-03-16",
     "yield_history": {}
   },
   {
@@ -284,7 +284,7 @@
     "humidity": 70,
     "status": "growing",
     "current_crop_id": 0,
-    "cycle_end_date": "2026-03-25",
+    "cycle_end_date": "2026-03-28",
     "yield_history": {}
   },
   {
@@ -302,7 +302,7 @@
     "humidity": 58,
     "status": "growing",
     "current_crop_id": 7,
-    "cycle_end_date": "2026-03-05",
+    "cycle_end_date": "2026-03-08",
     "yield_history": {}
   },
   {
@@ -320,7 +320,7 @@
     "humidity": 72,
     "status": "growing",
     "current_crop_id": 2,
-    "cycle_end_date": "2026-03-12",
+    "cycle_end_date": "2026-03-13",
     "yield_history": {}
   },
   {
@@ -338,7 +338,7 @@
     "humidity": 48,
     "status": "growing",
     "current_crop_id": 4,
-    "cycle_end_date": "2026-03-30",
+    "cycle_end_date": "2026-04-05",
     "yield_history": {}
   },
   {
@@ -356,7 +356,7 @@
     "humidity": 58,
     "status": "growing",
     "current_crop_id": 9,
-    "cycle_end_date": "2026-03-18",
+    "cycle_end_date": "2026-03-20",
     "yield_history": {}
   },
   {
@@ -3251,6 +3251,86 @@
     "preferred_crop_ids": [
       2
     ],
+    "currency_balance": 0.0,
+    "crops_on_hand": {},
+    "crops_lifetime": {},
+    "soil_texture": null,
+    "soil_depth_cm": null,
+    "drainage": null,
+    "organic_matter_pct": null,
+    "nitrogen_ppm": null,
+    "phosphorus_ppm": null,
+    "potassium_ppm": null,
+    "salinity_ds_m": null,
+    "growing_season_days": null,
+    "rainfall_distribution": null,
+    "sunlight_hours_day": null,
+    "water_availability": null,
+    "water_quality_ec": null,
+    "aspect": null
+  },
+  {
+    "id": 139,
+    "name": "efwe",
+    "lat": 43.65577,
+    "lng": -79.340839,
+    "plot_size_sqft": 0.0,
+    "plot_type": "balcony",
+    "tools": "basic",
+    "budget": "low",
+    "pH": 7.0,
+    "moisture": 60.0,
+    "temperature": 20.0,
+    "humidity": 60.0,
+    "status": "new",
+    "current_crop_id": null,
+    "cycle_end_date": null,
+    "cycle_start_date": "2026-03-08",
+    "cycle_number": 1,
+    "joined_at": "2026-03-08T11:37:37",
+    "yield_history": {},
+    "current_crop_ids": [],
+    "preferred_crop_ids": [],
+    "currency_balance": 0.0,
+    "crops_on_hand": {},
+    "crops_lifetime": {},
+    "soil_texture": null,
+    "soil_depth_cm": null,
+    "drainage": null,
+    "organic_matter_pct": null,
+    "nitrogen_ppm": null,
+    "phosphorus_ppm": null,
+    "potassium_ppm": null,
+    "salinity_ds_m": null,
+    "growing_season_days": null,
+    "rainfall_distribution": null,
+    "sunlight_hours_day": null,
+    "water_availability": null,
+    "water_quality_ec": null,
+    "aspect": null
+  },
+  {
+    "id": 140,
+    "name": "he heh eh",
+    "lat": 43.664481,
+    "lng": -79.360128,
+    "plot_size_sqft": 0.0,
+    "plot_type": "balcony",
+    "tools": "basic",
+    "budget": "low",
+    "pH": 7.0,
+    "moisture": 60.0,
+    "temperature": 20.0,
+    "humidity": 60.0,
+    "status": "new",
+    "current_crop_id": null,
+    "cycle_end_date": null,
+    "cycle_start_date": "2026-03-08",
+    "cycle_number": 1,
+    "joined_at": "2026-03-08T11:37:52",
+    "yield_history": {},
+    "current_crop_ids": [],
+    "preferred_crop_ids": [],
     "currency_balance": 0.0,
     "crops_on_hand": {},
     "crops_lifetime": {},

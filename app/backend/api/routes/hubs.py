@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.backend.api import storage, models
 from app.backend.engine.data import CROP_TASKS
+from app.backend.engine.router import compute_hub_routing
 
 router = APIRouter()
 
@@ -22,6 +23,21 @@ def get_hubs():
 def get_crops():
     """All crop definitions (id, name, grow_weeks, color, etc.)."""
     return storage.load_crops()
+
+
+@router.get('/hubs/routing')
+def get_hub_routing():
+    """Stored hub routing: {farm_id: [hub_id, ...]} for all farms."""
+    return storage.load_hub_routing()
+
+
+@router.post('/hubs/routing/compute')
+def compute_routing():
+    """Recompute hub routing from current farm/hub state and persist to hub_routing.json."""
+    farms, _, hubs, config = storage.load_engine_state()
+    routing = compute_hub_routing(farms, hubs, config.max_travel_distance)
+    storage.save_hub_routing(routing)
+    return routing
 
 
 @router.get('/hubs/{hub_id}/inventory', response_model=models.HubInventoryResponse)
