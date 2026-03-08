@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 from datetime import date
 
-from app.api import storage, models
-from app.engine.scorer    import build_yield_matrix
-from app.engine.router    import build_reachability_matrix
-from app.engine.scheduler import (classify_nodes, compute_locked_supply,
+from app.backend.api import storage, models
+from app.backend.engine.scorer    import build_yield_matrix
+from app.backend.engine.router    import build_reachability_matrix
+from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
-from app.engine.reporter  import generate_report
+from app.backend.engine.reporter  import generate_report
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ def get_coverage():
     )
 
     # Build BundleResponse list — one entry per crop slot per available farm
-    from app.engine.scorer import compute_suitability
+    from app.backend.engine.scorer import compute_suitability
     gap_vec = compute_gap(config, locked_supply, list(range(M)))
     bundles = []
     for i in available:

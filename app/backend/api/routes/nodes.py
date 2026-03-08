@@ -3,13 +3,13 @@ import numpy as np
 from fastapi import APIRouter, HTTPException
 from datetime import date
 
-from app.api import storage, models
-from app.engine.schemas   import FarmNode
-from app.engine.scorer    import build_yield_matrix, compute_suitability
-from app.engine.router    import build_reachability_matrix, haversine
-from app.engine.scheduler import (classify_nodes, compute_locked_supply,
+from app.backend.api import storage, models
+from app.backend.engine.schemas   import FarmNode
+from app.backend.engine.scorer    import build_yield_matrix, compute_suitability
+from app.backend.engine.router    import build_reachability_matrix, haversine
+from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
-from app.engine.optimizer import greedy_insert
+from app.backend.engine.optimizer import greedy_insert
 
 router = APIRouter()
 

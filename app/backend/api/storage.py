@@ -7,9 +7,9 @@ import dataclasses
 from pathlib import Path
 from datetime import date
 
-from app.engine.schemas import FarmNode, Crop, HubNode, NetworkConfig, HubInventoryEntry, Request, LedgerEntry
+from app.backend.engine.schemas import FarmNode, Crop, HubNode, NetworkConfig, HubInventoryEntry, Request, LedgerEntry
 
-DATA_DIR = Path(__file__).parent.parent / 'data'
+DATA_DIR = Path(__file__).parent.parent.parent / 'data'
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ def load_engine_state():
 
 def seed_if_missing() -> None:
     DATA_DIR.mkdir(exist_ok=True)
-    from app.engine.data import (farms as seed_farms, crops as seed_crops,
+    from app.backend.engine.data import (farms as seed_farms, crops as seed_crops,
                                   hubs as seed_hubs, config as seed_config)
 
     if not (DATA_DIR / 'farms.json').exists():
@@ -234,7 +234,7 @@ def seed_if_missing() -> None:
         _save('ledger.json', [])
 
     if not (DATA_DIR / 'hub_inventory.json').exists():
-        from app.engine.data import hubs as seed_hubs, crops as seed_crops
+        from app.backend.engine.data import hubs as seed_hubs, crops as seed_crops
         inventory = [
             {'hub_id': h.id, 'crop_id': c.id, 'quantity_kg': 0.0, 'last_updated': '2026-03-07T00:00:00'}
             for h in seed_hubs for c in seed_crops
@@ -242,6 +242,6 @@ def seed_if_missing() -> None:
         _save('hub_inventory.json', inventory)
 
     if not (DATA_DIR / 'current_rates.json').exists():
-        from app.engine.data import crops as seed_crops
+        from app.backend.engine.data import crops as seed_crops
         rates = {str(c.id): 1.0 for c in seed_crops}
         _save('current_rates.json', rates)

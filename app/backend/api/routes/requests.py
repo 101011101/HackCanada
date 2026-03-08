@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
-from app.api import storage, models
+from app.backend.api import storage, models
+from app.backend.engine import transaction_engine
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ def submit_request(body: models.RequestBody):
     hubs  = storage.load_hubs()
     crops = storage.load_crops()
 
-    if not any(h['id'] == body.hub_id  for h in hubs):
+    if body.hub_id is not None and not any(h['id'] == body.hub_id for h in hubs):
         raise HTTPException(status_code=404, detail=f'Hub {body.hub_id} not found')
     if not any(c['id'] == body.crop_id for c in crops):
         raise HTTPException(status_code=404, detail=f'Crop {body.crop_id} not found')
@@ -57,6 +58,7 @@ def submit_request(body: models.RequestBody):
         'crop_id':      body.crop_id,
         'quantity_kg':  body.quantity_kg,
         'status':       'pending',
+        'hub_options':  [],
         'created_at':   _now(),
         'matched_at':   None,
         'confirmed_at': None,
@@ -112,7 +114,7 @@ def cancel_request(request_id: int):
     req = next((r for r in requests if r['id'] == request_id), None)
     if not req:
         raise HTTPException(status_code=404, detail=f'Request {request_id} not found')
-    if req['status'] not in ('pending', 'matched'):
+    if req['status'] not in ('pending', 'options_ready', 'matched'):
         raise HTTPException(status_code=400, detail=f"Cannot cancel request with status '{req['status']}'")
     req['status'] = 'cancelled'
     storage.save_requests(requests)
@@ -196,9 +198,73 @@ def confirm_request(request_id: int, body: models.ConfirmBody):
     req['confirmed_at'] = _now()
     storage.save_requests(requests)
 
+    # Trigger engine — confirmation may unblock pending requests
+    farms_obj, crops_obj, hubs_obj, config_obj = storage.load_engine_state()
+    transaction_engine.run(farms_obj, hubs_obj, crops_obj, config_obj)
+
     return models.ConfirmResponse(
         status='confirmed',
         currency_delta=currency_delta,
         node_balance_after=balance_after,
         hub_inventory_after=entry['quantity_kg'],
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /requests/{request_id}/select-hub — node picks a hub from hub_options
+# ---------------------------------------------------------------------------
+
+@router.post('/requests/{request_id}/select-hub', response_model=models.SelectHubResponse)
+def select_hub(request_id: int, body: models.SelectHubBody):
+    requests = storage.load_requests()
+    req = next((r for r in requests if r['id'] == request_id), None)
+    if not req:
+        raise HTTPException(status_code=404, detail=f'Request {request_id} not found')
+    if req['status'] != 'options_ready':
+        raise HTTPException(status_code=400, detail="Request must be in 'options_ready' status")
+
+    hub_options = req.get('hub_options', [])
+    if not any(opt['hub_id'] == body.hub_id for opt in hub_options):
+        raise HTTPException(status_code=400, detail=f'Hub {body.hub_id} is not in hub_options for this request')
+
+    # Re-check hard constraints at selection time
+    hubs_raw  = storage.load_hubs()
+    hub_dict  = next((h for h in hubs_raw if h['id'] == body.hub_id), None)
+    if not hub_dict:
+        raise HTTPException(status_code=404, detail=f'Hub {body.hub_id} not found')
+    hub = storage.dict_to_hub(hub_dict)
+
+    inventory = storage.load_hub_inventory()
+    inv = {}
+    for e in inventory:
+        inv.setdefault(e['hub_id'], {})[e['crop_id']] = e['quantity_kg']
+
+    hub_total     = sum(inv.get(hub.id, {}).values())
+    cap_remaining = hub.capacity_kg - hub_total
+    hub_inv_crop  = inv.get(hub.id, {}).get(req['crop_id'], 0.0)
+
+    if req['type'] == 'give':
+        if cap_remaining < req['quantity_kg']:
+            raise HTTPException(status_code=400, detail='Hub no longer has capacity for this request')
+    else:
+        rates = storage.load_current_rates()
+        rate  = rates.get(str(req['crop_id']), 1.0)
+        cost  = req['quantity_kg'] * float(rate)
+        if hub_inv_crop < req['quantity_kg']:
+            raise HTTPException(status_code=400, detail='Hub no longer has sufficient stock')
+        farms = storage.load_farms()
+        farm  = next((f for f in farms if f['id'] == req['node_id']), None)
+        balance = farm.get('currency_balance', 0.0) if farm else 0.0
+        if balance < cost:
+            raise HTTPException(status_code=400, detail=f'Insufficient balance. Cost: {cost:.2f}, balance: {balance:.2f}')
+
+    req['hub_id']     = body.hub_id
+    req['status']     = 'matched'
+    req['matched_at'] = _now()
+    storage.save_requests(requests)
+
+    return models.SelectHubResponse(
+        status='matched',
+        hub_id=body.hub_id,
+        message=f'Hub selected. Proceed to Hub #{body.hub_id} for exchange.',
     )

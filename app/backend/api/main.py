@@ -2,8 +2,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import storage
-from app.api.routes import optimize, nodes, coverage, hubs, report, config as config_router, requests as requests_router, ledger as ledger_router
+from app.backend.api import storage
+from app.backend.api.routes import optimize, nodes, coverage, hubs, report, config as config_router, requests as requests_router, ledger as ledger_router
+from app.backend.rate_limit import install_rate_limiting
 
 
 @asynccontextmanager
@@ -13,6 +14,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title='MyCelium API', version='0.1.0', lifespan=lifespan)
+install_rate_limiting(app)
 
 app.add_middleware(
     CORSMiddleware,

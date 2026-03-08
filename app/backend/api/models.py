@@ -90,7 +90,7 @@ class HubUpdateRequest(BaseModel):
 class RequestBody(BaseModel):
     type:        str    # 'give' | 'receive'
     node_id:     int
-    hub_id:      int
+    hub_id:      Optional[int] = None
     crop_id:     int
     quantity_kg: float
 
@@ -99,13 +99,24 @@ class RequestResponse(BaseModel):
     id:           int
     type:         str
     node_id:      int
-    hub_id:       int
+    hub_id:       Optional[int]
     crop_id:      int
     quantity_kg:  float
     status:       str
+    hub_options:  list = []
     created_at:   str
     matched_at:   Optional[str] = None
     confirmed_at: Optional[str] = None
+
+
+class SelectHubBody(BaseModel):
+    hub_id: int
+
+
+class SelectHubResponse(BaseModel):
+    status:  str
+    hub_id:  int
+    message: str
 
 
 class ConfirmBody(BaseModel):
