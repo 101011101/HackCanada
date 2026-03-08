@@ -168,6 +168,29 @@ class HubUpdateRequest(BaseModel):
     priority:     Optional[str]   = None   # 'critical' | 'standard'
 
 
+class NewHubRequest(BaseModel):
+    name:         str
+    lat:          float
+    lng:          float
+    priority:     str            # 'critical' | 'standard'
+    capacity_kg:  float
+    local_demand: dict           # {str(crop_id): kg}
+
+
+class HubAuthRequest(BaseModel):
+    key: str
+
+
+class HubAuthResponse(BaseModel):
+    hub_id:   int
+    hub_name: str
+
+
+class HubKeyResponse(BaseModel):
+    hub_id: int
+    key:    str
+
+
 # ---------------------------------------------------------------------------
 # Transaction — request bodies & responses
 # ---------------------------------------------------------------------------

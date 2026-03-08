@@ -1,3 +1,6 @@
+import secrets
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 
 from app.backend.api import storage, models
@@ -73,6 +76,92 @@ def get_hub_inventory(hub_id: int):
         total_kg    = total_kg,
         capacity_kg = hub['capacity_kg'],
     )
+
+
+@router.post('/hubs', status_code=201)
+def create_hub(body: models.NewHubRequest):
+    """Create a new distribution hub."""
+    hubs = storage.load_hubs()
+    new_id = max((h['id'] for h in hubs), default=-1) + 1
+    new_hub = {
+        'id':           new_id,
+        'name':         body.name,
+        'lat':          body.lat,
+        'lng':          body.lng,
+        'priority':     body.priority,
+        'capacity_kg':  body.capacity_kg,
+        'local_demand': {str(k): v for k, v in body.local_demand.items()},
+    }
+    hubs.append(new_hub)
+    storage.save_hubs(hubs)
+
+    crops     = storage.load_crops()
+    inventory = storage.load_hub_inventory()
+    now       = datetime.utcnow().isoformat()
+    for crop in crops:
+        inventory.append({'hub_id': new_id, 'crop_id': crop['id'], 'quantity_kg': 0.0, 'last_updated': now})
+    storage.save_hub_inventory(inventory)
+
+    farms, _, hub_nodes, config = storage.load_engine_state()
+    routing = compute_hub_routing(farms, hub_nodes, config.max_travel_distance)
+    storage.save_hub_routing(routing)
+
+    return new_hub
+
+
+@router.delete('/hubs/{hub_id}')
+def delete_hub(hub_id: int):
+    """Delete a distribution hub and recompute routing."""
+    hubs = storage.load_hubs()
+    hub  = next((h for h in hubs if h['id'] == hub_id), None)
+    if not hub:
+        raise HTTPException(status_code=404, detail=f'Hub {hub_id} not found')
+    hubs = [h for h in hubs if h['id'] != hub_id]
+    storage.save_hubs(hubs)
+
+    inventory = [e for e in storage.load_hub_inventory() if e['hub_id'] != hub_id]
+    storage.save_hub_inventory(inventory)
+
+    farms, _, hub_nodes, config = storage.load_engine_state()
+    routing = compute_hub_routing(farms, hub_nodes, config.max_travel_distance)
+    storage.save_hub_routing(routing)
+
+    return {'status': 'deleted', 'hub_id': hub_id}
+
+
+@router.get('/hubs/keys')
+def get_hub_keys():
+    """Return all hub keys (admin use)."""
+    return storage.load_keys()
+
+
+@router.post('/hubs/{hub_id}/key/generate', response_model=models.HubKeyResponse)
+def generate_hub_key(hub_id: int):
+    """Generate (or regenerate) the access key for a hub."""
+    hubs = storage.load_hubs()
+    hub  = next((h for h in hubs if h['id'] == hub_id), None)
+    if not hub:
+        raise HTTPException(status_code=404, detail=f'Hub {hub_id} not found')
+    keys    = storage.load_keys()
+    new_key = secrets.token_urlsafe(12)
+    keys[str(hub_id)] = new_key
+    storage.save_keys(keys)
+    return models.HubKeyResponse(hub_id=hub_id, key=new_key)
+
+
+@router.post('/auth/hub', response_model=models.HubAuthResponse)
+def auth_hub(body: models.HubAuthRequest):
+    """Validate a hub key and return the associated hub's id and name."""
+    keys       = storage.load_keys()
+    hub_id_str = next((hid for hid, k in keys.items() if k == body.key), None)
+    if hub_id_str is None:
+        raise HTTPException(status_code=401, detail='Invalid hub key')
+    hub_id = int(hub_id_str)
+    hubs   = storage.load_hubs()
+    hub    = next((h for h in hubs if h['id'] == hub_id), None)
+    if not hub:
+        raise HTTPException(status_code=404, detail='Hub not found')
+    return models.HubAuthResponse(hub_id=hub_id, hub_name=hub['name'])
 
 
 @router.get('/crops/{crop_id}/tasks', response_model=list[models.TaskItem])

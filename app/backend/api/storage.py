@@ -120,6 +120,15 @@ def load_hub_routing() -> dict:
 def save_hub_routing(routing: dict) -> None:
     _save('hub_routing.json', routing)
 
+def load_keys() -> dict:
+    try:
+        return _load('keys.json')
+    except FileNotFoundError:
+        return {}
+
+def save_keys(keys: dict) -> None:
+    _save('keys.json', keys)
+
 
 # ---------------------------------------------------------------------------
 # Dict → engine type converters
