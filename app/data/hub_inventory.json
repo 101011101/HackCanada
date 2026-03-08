@@ -2,8 +2,8 @@
   {
     "hub_id": 0,
     "crop_id": 0,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 10.0,
+    "last_updated": "2026-03-08T11:47:58"
   },
   {
     "hub_id": 0,
@@ -74,8 +74,8 @@
   {
     "hub_id": 1,
     "crop_id": 2,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 2.0,
+    "last_updated": "2026-03-08T11:43:25"
   },
   {
     "hub_id": 1,
@@ -134,8 +134,8 @@
   {
     "hub_id": 2,
     "crop_id": 2,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 1.0,
+    "last_updated": "2026-03-08T11:48:22"
   },
   {
     "hub_id": 2,

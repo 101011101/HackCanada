@@ -187,8 +187,15 @@ export function getDeliveryCost(
   );
 }
 
-export function getLedger(node_id: number) {
-  return request<LedgerEntryResponse[]>(`/ledger?node_id=${node_id}`);
+export function getLedger(node_id?: number) {
+  const qs = node_id != null ? `?node_id=${node_id}` : "";
+  return request<LedgerEntryResponse[]>(`/ledger${qs}`);
+}
+
+export function cancelRequest(requestId: number) {
+  return request<{ status: string; request_id: number }>(`/requests/${requestId}`, {
+    method: "DELETE",
+  });
 }
 
 export function getCrops() {
@@ -197,4 +204,14 @@ export function getCrops() {
 
 export function getHubs() {
   return request<Hub[]>("/hubs");
+}
+
+export interface FarmBasic {
+  id: number;
+  name: string;
+  [key: string]: unknown;
+}
+
+export function getFarms() {
+  return request<FarmBasic[]>("/farms");
 }

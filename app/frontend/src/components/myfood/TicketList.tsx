@@ -35,14 +35,28 @@ function getSubtitle(req: RequestResponse, hubNames: Record<number, string>): st
   return "";
 }
 
-function getHubOptions(req: RequestResponse, hubs: { id: number; name: string }[]) {
+type HubOptionItem = { id: number; name: string; distance_km?: number };
+
+function getHubOptions(
+  req: RequestResponse,
+  hubs: { id: number; name: string }[],
+  hubNames: Record<number, string>
+): HubOptionItem[] {
+  const withDistance = (o: { hub_id?: number; hub_name?: string; distance_km?: number }) => ({
+    id: o.hub_id ?? 0,
+    name: o.hub_name ?? hubNames[o.hub_id!] ?? `Hub #${o.hub_id}`,
+    distance_km: o.distance_km,
+  });
   if (req.hub_options && Array.isArray(req.hub_options) && req.hub_options.length > 0) {
-    return req.hub_options.map((o: { hub_id?: number; hub_name?: string }) => ({
-      id: o.hub_id ?? 0,
-      name: o.hub_name ?? `Hub #${o.hub_id}`,
-    })).filter((o) => o.id > 0);
+    const options = req.hub_options
+      .map((o: { hub_id?: number; hub_name?: string; distance_km?: number }) => withDistance(o))
+      .filter((o) => o.id > 0);
+    // Sort by distance (nearest first); ensure at least one option
+    options.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity));
+    return options;
   }
-  return hubs;
+  // Fallback: all hubs so user always has at least one choice when any hub exists
+  return hubs.map((h) => ({ id: h.id, name: h.name }));
 }
 
 export default function TicketList({
@@ -63,11 +77,13 @@ export default function TicketList({
           </div>
         ) : (
           requests.map((req) => {
-            const options = getHubOptions(req, hubList);
+            const options = getHubOptions(req, hubList, hubNames);
             const instructionsContent =
               req.status === "options_ready" && options.length > 0 && onSelectHub ? (
                 <div>
-                  <label className="input-label" style={{ marginBottom: 4, display: "block" }}>Choose hub</label>
+                  <label className="input-label" style={{ marginBottom: 4, display: "block" }}>
+                    Choose nearest hub
+                  </label>
                   <select
                     className="input"
                     onChange={(e) => {
@@ -76,8 +92,10 @@ export default function TicketList({
                     }}
                   >
                     <option value="">Select hub…</option>
-                    {options.map((h) => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
+                    {options.map((h, i) => (
+                      <option key={h.id} value={h.id}>
+                        {i === 0 && h.distance_km != null ? `Nearest: ${h.name} (${h.distance_km} km)` : h.name}
+                      </option>
                     ))}
                   </select>
                 </div>

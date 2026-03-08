@@ -180,8 +180,9 @@ export default function MyFoodPage() {
               try {
                 await api.selectHub(requestId, hub_id);
                 refetch();
-              } catch {
-                setError("Failed to select hub");
+              } catch (e) {
+                if (e instanceof api.ApiError) setError(e.detail ?? e.message ?? "Failed to select hub");
+                else setError("Failed to select hub");
               }
             }}
             onConfirm={async (requestId, actual_quantity_kg) => {

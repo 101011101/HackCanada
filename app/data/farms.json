@@ -35,7 +35,8 @@
     "current_crop_id": null,
     "cycle_end_date": null,
     "yield_history": {},
-    "currency_balance": 50
+    "currency_balance": 74.0,
+    "crops_on_hand": {}
   },
   {
     "id": 4,
@@ -92,7 +93,8 @@
     "current_crop_id": null,
     "cycle_end_date": null,
     "yield_history": {},
-    "currency_balance": 30
+    "currency_balance": 38.0,
+    "crops_on_hand": {}
   },
   {
     "id": 10,
@@ -237,7 +239,8 @@
     "current_crop_id": 0,
     "cycle_end_date": "2026-03-20",
     "yield_history": {},
-    "currency_balance": 10
+    "currency_balance": 30.0,
+    "crops_on_hand": {}
   },
   {
     "id": 3,
