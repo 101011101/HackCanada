@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as api from "@/services/myfood-api";
 import type { Crop } from "@/services/myfood-api";
 import BottomSheet from "./BottomSheet";
@@ -19,15 +19,34 @@ export default function GroceriesSheet({
   onSuccess,
 }: GroceriesSheetProps) {
   const [crops, setCrops] = useState<Crop[]>([]);
+  const [cropsLoading, setCropsLoading] = useState(false);
+  const [cropsError, setCropsError] = useState<string | null>(null);
   const [cropId, setCropId] = useState<number | "">("");
   const [quantity, setQuantity] = useState("");
   const [cost, setCost] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) api.getCrops().then(setCrops);
+  const loadCrops = useCallback(() => {
+    if (!open) return;
+    setCropsError(null);
+    setCropsLoading(true);
+    api
+      .getCrops()
+      .then((list) => {
+        setCrops(list);
+        setCropsLoading(false);
+      })
+      .catch(() => {
+        setCropsError("Could not load crops. Check your connection and try again.");
+        setCrops([]);
+        setCropsLoading(false);
+      });
   }, [open]);
+
+  useEffect(() => {
+    if (open) loadCrops();
+  }, [open, loadCrops]);
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +54,7 @@ export default function GroceriesSheet({
     setQuantity("");
     setCost(null);
     setError(null);
+    setCropsError(null);
   }, [open]);
 
   useEffect(() => {
@@ -92,14 +112,23 @@ export default function GroceriesSheet({
       <p style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 16 }}>
         What would you like to receive?
       </p>
+      {cropsError && (
+        <p style={{ fontSize: 12, color: "var(--error)", marginBottom: 12 }}>
+          {cropsError}
+          <button type="button" className="btn btn--secondary btn--sm" style={{ marginLeft: 8 }} onClick={loadCrops}>
+            Retry
+          </button>
+        </p>
+      )}
       <div className="input-group">
         <label className="input-label">What do you want?</label>
         <select
+          disabled={cropsLoading}
           className="input"
           value={cropId === "" ? "" : cropId}
           onChange={(e) => setCropId(e.target.value ? Number(e.target.value) : "")}
         >
-          <option value="">Select a crop…</option>
+          <option value="">{cropsLoading ? "Loading crops…" : "Select a crop…"}</option>
           {crops.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}

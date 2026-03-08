@@ -85,88 +85,93 @@ export default function MyFoodPage() {
   if (!nodeId) {
     return (
       <div className="shell">
-        <MobileTopbar />
-        <div className="m-content" style={{ padding: 24 }}>
-          <p style={{ marginBottom: 16, color: "var(--ink-2)" }}>
-            Enter a node ID (e.g. from a registered farm) to use MyFood.
-          </p>
-          <input
-            type="number"
-            className="input"
-            value={demoNodeId}
-            onChange={(e) => setDemoNodeId(e.target.value)}
-            placeholder="Node ID"
-            min={1}
-            style={{ marginBottom: 12 }}
-          />
-          <button
-            type="button"
-            className="btn btn--accent btn--full"
-            onClick={() => {
-              const n = parseInt(demoNodeId, 10);
-              if (!Number.isNaN(n) && n > 0) setNodeId(n);
-            }}
-          >
-            Continue
-          </button>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <MobileTopbar />
+          <div className="m-content" style={{ padding: 24 }}>
+            <p style={{ marginBottom: 16, color: "var(--ink-2)" }}>
+              Enter a node ID (e.g. from a registered farm) to use MyFood.
+            </p>
+            <input
+              type="number"
+              className="input"
+              value={demoNodeId}
+              onChange={(e) => setDemoNodeId(e.target.value)}
+              placeholder="Node ID"
+              min={1}
+              style={{ marginBottom: 12 }}
+            />
+            <button
+              type="button"
+              className="btn btn--accent btn--full"
+              onClick={() => {
+                const n = parseInt(demoNodeId, 10);
+                if (!Number.isNaN(n) && n > 0) setNodeId(n);
+              }}
+            >
+              Continue
+            </button>
+          </div>
         </div>
+        <BottomTabBar />
       </div>
     );
   }
 
   return (
     <div className="shell">
-      <MobileTopbar />
-      <MyFoodHero
-        balance={balance?.currency_balance ?? 0}
-        consumedKg={consumedKg}
-        donatedKg={donatedKg}
-        requestCount={activeRequests}
-      />
-      <TasksRow
-        onGroceriesClick={() => setGroceriesOpen(true)}
-        onDonationsClick={() => setDonationsOpen(true)}
-      />
-      {loading ? (
-        <div className="myfood-loading">Loading…</div>
-      ) : error ? (
-        <div className="m-content">
-          <div className="myfood-empty" style={{ color: "var(--error)" }}>
-            {error}
-            <button
-              type="button"
-              className="btn btn--secondary"
-              style={{ marginTop: 12 }}
-              onClick={() => fetchData(nodeId!)}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : (
-        <TicketList
-          requests={requests}
-          cropNames={cropNames}
-          hubNames={hubNames}
-          onSelectHub={async (requestId, hub_id) => {
-            try {
-              await api.selectHub(requestId, hub_id);
-              refetch();
-            } catch {
-              setError("Failed to select hub");
-            }
-          }}
-          onConfirm={async (requestId, actual_quantity_kg) => {
-            try {
-              await api.confirmRequest(requestId, actual_quantity_kg);
-              refetch();
-            } catch (e) {
-              if (e instanceof api.ApiError) setError(e.detail ?? e.message);
-              else setError("Failed to confirm");
-            }
-          }}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <MobileTopbar />
+        <MyFoodHero
+          balance={balance?.currency_balance ?? 0}
+          consumedKg={consumedKg}
+          donatedKg={donatedKg}
+          requestCount={activeRequests}
         />
-      )}
+        <TasksRow
+          onGroceriesClick={() => setGroceriesOpen(true)}
+          onDonationsClick={() => setDonationsOpen(true)}
+        />
+        {loading ? (
+          <div className="myfood-loading">Loading…</div>
+        ) : error ? (
+          <div className="m-content">
+            <div className="myfood-empty" style={{ color: "var(--error)" }}>
+              {error}
+              <button
+                type="button"
+                className="btn btn--secondary"
+                style={{ marginTop: 12 }}
+                onClick={() => fetchData(nodeId!)}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <TicketList
+            requests={requests}
+            cropNames={cropNames}
+            hubNames={hubNames}
+            onSelectHub={async (requestId, hub_id) => {
+              try {
+                await api.selectHub(requestId, hub_id);
+                refetch();
+              } catch {
+                setError("Failed to select hub");
+              }
+            }}
+            onConfirm={async (requestId, actual_quantity_kg) => {
+              try {
+                await api.confirmRequest(requestId, actual_quantity_kg);
+                refetch();
+              } catch (e) {
+                if (e instanceof api.ApiError) setError(e.detail ?? e.message);
+                else setError("Failed to confirm");
+              }
+            }}
+          />
+        )}
+      </div>
       <BottomTabBar />
 
       <GroceriesSheet
