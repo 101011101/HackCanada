@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layout Patterns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #E8E5E0;
+      --bg-warm:   #DDD9D3;
+      --bg-card:   #F2F0EC;
+      --bg-elev:   #FFFFFF;
+      --ink:       #1A1A1A;
+      --ink-2:     #6B6762;
+      --ink-3:     #9E9A94;
+      --inv:       #F2F0EC;
+      --accent:    #E8913A;
+      --accent-bg: rgba(232,145,58,0.12);
+      --border:    #D1CDC7;
+      --border-lt: #E2DFD9;
+      --success:   #4CAF50;
+      --error:     #D94F4F;
+      --info:      #5B8DEF;
+      --r-xs: 2px; --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-pill: 999px;
+      --sh-sm: 0 1px 3px rgba(26,26,26,0.06);
+      --sh-md: 0 4px 12px rgba(26,26,26,0.08);
+      --sh-lg: 0 8px 24px rgba(26,26,26,0.12);
+      --fb: 'Inter', system-ui, sans-serif;
+      --fd: 'Space Grotesk', system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--fb); background: var(--bg); color: var(--ink); line-height: 1.5; }
+
+    /* ── PAGE SHELL ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 48px 32px 96px; }
+    .page-title {
+      font-family: var(--fd); font-size: 28px; font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 4px;
+    }
+    .page-sub { font-size: 13px; color: var(--ink-3); margin-bottom: 56px; }
+
+    /* ── SECTION LABEL ── */
+    .sec {
+      margin-bottom: 56px;
+    }
+    .sec-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--ink-3);
+      padding-bottom: 10px; margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── SHARED PRIMITIVES ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      font-size: 10px; font-weight: 600; padding: 2px 7px;
+      border-radius: var(--r-xs); letter-spacing: 0.02em;
+    }
+    .badge--accent  { background: var(--accent-bg); color: var(--accent); }
+    .badge--success { background: rgba(76,175,80,0.12); color: var(--success); }
+    .badge--error   { background: rgba(217,79,79,0.12); color: var(--error); }
+    .badge--info    { background: rgba(91,141,239,0.12); color: var(--info); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--fb); font-weight: 600; border: none; cursor: pointer;
+      border-radius: var(--r-sm); white-space: nowrap; font-size: 13px;
+      padding: 9px 18px; height: 36px; transition: opacity .15s;
+    }
+    .btn:hover { opacity: 0.82; }
+    .btn--primary   { background: var(--ink); color: var(--inv); }
+    .btn--secondary { background: transparent; color: var(--ink); border: 1.5px solid var(--border); }
+    .btn--accent    { background: var(--accent); color: #fff; }
+    .btn--ghost     { background: transparent; color: var(--ink-2); }
+    .btn--sm { height: 28px; padding: 5px 12px; font-size: 11px; }
+    .btn--lg { height: 44px; padding: 11px 24px; font-size: 15px; }
+    .btn--full { width: 100%; }
+
+    .overline { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+    .pbar { width: 100%; height: 3px; background: var(--border-lt); border-radius: var(--r-pill); overflow: hidden; }
+    .pbar-fill { height: 100%; background: var(--accent); border-radius: var(--r-pill); }
+
+    /* dot grid texture */
+    .dot-grid::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+      background-size: 18px 18px;
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════════════════
+       1. HERO BANNER — full-width dark
+    ════════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      background: var(--ink);
+      border-radius: var(--r-lg);
+      padding: 64px 56px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 32px;
+      min-height: 280px;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, transparent 30%, rgba(26,26,26,0.85) 75%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 520px; }
+    .hero-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+    .hero-title   { font-family: var(--fd); font-size: 48px; font-weight: 700; color: #fff; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 14px; }
+    .hero-sub     { font-size: 14px; color: #888; line-height: 1.7; margin-bottom: 28px; max-width: 420px; }
+    .hero-actions { display: flex; gap: 10px; align-items: center; }
+    .hero-stat {
+      position: relative; z-index: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--r-md);
+      padding: 24px 28px;
+      text-align: center;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+    .hero-stat-val  { font-family: var(--fd); font-size: 40px; font-weight: 700; color: #fff; line-height: 1; }
+    .hero-stat-unit { font-size: 16px; font-weight: 500; color: #666; }
+    .hero-stat-lbl  { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-top: 6px; }
+
+    /* ════════════════════════════════════════════
+       2. ICON CARDS — 4-col grid
+    ════════════════════════════════════════════ */
+    .icon-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .icon-card {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .icon-card:hover { background: var(--bg-elev); box-shadow: var(--sh-md); }
+    .icon-card--dark { background: var(--ink); }
+    .icon-card--dark:hover { background: #222; }
+    .ic {
+      width: 40px; height: 40px;
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ic--acc   { background: var(--accent-bg); color: var(--accent); }
+    .ic--dark  { background: rgba(255,255,255,0.06); color: #888; }
+    .ic--info  { background: rgba(91,141,239,0.12); color: var(--info); }
+    .ic--green { background: rgba(76,175,80,0.12); color: var(--success); }
+    .icon-card-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .icon-card-sub   { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+    .icon-card--dark .icon-card-title { color: #fff; }
+    .icon-card--dark .icon-card-sub   { color: #555; }
+    .icon-card-val   { font-family: var(--fd); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+    .icon-card--dark .icon-card-val   { color: #fff; }
+
+    /* ════════════════════════════════════════════
+       3. THREE-SPLIT — equal thirds
+    ════════════════════════════════════════════ */
+    .three-split { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .split-card {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .split-card--white { background: var(--bg-elev); box-shadow: var(--sh-sm); }
+    .split-card--dark  { background: var(--ink); }
+    .split-card--acc   { background: var(--accent); }
+    .split-title { font-family: var(--fd); font-size: 17px; font-weight: 700; line-height: 1.2; }
+    .split-body  { font-size: 12px; color: var(--ink-2); line-height: 1.6; flex: 1; }
+    .split-card--dark .split-title  { color: #fff; }
+    .split-card--dark .split-body   { color: #666; }
+    .split-card--acc  .split-title  { color: #fff; }
+    .split-card--acc  .split-body   { color: rgba(255,255,255,0.7); }
+    .split-card--acc  .overline     { color: rgba(255,255,255,0.5); }
+    .split-num { font-family: var(--fd); font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+    .split-card--dark .split-num { color: #fff; }
+    .split-card--acc  .split-num { color: #fff; }
+
+    /* ════════════════════════════════════════════
+       4. FEATURE — 1 big + 2 right
+    ════════════════════════════════════════════ */
+    .feature-r { display: grid; grid-template-columns: 1fr 340px; gap: 12px; align-items: stretch; }
+    .feature-r-right { display: flex; flex-direction: column; gap: 12px; }
+
+    .feature-l { display: grid; grid-template-columns: 340px 1fr; gap: 12px; align-items: stretch; }
+    .feature-l-left { display: flex; flex-direction: column; gap: 12px; }
+
+    .big-panel {
+      background: var(--ink);
+      border-radius: var(--r-lg);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+    }
+    .big-panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .big-panel-content { position: relative; z-index: 1; }
+    .big-panel-tag  { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+    .big-panel-title { font-family: var(--fd); font-size: 32px; font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px; }
+    .big-panel-sub   { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 20px; }
+
+    .small-panel {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    .small-panel--white { background: var(--bg-elev); box-shadow: var(--sh-sm); }
+    .small-panel--warm  { background: var(--bg-warm); }
+    .small-panel-title { font-size: 13px; font-weight: 600; }
+    .small-panel-val   { font-family: var(--fd); font-size: 32px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--ink); }
+    .small-panel-sub   { font-size: 11px; color: var(--ink-3); line-height: 1.5; flex: 1; }
+
+    /* ════════════════════════════════════════════
+       5. TOP + BOTTOM — 2 tall side + 1 wide top/bottom
+    ════════════════════════════════════════════ */
+    .tb-layout { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
+    .tb-top  { grid-column: span 2; }
+    .tb-bot  { grid-column: span 2; }
+
+    .wide-panel {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .wide-panel--dark { background: var(--ink); }
+    .wide-panel-content { flex: 1; }
+    .wide-panel-title { font-family: var(--fd); font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .wide-panel--dark .wide-panel-title { color: #fff; }
+    .wide-panel-sub   { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+    .wide-panel--dark .wide-panel-sub   { color: #555; }
+    .wide-panel-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* list row */
+    .li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-lt); }
+    .li:last-child { border-bottom: none; padding-bottom: 0; }
+    .li-title { font-size: 12px; font-weight: 500; }
+    .li-sub   { font-size: 10px; color: var(--ink-3); }
+    .li-right { margin-left: auto; font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
+
+    /* ════════════════════════════════════════════
+       6. SIDEBAR LAYOUT — left nav + content
+    ════════════════════════════════════════════ */
+    .sidebar-layout { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: start; }
+    .sidebar {
+      background: var(--ink);
+      border-radius: var(--r-md);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-logo  { display: flex; align-items: center; gap: 8px; padding: 0 20px 20px; border-bottom: 1px solid #2a2a2a; margin-bottom: 8px; }
+    .sidebar-name  { font-family: var(--fd); font-size: 14px; font-weight: 700; color: #fff; }
+    .sidebar-dot   { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px; font-size: 12px; font-weight: 500;
+      color: #555; cursor: pointer; transition: background .15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: #888; }
+    .nav-item--on   { color: #fff; background: rgba(255,255,255,0.06); }
+    .nav-item-dot   { width: 3px; height: 3px; border-radius: 50%; background: transparent; margin-left: auto; }
+    .nav-item--on .nav-item-dot { background: var(--accent); }
+    .sidebar-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #333; padding: 12px 20px 4px; }
+
+    .sidebar-content { display: flex; flex-direction: column; gap: 12px; }
+    .content-topbar {
+      background: var(--bg-elev);
+      border-radius: var(--r-md);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--sh-sm);
+    }
+    .content-topbar-title { font-size: 14px; font-weight: 600; }
+    .content-topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .kpi-card {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 16px;
+    }
+    .kpi-val  { font-family: var(--fd); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+    .kpi-lbl  { font-size: 10px; color: var(--ink-3); margin-top: 4px; font-weight: 500; }
+    .kpi-delta { font-size: 10px; font-weight: 600; margin-top: 6px; }
+    .kpi-delta--up { color: var(--success); }
+    .kpi-delta--dn { color: var(--error); }
+
+    /* ════════════════════════════════════════════
+       7. DATA TABLE PANEL
+    ════════════════════════════════════════════ */
+    .table-panel {
+      background: var(--bg-elev);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      box-shadow: var(--sh-sm);
+    }
+    .table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-lt);
+    }
+    .table-title { font-size: 13px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
+      padding: 10px 20px; background: var(--bg-card);
+      border-bottom: 1px solid var(--border-lt);
+    }
+    tbody td {
+      padding: 11px 20px; font-size: 12px; color: var(--ink);
+      border-bottom: 1px solid var(--border-lt);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--bg-card); }
+
+    /* ════════════════════════════════════════════
+       8. MOSAIC — mixed-size grid
+    ════════════════════════════════════════════ */
+    .mosaic {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-auto-rows: 120px;
+      gap: 10px;
+    }
+    .m1 { grid-column: span 2; grid-row: span 2; }
+    .m2 { grid-column: span 2; }
+    .m3 { grid-column: span 2; }
+    .m4 { grid-column: span 4; }
+    .m5 { grid-column: span 2; }
+    .m6 { grid-column: span 3; }
+    .m7 { grid-column: span 3; }
+
+    .mosaic-card {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+    }
+    .mosaic-card--dark  { background: var(--ink); }
+    .mosaic-card--acc   { background: var(--accent); }
+    .mosaic-card--white { background: var(--bg-elev); box-shadow: var(--sh-sm); }
+    .mosaic-card--warm  { background: var(--bg-warm); }
+    .m-title { font-size: 11px; font-weight: 600; color: var(--ink-2); }
+    .m-val   { font-family: var(--fd); font-size: 32px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--ink); }
+    .m-sub   { font-size: 10px; color: var(--ink-3); }
+    .mosaic-card--dark .m-title { color: #555; }
+    .mosaic-card--dark .m-val   { color: #fff; font-size: 40px; }
+    .mosaic-card--dark .m-sub   { color: #444; }
+    .mosaic-card--acc  .m-title { color: rgba(255,255,255,0.6); }
+    .mosaic-card--acc  .m-val   { color: #fff; }
+    .mosaic-card--acc  .m-sub   { color: rgba(255,255,255,0.5); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-title">Layout Patterns</div>
+  <div class="page-sub">Reusable structural templates — mix and match to build screens</div>
+
+
+  <!-- ── 1. HERO BANNER ── -->
+  <div class="sec">
+    <div class="sec-label">01 — Hero Banner</div>
+    <div class="hero">
+      <div class="hero-content">
+        <div class="hero-eyebrow">Real-time Network Coverage</div>
+        <div class="hero-title">Monitor Every<br/>Node at Once</div>
+        <div class="hero-sub">Live telemetry, predictive coverage maps, and instant alerts across your entire mesh network infrastructure.</div>
+        <div class="hero-actions">
+          <button class="btn btn--accent btn--lg">Get Started</button>
+          <button class="btn" style="color:#666;background:transparent">View Coverage Map</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;position:relative;z-index:1;flex-shrink:0">
+        <div class="hero-stat">
+          <div class="hero-stat-val">58<span class="hero-stat-unit">°</span></div>
+          <div class="hero-stat-lbl">Temperature</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">142</div>
+          <div class="hero-stat-lbl">Nodes Online</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">94<span class="hero-stat-unit">%</span></div>
+          <div class="hero-stat-lbl">Coverage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 2. ICON CARDS ── -->
+  <div class="sec">
+    <div class="sec-label">02 — Icon Cards (4-col)</div>
+    <div class="icon-cards">
+      <div class="icon-card">
+        <div class="ic ic--acc">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="8" cy="6" r="3"/><line x1="8" y1="1" x2="8" y2="3"/><line x1="8" y1="9" x2="8" y2="15"/><line x1="3" y1="3" x2="4.5" y2="4.5"/><line x1="13" y1="3" x2="11.5" y2="4.5"/></svg>
+        </div>
+        <div>
+          <div class="icon-card-val">58°F</div>
+          <div class="icon-card-title">Temperature</div>
+          <div class="icon-card-sub">Feels like 55° — clear skies expected through evening</div>
+        </div>
+      </div>
+      <div class="icon-card">
+        <div class="ic ic--info">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M8 2 C8 2 4 6 4 10 C4 12.2 5.8 14 8 14 C10.2 14 12 12.2 12 10 C12 6 8 2 8 2Z"/></svg>
+        </div>
+        <div>
+          <div class="icon-card-val">62%</div>
+          <div class="icon-card-title">Humidity</div>
+          <div class="icon-card-sub">Moderate — dew point at 44°F, comfortable conditions</div>
+        </div>
+      </div>
+      <div class="icon-card icon-card--dark">
+        <div class="ic ic--dark">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M2 8 Q5 5 8 8 Q11 11 14 8"/><path d="M2 11 Q4 9 6 10"/></svg>
+        </div>
+        <div>
+          <div class="icon-card-val">12 mph</div>
+          <div class="icon-card-title">Wind Speed</div>
+          <div class="icon-card-sub" style="color:#444">NW direction — gusts up to 18 mph after midnight</div>
+        </div>
+      </div>
+      <div class="icon-card">
+        <div class="ic ic--green">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="7" width="3" height="7"/><rect x="11" y="4" width="3" height="10"/></svg>
+        </div>
+        <div>
+          <div class="icon-card-val">94%</div>
+          <div class="icon-card-title">Network Coverage</div>
+          <div class="icon-card-sub">142 of 151 nodes reporting — 3 offline in sector B</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 3. THREE-SPLIT ── -->
+  <div class="sec">
+    <div class="sec-label">03 — Three-Split (equal thirds)</div>
+    <div class="three-split">
+      <div class="split-card split-card--white">
+        <div class="overline">Coverage</div>
+        <div class="split-num">94%</div>
+        <div class="split-body">Network nodes reporting healthy signal across all monitored zones in your area.</div>
+        <div><div class="pbar"><div class="pbar-fill" style="width:94%"></div></div></div>
+        <button class="btn btn--secondary btn--sm" style="align-self:flex-start">View Map</button>
+      </div>
+      <div class="split-card split-card--dark">
+        <div class="overline" style="color:#444">Nodes Online</div>
+        <div class="split-num">142</div>
+        <div class="split-body">Active telemetry nodes transmitting data every 30 seconds to the central hub.</div>
+        <div style="display:flex;gap:6px">
+          <span class="badge badge--success">142 active</span>
+          <span class="badge badge--error">3 offline</span>
+        </div>
+      </div>
+      <div class="split-card split-card--acc">
+        <div class="overline">Today's Forecast</div>
+        <div class="split-title">Partly Cloudy</div>
+        <div class="split-body">Highs of 62°F expected. Light breeze from the northwest. No precipitation.</div>
+        <button class="btn btn--sm" style="background:rgba(255,255,255,0.2);color:#fff;border:none;align-self:flex-start">Full Forecast</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 4A. 1 BIG + 2 RIGHT ── -->
+  <div class="sec">
+    <div class="sec-label">04a — One Big Panel + Two Right</div>
+    <div class="feature-r">
+      <div class="big-panel">
+        <div class="big-panel-content">
+          <div class="big-panel-tag">Live Coverage</div>
+          <div class="big-panel-title">Network Hub<br/>Overview</div>
+          <div class="big-panel-sub">Real-time telemetry from 142 active nodes across 6 monitoring zones. Signal integrity at 94%.</div>
+          <button class="btn btn--accent">Open Dashboard</button>
+        </div>
+      </div>
+      <div class="feature-r-right">
+        <div class="small-panel small-panel--white">
+          <div class="overline">Signal Strength</div>
+          <div class="small-panel-val">-72 dBm</div>
+          <div class="small-panel-sub">Average across all active nodes. Within acceptable operational range.</div>
+          <div><div class="pbar"><div class="pbar-fill" style="width:78%"></div></div></div>
+        </div>
+        <div class="small-panel">
+          <div class="overline">Data Uptime</div>
+          <div class="small-panel-val">99.4%</div>
+          <div class="small-panel-sub">30-day rolling average. Last outage 18 days ago, duration 4m.</div>
+          <div style="display:flex;gap:6px">
+            <span class="badge badge--success">Healthy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 4B. 2 LEFT + 1 BIG ── -->
+  <div class="sec">
+    <div class="sec-label">04b — Two Left + One Big Panel</div>
+    <div class="feature-l">
+      <div class="feature-l-left">
+        <div class="small-panel small-panel--warm">
+          <div class="overline">Today High</div>
+          <div class="small-panel-val">62°F</div>
+          <div class="small-panel-sub">Clear skies through evening. UV index moderate.</div>
+        </div>
+        <div class="small-panel small-panel--white">
+          <div class="overline">Precipitation</div>
+          <div class="small-panel-val">12%</div>
+          <div class="small-panel-sub">Low chance of rain. Next significant rainfall in 4 days.</div>
+          <div><div class="pbar"><div class="pbar-fill" style="width:12%"></div></div></div>
+        </div>
+      </div>
+      <div class="big-panel" style="justify-content:flex-start;padding-top:40px">
+        <div class="big-panel-content">
+          <div class="big-panel-tag">Weekly Summary</div>
+          <div class="big-panel-title">Forecast for<br/>the Next 7 Days</div>
+          <div class="big-panel-sub">Temperatures ranging from 48°F to 65°F. Mostly clear with isolated showers on Thursday.</div>
+          <button class="btn btn--secondary" style="color:#666;border-color:#333">See Detailed View</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 5. TOP + BOTTOM WIDE ── -->
+  <div class="sec">
+    <div class="sec-label">05 — Wide Top / Two Halves / Wide Bottom</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="wide-panel">
+        <div class="wide-panel-content">
+          <div class="wide-panel-title">Network Status — All Zones Reporting</div>
+          <div class="wide-panel-sub">Last sync: 42 seconds ago · 142 nodes active · Hub latency 12ms</div>
+        </div>
+        <div class="wide-panel-actions">
+          <span class="badge badge--success">All Systems Operational</span>
+          <button class="btn btn--secondary btn--sm">Refresh</button>
+          <button class="btn btn--primary btn--sm">Configure</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="small-panel small-panel--white" style="flex-direction:column;gap:8px">
+          <div class="small-panel-title">Zone A — Downtown</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="li"><div style="flex:1"><div class="li-title">Node 01</div></div><div class="li-right"><span class="badge badge--success">Online</span><span style="font-size:11px;font-weight:600">-68 dBm</span></div></div>
+            <div class="li"><div style="flex:1"><div class="li-title">Node 02</div></div><div class="li-right"><span class="badge badge--success">Online</span><span style="font-size:11px;font-weight:600">-71 dBm</span></div></div>
+            <div class="li"><div style="flex:1"><div class="li-title">Node 03</div></div><div class="li-right"><span class="badge badge--error">Offline</span><span style="font-size:11px;font-weight:600">—</span></div></div>
+          </div>
+        </div>
+        <div class="small-panel small-panel--white" style="flex-direction:column;gap:8px">
+          <div class="small-panel-title">Zone B — North End</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="li"><div style="flex:1"><div class="li-title">Node 07</div></div><div class="li-right"><span class="badge badge--success">Online</span><span style="font-size:11px;font-weight:600">-74 dBm</span></div></div>
+            <div class="li"><div style="flex:1"><div class="li-title">Node 08</div></div><div class="li-right"><span class="badge badge--success">Online</span><span style="font-size:11px;font-weight:600">-70 dBm</span></div></div>
+            <div class="li"><div style="flex:1"><div class="li-title">Node 09</div></div><div class="li-right"><span class="badge badge--success">Online</span><span style="font-size:11px;font-weight:600">-69 dBm</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="wide-panel wide-panel--dark">
+        <div class="wide-panel-content">
+          <div class="wide-panel-title">Ready to expand your coverage zone?</div>
+          <div class="wide-panel-sub" style="color:#555">Add new nodes, configure alert thresholds, and export coverage reports.</div>
+        </div>
+        <div class="wide-panel-actions">
+          <button class="btn btn--accent">Add Node</button>
+          <button class="btn" style="background:rgba(255,255,255,0.06);color:#888;border:none">Export Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 6. SIDEBAR LAYOUT ── -->
+  <div class="sec">
+    <div class="sec-label">06 — Sidebar + Content Area</div>
+    <div class="sidebar-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 32 32" fill="#fff" width="18" height="18"><path d="M6 8l8-4 8 4v8l-8 12-8-12z"/></svg>
+          <div class="sidebar-name">MyCelium<span class="sidebar-dot" style="display:inline-block;margin-left:3px;vertical-align:middle"></span></div>
+        </div>
+        <div class="sidebar-section-label">Main</div>
+        <div class="nav-item nav-item--on">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M2 8L8 2L14 8V14H10V10H6V14H2Z"/></svg>
+          Dashboard
+          <span class="nav-item-dot"></span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><rect x="2" y="8" width="2.5" height="6"/><rect x="6.5" y="5" width="2.5" height="9"/><rect x="11" y="2" width="2.5" height="12"/></svg>
+          Analytics
+          <span class="nav-item-dot"></span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="15" y2="15"/></svg>
+          Coverage Map
+          <span class="nav-item-dot"></span>
+        </div>
+        <div class="sidebar-section-label">Management</div>
+        <div class="nav-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+          Nodes
+          <span class="nav-item-dot"></span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M2 4h12v2L8 10 2 6V4z"/><path d="M2 6v6h12V6"/></svg>
+          Alerts
+          <span class="nav-item-dot"></span>
+        </div>
+        <div class="nav-item" style="margin-top:auto">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+          Profile
+          <span class="nav-item-dot"></span>
+        </div>
+      </div>
+      <div class="sidebar-content">
+        <div class="content-topbar">
+          <div class="content-topbar-title">Dashboard</div>
+          <div class="content-topbar-actions">
+            <button class="btn btn--secondary btn--sm">Export</button>
+            <button class="btn btn--accent btn--sm">Add Node</button>
+          </div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-val">142</div>
+            <div class="kpi-lbl">Nodes Online</div>
+            <div class="kpi-delta kpi-delta--up">+4 this week</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">94%</div>
+            <div class="kpi-lbl">Coverage</div>
+            <div class="kpi-delta kpi-delta--up">+2.1% vs last month</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">12ms</div>
+            <div class="kpi-lbl">Avg Latency</div>
+            <div class="kpi-delta kpi-delta--dn">+3ms vs yesterday</div>
+          </div>
+        </div>
+        <div class="table-panel">
+          <div class="table-header">
+            <div class="table-title">Node Status</div>
+            <span class="badge badge--accent">Live</span>
+          </div>
+          <table>
+            <thead><tr><th>Node ID</th><th>Zone</th><th>Signal</th><th>Uptime</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Node-01</td><td>Downtown</td><td>-68 dBm</td><td>99.8%</td><td><span class="badge badge--success">Online</span></td></tr>
+              <tr><td>Node-02</td><td>Downtown</td><td>-71 dBm</td><td>99.1%</td><td><span class="badge badge--success">Online</span></td></tr>
+              <tr><td>Node-03</td><td>North End</td><td>—</td><td>0%</td><td><span class="badge badge--error">Offline</span></td></tr>
+              <tr><td>Node-07</td><td>North End</td><td>-74 dBm</td><td>98.4%</td><td><span class="badge badge--success">Online</span></td></tr>
+              <tr><td>Node-11</td><td>East Side</td><td>-80 dBm</td><td>94.2%</td><td><span class="badge badge--accent">Degraded</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 7. MOSAIC ── -->
+  <div class="sec">
+    <div class="sec-label">07 — Mosaic (mixed-size grid)</div>
+    <div class="mosaic">
+      <!-- big dark 2x2 -->
+      <div class="mosaic-card mosaic-card--dark m1">
+        <div class="m-title">Network Nodes</div>
+        <div>
+          <div class="m-val">142</div>
+          <div class="m-sub" style="margin-top:6px">3 offline · 1 degraded</div>
+        </div>
+      </div>
+      <!-- small top right -->
+      <div class="mosaic-card mosaic-card--white m2">
+        <div class="m-title">Temperature</div>
+        <div class="m-val" style="font-size:24px">58°F</div>
+      </div>
+      <div class="mosaic-card mosaic-card--acc m3">
+        <div class="m-title" style="color:rgba(255,255,255,0.6)">Coverage</div>
+        <div class="m-val" style="color:#fff;font-size:24px">94%</div>
+      </div>
+      <!-- wide bottom -->
+      <div class="mosaic-card m4">
+        <div class="m-title">Signal Strength</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:auto">
+          <div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink-3);margin-bottom:3px"><span>Zone A</span><span>-68 dBm</span></div><div class="pbar"><div class="pbar-fill" style="width:82%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink-3);margin-bottom:3px"><span>Zone B</span><span>-74 dBm</span></div><div class="pbar"><div class="pbar-fill" style="width:66%"></div></div></div>
+        </div>
+      </div>
+      <div class="mosaic-card mosaic-card--warm m5">
+        <div class="m-title">Humidity</div>
+        <div class="m-val" style="font-size:24px">62%</div>
+      </div>
+      <!-- bottom row -->
+      <div class="mosaic-card mosaic-card--dark m6">
+        <div class="m-title">Avg Latency</div>
+        <div class="m-val" style="color:#fff;font-size:28px">12ms</div>
+      </div>
+      <div class="mosaic-card m7">
+        <div class="m-title">Data Uptime</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div class="m-val" style="font-size:28px">99.4%</div>
+          <span class="badge badge--success">Healthy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+</body>
+</html>
