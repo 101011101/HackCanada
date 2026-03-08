@@ -65,20 +65,23 @@ Radii:    --r-xs 2px · --r-sm 4px · --r-md 6px · --r-pill 999px
 
 ---
 
-## NAVIGATION — 3 TABS (ALL AUTHENTICATED SCREENS)
+## NAVIGATION — 2 TABS + HAMBURGER MENU
 
-The app has **3 main tabs** in the bottom nav (mobile) and top nav (desktop):
+The app has **2 main tabs** in the bottom nav. Everything else lives in a hamburger menu on the topbar.
 
-| Tab | Icon | Screens covered |
+| Tab | Icon | Primary content |
 |---|---|---|
-| **My Farm** | seedling/plant | Dashboard, Cycle Update |
-| **My Food** | basket/bowl | Wallet, Food Manager, Delivery |
-| **Suggestions** | sparkle/search | Suggestions entry, form, results |
+| **My Farm** | seedling/plant | Dashboard — the main daily screen |
+| **My Food** | basket/bowl | Wallet, HC balance, food manager, delivery |
 
-Suggestions tab is public (no auth required). My Farm and My Food require auth.
+**Hamburger menu (topbar, top-right)** contains:
+- Suggestions (crop planning — occasional use)
+- Cycle Update / log update (or surfaced as a card on My Farm — each agent decides)
+- Profile / settings
+- Onboarding (first-time only, then hidden)
 
 ```html
-<!-- Bottom tabbar — mobile -->
+<!-- Bottom tabbar — mobile, 2 tabs only -->
 <div class="m-tabbar m-only">
   <button class="m-tab m-tab--on">
     <svg><!-- plant icon --></svg>
@@ -90,10 +93,12 @@ Suggestions tab is public (no auth required). My Farm and My Food require auth.
     <span class="m-tab-lbl">My Food</span>
     <span class="m-tab-dot"></span>
   </button>
-  <button class="m-tab">
-    <svg><!-- sparkle icon --></svg>
-    <span class="m-tab-lbl">Suggestions</span>
-    <span class="m-tab-dot"></span>
+</div>
+
+<!-- Topbar hamburger — top-right -->
+<div class="m-topbar-actions">
+  <button class="btn btn--ghost btn--icon btn--sm">
+    <svg><!-- hamburger icon --></svg>
   </button>
 </div>
 ```
@@ -152,12 +157,14 @@ MOBILE                              DESKTOP (768px+)
 .m-stat-row (1 stat)
   .m-stat-card "Expected yield"
 
-.m-tabbar (My Farm active)          [no tabbar — desktop uses topbar nav]
+.m-tabbar (My Farm active, 2 tabs)  [no tabbar — desktop uses topbar nav]
 ```
 
 **States to show in wireframe:**
 - Active cycle (primary state — what to build)
 - Empty state: `.m-content` with `.overline` "Your first instructions are being prepared"
+
+**Agent A decision point:** Decide in `do ide` whether Cycle Update lives as a card/button on this dashboard screen, or is accessed via the hamburger menu. Present both options to the user.
 
 ---
 
@@ -224,6 +231,7 @@ MOBILE                              DESKTOP (768px+)
 3. Run `do dis` via MCP
 4. Run `do ide` via MCP — propose 2 layout concepts for the suggestions entry, wait for user selection
 5. Then build all 5 wireframe files
+6. Note: Suggestions is accessed via the hamburger menu, not a bottom tab. Design accordingly — it may be a full-screen overlay or a separate routed screen, your `do ide` concepts should explore both.
 
 ---
 

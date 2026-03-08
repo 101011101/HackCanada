@@ -24,3 +24,10 @@ venv/
 
 # OS
 .DS_Store
+
+# AI tool metadata
+.superdesign/
+.edp_intent/
+
+# Wireframes
+app/frontend/wireframes/
