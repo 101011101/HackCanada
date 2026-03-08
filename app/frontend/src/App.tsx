@@ -1,5 +1,5 @@
-import AdminDashboard from "./AdminDashboard";
+import Homepage from "@/pages/Homepage";
 
 export default function App() {
-  return <AdminDashboard />;
+  return <Homepage />;
 }

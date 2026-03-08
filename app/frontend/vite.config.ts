@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import fs from "fs";
 
@@ -34,7 +35,7 @@ export default defineConfig(({ mode }) => {
   const mapId = (env.VITE_MAP_ID ?? env.NEXT_PUBLIC_MAP_ID ?? "").trim() || undefined;
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     root,
     resolve: {
       alias: {

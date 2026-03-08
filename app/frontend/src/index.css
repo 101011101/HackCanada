@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* MyCelium UI kit design tokens (from desktop-ui-kit.html) */
+:root {
+  --bg: #E8E5E0;
+  --bg-warm: #DDD9D3;
+  --bg-card: #F2F0EC;
+  --bg-elev: #FFFFFF;
+  --ink: #1A1A1A;
+  --ink-2: #6B6762;
+  --ink-3: #9E9A94;
+  --inv: #F2F0EC;
+  --accent: #E8913A;
+  --accent-bg: rgba(232, 145, 58, 0.12);
+  --border: #D1CDC7;
+  --border-lt: #E2DFD9;
+  --success: #4CAF50;
+  --error: #D94F4F;
+  --info: #5B8DEF;
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-pill: 999px;
+  --sh-sm: 0 1px 3px rgba(26, 26, 26, 0.06);
+  --sh-md: 0 4px 12px rgba(26, 26, 26, 0.08);
+  --sh-lg: 0 8px 24px rgba(26, 26, 26, 0.12);
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
