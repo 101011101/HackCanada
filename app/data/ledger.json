@@ -58,5 +58,85 @@
     "balance_after": 141.75,
     "created_at": "2026-03-08T13:24:07",
     "note": "Withdrawal 1.0kg crop#2 at hub#2"
+  },
+  {
+    "id": 7,
+    "type": "debit",
+    "node_id": 102,
+    "request_id": 16,
+    "amount": 8.0,
+    "balance_after": 133.75,
+    "created_at": "2026-03-08T13:35:05",
+    "note": "Withdrawal 2.0kg crop#0 at hub#0"
+  },
+  {
+    "id": 8,
+    "type": "debit",
+    "node_id": 5,
+    "request_id": 10,
+    "amount": 20.0,
+    "balance_after": 80.0,
+    "created_at": "2026-03-08T13:35:18",
+    "note": "Withdrawal 5.0kg crop#0 at hub#0"
+  },
+  {
+    "id": 9,
+    "type": "debit",
+    "node_id": 1,
+    "request_id": 4,
+    "amount": 4.0,
+    "balance_after": 26.0,
+    "created_at": "2026-03-08T13:35:19",
+    "note": "Withdrawal 1.0kg crop#0 at hub#0"
+  },
+  {
+    "id": 10,
+    "type": "credit",
+    "node_id": 102,
+    "request_id": 21,
+    "amount": 20.0,
+    "balance_after": 153.75,
+    "created_at": "2026-03-08T13:35:55",
+    "note": "Deposit 5.0kg crop#2 at hub#1"
+  },
+  {
+    "id": 11,
+    "type": "debit",
+    "node_id": 102,
+    "request_id": 20,
+    "amount": 4.0,
+    "balance_after": 149.75,
+    "created_at": "2026-03-08T13:35:57",
+    "note": "Withdrawal 1.0kg crop#2 at hub#1"
+  },
+  {
+    "id": 12,
+    "type": "debit",
+    "node_id": 102,
+    "request_id": 22,
+    "amount": 9.0,
+    "balance_after": 140.75,
+    "created_at": "2026-03-08T13:49:54",
+    "note": "Withdrawal 3.0kg crop#1 at hub#1"
+  },
+  {
+    "id": 13,
+    "type": "debit",
+    "node_id": 102,
+    "request_id": 23,
+    "amount": 8.0,
+    "balance_after": 132.75,
+    "created_at": "2026-03-08T13:51:51",
+    "note": "Withdrawal 2.0kg crop#3 at hub#1"
+  },
+  {
+    "id": 14,
+    "type": "debit",
+    "node_id": 102,
+    "request_id": 24,
+    "amount": 24.0,
+    "balance_after": 108.75,
+    "created_at": "2026-03-08T13:53:59",
+    "note": "Withdrawal 6.0kg crop#3 at hub#0"
   }
 ]

@@ -1498,5 +1498,35 @@
     "moisture": 70.0,
     "temperature": 28.0,
     "humidity": 69.0
+  },
+  {
+    "id": 150,
+    "farm_id": 102,
+    "crop_id": 2,
+    "recorded_at": "2026-03-08T13:54:12",
+    "pH": 7.0,
+    "moisture": 72.0,
+    "temperature": 20.0,
+    "humidity": 68.0
+  },
+  {
+    "id": 151,
+    "farm_id": 102,
+    "crop_id": 5,
+    "recorded_at": "2026-03-08T14:09:47",
+    "pH": 7.0,
+    "moisture": 72.0,
+    "temperature": 20.0,
+    "humidity": 68.0
+  },
+  {
+    "id": 152,
+    "farm_id": 102,
+    "crop_id": 7,
+    "recorded_at": "2026-03-08T14:09:57",
+    "pH": 7.0,
+    "moisture": 72.0,
+    "temperature": 20.0,
+    "humidity": 68.0
   }
 ]

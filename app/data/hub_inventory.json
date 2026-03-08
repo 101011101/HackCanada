@@ -2,26 +2,26 @@
   {
     "hub_id": 0,
     "crop_id": 0,
-    "quantity_kg": 10.0,
-    "last_updated": "2026-03-08T11:47:58"
+    "quantity_kg": 2.0,
+    "last_updated": "2026-03-08T13:35:19"
   },
   {
     "hub_id": 0,
     "crop_id": 1,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 8.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 0,
     "crop_id": 2,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 12.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 0,
     "crop_id": 3,
     "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "last_updated": "2026-03-08T13:53:59"
   },
   {
     "hub_id": 0,
@@ -32,8 +32,8 @@
   {
     "hub_id": 0,
     "crop_id": 5,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 6.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 0,
@@ -44,8 +44,8 @@
   {
     "hub_id": 0,
     "crop_id": 7,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 3.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 0,
@@ -56,8 +56,8 @@
   {
     "hub_id": 0,
     "crop_id": 9,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 9.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 1,
@@ -68,26 +68,26 @@
   {
     "hub_id": 1,
     "crop_id": 1,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 2.0,
+    "last_updated": "2026-03-08T13:49:54"
   },
   {
     "hub_id": 1,
     "crop_id": 2,
-    "quantity_kg": 2.0,
-    "last_updated": "2026-03-08T11:43:25"
+    "quantity_kg": 6.0,
+    "last_updated": "2026-03-08T13:35:57"
   },
   {
     "hub_id": 1,
     "crop_id": 3,
     "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "last_updated": "2026-03-08T13:51:51"
   },
   {
     "hub_id": 1,
     "crop_id": 4,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 7.5,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 1,
@@ -98,14 +98,14 @@
   {
     "hub_id": 1,
     "crop_id": 6,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 3.5,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 1,
     "crop_id": 7,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 1.5,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 1,
@@ -116,8 +116,8 @@
   {
     "hub_id": 1,
     "crop_id": 9,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 4.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
@@ -140,20 +140,20 @@
   {
     "hub_id": 2,
     "crop_id": 3,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 3.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
     "crop_id": 4,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 2.5,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
     "crop_id": 5,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 5.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
@@ -164,14 +164,14 @@
   {
     "hub_id": 2,
     "crop_id": 7,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 6.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
     "crop_id": 8,
-    "quantity_kg": 0.0,
-    "last_updated": "2026-03-07T00:00:00"
+    "quantity_kg": 2.0,
+    "last_updated": "2026-03-08T09:00:00"
   },
   {
     "hub_id": 2,
