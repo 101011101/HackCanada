@@ -30,6 +30,8 @@ class FarmNode:
     # --- Multi-crop & preferences ---
     current_crop_ids:    list = field(default_factory=list)  # list[int]; populated from current_crop_id if empty
     preferred_crop_ids:  list = field(default_factory=list)  # list[int]; farmer-selected preferred crops
+    # --- Delivery preference ---
+    max_delivery_distance_m: Optional[float] = None  # None = use network default
     # --- Transaction / currency ---
     currency_balance:    float = 0.0                          # Hub Currency balance
     crops_on_hand:       dict  = field(default_factory=dict)  # {crop_id: kg} — self-reported, display only
@@ -49,6 +51,7 @@ class FarmNode:
     growing_season_days:    Optional[float] = None
     rainfall_distribution:  Optional[str]   = None  # 'even'|'seasonal'|'monsoon'|'irregular'
     sunlight_hours_day:     Optional[float] = None
+    sunlight_hours:         Optional[float] = None   # API-facing daily sunlight hours (from setup/patch)
     # Water
     water_availability:     Optional[str]   = None  # 'none'|'rain_fed'|'irrigation'
     water_quality_ec:       Optional[float] = None  # dS/m

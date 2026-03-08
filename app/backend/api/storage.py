@@ -111,6 +111,15 @@ def save_config(config: dict) -> None:
 def save_readings(readings: list[dict]) -> None:
     _save('readings.json', readings)
 
+def load_hub_routing() -> dict:
+    try:
+        return _load('hub_routing.json')
+    except FileNotFoundError:
+        return {}
+
+def save_hub_routing(routing: dict) -> None:
+    _save('hub_routing.json', routing)
+
 
 # ---------------------------------------------------------------------------
 # Dict → engine type converters
@@ -160,9 +169,11 @@ def dict_to_farmnode(d: dict) -> FarmNode:
         growing_season_days   = d.get('growing_season_days'),
         rainfall_distribution = d.get('rainfall_distribution'),
         sunlight_hours_day    = d.get('sunlight_hours_day'),
-        water_availability    = d.get('water_availability'),
-        water_quality_ec      = d.get('water_quality_ec'),
-        aspect                = d.get('aspect'),
+        sunlight_hours        = d.get('sunlight_hours'),
+        water_availability       = d.get('water_availability'),
+        water_quality_ec         = d.get('water_quality_ec'),
+        aspect                   = d.get('aspect'),
+        max_delivery_distance_m  = d.get('max_delivery_distance_m'),
     )
 
 
@@ -263,3 +274,12 @@ def seed_if_missing() -> None:
         from app.backend.engine.data import crops as seed_crops
         rates = {str(c.id): 1.0 for c in seed_crops}
         _save('current_rates.json', rates)
+
+    if not (DATA_DIR / 'hub_routing.json').exists():
+        from app.backend.engine.router import compute_hub_routing
+        routing = compute_hub_routing(
+            [dict_to_farmnode(d) for d in _load('farms.json')],
+            [dict_to_hub(d)      for d in _load('hubs.json')],
+            dict_to_config(_load('config.json')).max_travel_distance,
+        )
+        _save('hub_routing.json', routing)

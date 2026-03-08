@@ -3,7 +3,7 @@ from datetime import date
 
 from app.backend.api import storage, models
 from app.backend.engine.scorer    import build_yield_matrix
-from app.backend.engine.router    import build_reachability_matrix
+from app.backend.engine.router    import build_reachability_matrix, compute_hub_routing
 from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
 from app.backend.engine.optimizer import run_ilp, compute_multi_crop_assignments
@@ -50,6 +50,9 @@ def optimize():
         for idx, i in enumerate(available)
     }
     storage.save_assignments(assignments_dict)
+
+    routing = compute_hub_routing(farms, hubs, config.max_travel_distance)
+    storage.save_hub_routing(routing)
 
     return models.OptimizeResponse(
         status='ok',

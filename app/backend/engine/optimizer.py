@@ -87,15 +87,44 @@ def run_ilp(available_indices: list,
             ub=np.array(ub_hub)
         ))
 
+    # --- Constraint 3: hub capacity (hard upper bound per hub) ---------------
+    cap_rows, ub_cap = [], []
+    for h, hub in enumerate(hubs):
+        if hub.capacity_kg <= 0:
+            continue
+        row = np.zeros(n_vars, dtype=float)
+        for idx, farm_i in enumerate(available_indices):
+            if reachability_matrix[farm_i][h]:
+                for c in range(M):
+                    row[idx * M + c] += yield_matrix[farm_i][c]
+        if row.sum() > 0:
+            cap_rows.append(row)
+            ub_cap.append(hub.capacity_kg)
+
+    constraints_with_cap = list(constraints)
+    if cap_rows:
+        constraints_with_cap.append(LinearConstraint(
+            np.array(cap_rows),
+            lb=-np.inf,
+            ub=np.array(ub_cap)
+        ))
+
     # --- Solve ---------------------------------------------------------------
     bounds      = Bounds(lb=0.0, ub=1.0)
     integrality = np.ones(n_vars, dtype=int)
 
-    result = milp(c_obj, constraints=constraints,
+    result = milp(c_obj, constraints=constraints_with_cap,
                   integrality=integrality, bounds=bounds)
 
     if result.status != 0:
-        # Relax hub coverage constraints and retry with assignment only
+        # Fallback 1: relax hub capacity constraint, keep coverage constraints
+        import warnings
+        warnings.warn('Hub capacity constraint made ILP infeasible; retrying without it.')
+        result = milp(c_obj, constraints=constraints,
+                      integrality=integrality, bounds=bounds)
+
+    if result.status != 0:
+        # Fallback 2: relax hub coverage constraints and retry with assignment only
         result = milp(c_obj, constraints=[c1],
                       integrality=integrality, bounds=bounds)
 

@@ -18,22 +18,26 @@ class NewFarmRequest(BaseModel):
     moisture:           float
     temperature:        float
     humidity:           float
-    preferred_crop_ids: list[int] = []
+    sunlight_hours:            Optional[float] = None
+    preferred_crop_ids:        list[int]       = []
+    max_delivery_distance_m:   Optional[float] = None  # metres; None = use network default
 
 
 class SoilUpdateRequest(BaseModel):
-    pH:          float = Field(ge=0, le=14)
-    moisture:    float = Field(ge=0, le=100)
-    temperature: float
-    humidity:    float = Field(ge=0, le=100)
+    pH:             float = Field(ge=0, le=14)
+    moisture:       float = Field(ge=0, le=100)
+    temperature:    float
+    humidity:       float = Field(ge=0, le=100)
+    sunlight_hours: Optional[float] = None
 
 
 class SoilReadingResponse(BaseModel):
-    farm_id:     int
-    pH:          float
-    moisture:    float
-    temperature: float
-    humidity:    float
+    farm_id:        int
+    pH:             float
+    moisture:       float
+    temperature:    float
+    humidity:       float
+    sunlight_hours: Optional[float] = None
 
 
 class ReadingEntry(BaseModel):

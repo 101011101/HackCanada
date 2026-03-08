@@ -72,6 +72,14 @@ hubs = [
     HubNode(id=2, name='East Neighbourhood Hub',  lat=43.6400, lng=-79.3600,
             priority='standard', capacity_kg=300.0,
             local_demand={0:15, 1:12, 2:10, 3:8,  4:10, 5:10, 6:8,  7:8,  8:5,  9:5}),
+
+    HubNode(id=3, name='West End Food Hub',        lat=43.6580, lng=-79.4150,
+            priority='critical', capacity_kg=450.0,
+            local_demand={0:25, 1:20, 2:15, 3:12, 4:18, 5:15, 6:12, 7:10, 8:8,  9:8}),
+
+    HubNode(id=4, name='Riverdale Market Hub',     lat=43.6620, lng=-79.3520,
+            priority='standard', capacity_kg=250.0,
+            local_demand={0:12, 1:10, 2:8,  3:6,  4:8,  5:8,  6:6,  7:6,  8:4,  9:4}),
 ]
 
 # ---------------------------------------------------------------------------
@@ -180,56 +188,56 @@ farms = [
              plot_type='rooftop',   tools='intermediate', budget='medium',
              pH=6.8, moisture=70, temperature=21, humidity=60,
              status='growing', current_crop_id=0,
-             cycle_end_date=date(2026, 3, 20)),     # Tomato
+             cycle_end_date=date(2026, 3, 22)),     # Tomato — 2 wks out
 
     FarmNode(id=3,  name='Farm #04 — Community Lot',
              lat=43.6610, lng=-79.3950, plot_size_sqft=400,
              plot_type='community', tools='advanced',     budget='high',
              pH=7.0, moisture=72, temperature=20, humidity=68,
              status='growing', current_crop_id=1,
-             cycle_end_date=date(2026, 3, 10)),     # Lettuce
+             cycle_end_date=date(2026, 3, 11)),     # Lettuce — 3 days out
 
     FarmNode(id=6,  name='Farm #07 — Backyard',
              lat=43.6420, lng=-79.3650, plot_size_sqft=150,
              plot_type='backyard',  tools='basic',        budget='low',
              pH=6.3, moisture=62, temperature=19, humidity=57,
              status='growing', current_crop_id=5,
-             cycle_end_date=date(2026, 3, 15)),     # Kale
+             cycle_end_date=date(2026, 3, 16)),     # Kale — 8 days out
 
     FarmNode(id=7,  name='Farm #08 — Community Lot',
              lat=43.6720, lng=-79.3980, plot_size_sqft=350,
              plot_type='community', tools='advanced',     budget='high',
              pH=6.9, moisture=75, temperature=22, humidity=70,
              status='growing', current_crop_id=0,
-             cycle_end_date=date(2026, 3, 25)),     # Tomato
+             cycle_end_date=date(2026, 3, 28)),     # Tomato — 3 wks out
 
     FarmNode(id=9,  name='Farm #10 — Rooftop',
              lat=43.6380, lng=-79.3580, plot_size_sqft=70,
              plot_type='rooftop',   tools='intermediate', budget='medium',
              pH=6.7, moisture=65, temperature=20, humidity=58,
              status='growing', current_crop_id=7,
-             cycle_end_date=date(2026, 3, 5)),      # Microgreens
+             cycle_end_date=date(2026, 3, 8)),      # Microgreens — due TODAY (unlocks on engine run)
 
     FarmNode(id=11, name='Farm #12 — Community Lot',
              lat=43.6660, lng=-79.4050, plot_size_sqft=280,
              plot_type='community', tools='intermediate', budget='medium',
              pH=7.1, moisture=78, temperature=21, humidity=72,
              status='growing', current_crop_id=2,
-             cycle_end_date=date(2026, 3, 12)),     # Spinach
+             cycle_end_date=date(2026, 3, 13)),     # Spinach — 5 days out
 
     FarmNode(id=14, name='Farm #15 — Backyard',
              lat=43.6430, lng=-79.3640, plot_size_sqft=180,
              plot_type='backyard',  tools='basic',        budget='low',
              pH=5.9, moisture=50, temperature=17, humidity=48,
              status='growing', current_crop_id=4,
-             cycle_end_date=date(2026, 3, 30)),     # Carrots
+             cycle_end_date=date(2026, 4, 5)),      # Carrots — 4 wks out
 
     FarmNode(id=19, name='Farm #20 — Community Lot',
              lat=43.6640, lng=-79.4030, plot_size_sqft=180,
              plot_type='community', tools='basic',        budget='low',
              pH=6.2, moisture=58, temperature=20, humidity=58,
              status='growing', current_crop_id=9,
-             cycle_end_date=date(2026, 3, 18)),     # Beans
+             cycle_end_date=date(2026, 3, 20)),     # Beans — 12 days out
 ]
 
 # ---------------------------------------------------------------------------
