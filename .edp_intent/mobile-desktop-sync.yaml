@@ -1,0 +1,53 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: "Map desktop post-task improvements to mobile: crop trigger row opening existing bottom sheet, Add new plot CTA, line chart replacing bar chart, viz tabs in summary row. Follow MyCelium design kit."
+scope:
+  allowedPaths:
+    - ".superdesign/design_iterations/ide_dashboard_concept_e.html"
+  forbiddenPaths:
+    - "app/frontend/**"
+    - "frontend-PRD/**"
+  newFiles:
+    - ".edp_intent/mobile-desktop-sync.yaml"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Crop data section header with Add new plot button on mobile"
+    given: "Mobile viewport"
+    when: "Page renders"
+    then: "Section header reads Crop data with Add new plot btn--secondary btn--sm"
+  - id: "AC-002"
+    description: "Crop trigger row opens existing crop bottom sheet"
+    given: "Mobile viewport"
+    when: "User taps crop trigger row"
+    then: "#crop-sheet opens via openCropSheet()"
+  - id: "AC-003"
+    description: "Mobile viz uses line chart not bar chart"
+    given: "Mobile viz section is expanded"
+    when: "User opens details.viz-collapse"
+    then: "SVG shows polyline + area fill, no rect bars"
+  - id: "AC-004"
+    description: "Viz tabs appear in summary row"
+    given: "Mobile viz collapse is visible"
+    when: "Page renders"
+    then: "Moisture/Temp/Light tabs visible in summary element"
+  - id: "AC-005"
+    description: "Desktop layout unchanged"
+    given: "Viewport >= 768px"
+    when: "Page renders"
+    then: "Desktop shell renders identically to pre-change state"
+  - id: "AC-006"
+    description: "Crop bottom sheet still functions"
+    given: "Crop trigger is tapped"
+    when: "openCropSheet() called"
+    then: "#crop-sheet slides up, backdrop appears"
+nonGoals:
+  - "Actual crop switching logic"
+  - "New bottom sheet creation"
+  - "Desktop section changes"
+  - "Mobile task section changes"
+complexityBudget:
+  maxNewFunctions: 0
+  maxNewFiles: 1
+  maxLinesOfCode: 60
+  maxDependencies: 0

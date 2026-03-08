@@ -7,17 +7,18 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 class NewFarmRequest(BaseModel):
-    name:           str
-    lat:            float
-    lng:            float
-    plot_size_sqft: float
-    plot_type:      str     # 'balcony' | 'rooftop' | 'backyard' | 'community'
-    tools:          str     # 'basic' | 'intermediate' | 'advanced'
-    budget:         str     # 'low' | 'medium' | 'high'
-    pH:             float
-    moisture:       float
-    temperature:    float
-    humidity:       float
+    name:               str
+    lat:                float
+    lng:                float
+    plot_size_sqft:     float
+    plot_type:          str     # 'balcony' | 'rooftop' | 'backyard' | 'community'
+    tools:              str     # 'basic' | 'intermediate' | 'advanced'
+    budget:             str     # 'low' | 'medium' | 'high'
+    pH:                 float
+    moisture:           float
+    temperature:        float
+    humidity:           float
+    preferred_crop_ids: list[int] = []
 
 
 class SoilUpdateRequest(BaseModel):
@@ -32,13 +33,15 @@ class SoilUpdateRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 class BundleResponse(BaseModel):
-    farm_id:     int
-    farm_name:   str
-    crop_id:     int
-    crop_name:   str
-    quantity_kg: float
-    grow_weeks:  int
-    reason:      str
+    farm_id:          int
+    farm_name:        str
+    crop_id:          int
+    crop_name:        str
+    quantity_kg:      float
+    grow_weeks:       int
+    reason:           str
+    preference_match: bool = False
+    sqft_allocated:   Optional[float] = None
 
 
 class LockedFarmResponse(BaseModel):

@@ -16,27 +16,33 @@ def _build_reason(farm: FarmNode, crop: Crop, suitability: float,
 
 def package_instructions(farms: list,
                           available_indices: list,
-                          assignment: np.ndarray,
+                          assignment: list,
                           crops: list,
                           yield_matrix: np.ndarray,
                           gap_vector: np.ndarray,
                           config: NetworkConfig) -> list:
     """
-    Returns one InstructionBundle per available farm.
+    Returns one InstructionBundle per (farm, crop) pair.
+    assignment — list of lists: assignment[idx] = [crop_id, ...] for available_indices[idx]
+    Yield and sqft are split equally across crops for multi-crop farms.
     """
     bundles = []
     for idx, farm_i in enumerate(available_indices):
-        farm       = farms[farm_i]
-        c          = int(assignment[idx])
-        crop       = crops[c]
-        suitability = compute_suitability(farm, crop)
-        bundles.append(InstructionBundle(
-            farm_id     = farm.id,
-            farm_name   = farm.name,
-            crop_id     = crop.id,
-            crop_name   = crop.name,
-            quantity_kg = round(float(yield_matrix[farm_i][c]), 1),
-            grow_weeks  = crop.grow_weeks,
-            reason      = _build_reason(farm, crop, suitability, gap_vector, config),
-        ))
+        farm     = farms[farm_i]
+        crop_ids = assignment[idx]
+        n        = len(crop_ids)
+        sqft_per = farm.plot_size_sqft / n
+        for c in crop_ids:
+            crop        = crops[c]
+            suitability = compute_suitability(farm, crop)
+            bundles.append(InstructionBundle(
+                farm_id        = farm.id,
+                farm_name      = farm.name,
+                crop_id        = crop.id,
+                crop_name      = crop.name,
+                quantity_kg    = round(float(yield_matrix[farm_i][c]) / n, 1),
+                grow_weeks     = crop.grow_weeks,
+                reason         = _build_reason(farm, crop, suitability, gap_vector, config),
+                sqft_allocated = round(sqft_per, 1),
+            ))
     return bundles

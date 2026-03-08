@@ -1,0 +1,53 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: "Desktop data section: replace 3-col crop grid with single card (task-panel style), crop trigger row at top opens existing bottom sheet, two-column body readings(250px) | viz(1fr)"
+scope:
+  allowedPaths:
+    - ".superdesign/design_iterations/ide_dashboard_concept_e.html"
+  forbiddenPaths:
+    - "app/frontend/**"
+    - "frontend-PRD/**"
+  newFiles:
+    - ".edp_intent/desktop-crop-card.yaml"
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Desktop data section is a single card"
+    given: "Viewport >= 768px"
+    when: "Page renders"
+    then: ".d-data-card has bg-elev, r-md, sh-sm identical to .d-task-panel"
+  - id: "AC-002"
+    description: "Crop trigger row at top of card opens bottom sheet"
+    given: "Desktop data card is visible"
+    when: "User clicks the trigger row"
+    then: "openCropSheet() fires, #crop-sheet opens"
+  - id: "AC-003"
+    description: "Two-column body: readings left, viz right"
+    given: "Desktop data card"
+    when: "Page renders"
+    then: "grid-template-columns: 250px 1fr — readings smaller left, viz bigger right"
+  - id: "AC-004"
+    description: "Old 3-column crop grid and crop pills removed"
+    given: "Desktop viewport"
+    when: "Page renders"
+    then: "No .d-data-grid, no .d-crop-col, no .d-crop-pill elements present"
+  - id: "AC-005"
+    description: "Section header unchanged"
+    given: "Desktop viewport"
+    when: "Page renders"
+    then: "d-section-hd with Crop data label and Add new plot button above card"
+  - id: "AC-006"
+    description: "Mobile layout unchanged"
+    given: "Viewport < 768px"
+    when: "Page renders"
+    then: "Mobile shell renders identically to pre-change state"
+nonGoals:
+  - "Mobile section changes"
+  - "New JS functions"
+  - "Crop switching logic"
+  - "Tabbar or hero changes"
+complexityBudget:
+  maxNewFunctions: 0
+  maxNewFiles: 1
+  maxLinesOfCode: 40
+  maxDependencies: 0

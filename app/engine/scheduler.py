@@ -25,12 +25,16 @@ def compute_locked_supply(farms: list, locked_indices: list,
     """
     Returns float array of shape [M].
     locked_supply[c] = total kg of crop c already committed by locked farms.
+    Supports multi-crop farms via current_crop_ids (yield split equally per crop).
     """
     supply = np.zeros(num_crops, dtype=float)
     for i in locked_indices:
-        c = farms[i].current_crop_id
-        if c is not None:
-            supply[c] += yield_matrix[i][c]
+        crop_ids = farms[i].current_crop_ids
+        if not crop_ids:
+            continue
+        n = len(crop_ids)
+        for c in crop_ids:
+            supply[c] += yield_matrix[i][c] / n
     return supply
 
 
@@ -59,9 +63,12 @@ def compute_locked_supply_per_hub(farms: list, locked_indices: list,
     H = len(hubs)
     hub_supply = np.zeros((H, num_crops), dtype=float)
     for i in locked_indices:
-        c = farms[i].current_crop_id
-        if c is not None:
+        crop_ids = farms[i].current_crop_ids
+        if not crop_ids:
+            continue
+        n = len(crop_ids)
+        for c in crop_ids:
             for h in range(H):
                 if reachability_matrix[i][h]:
-                    hub_supply[h][c] += yield_matrix[i][c]
+                    hub_supply[h][c] += yield_matrix[i][c] / n
     return hub_supply

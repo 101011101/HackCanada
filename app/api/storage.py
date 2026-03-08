@@ -43,7 +43,9 @@ def load_config() -> dict:
 
 def load_assignments() -> dict:
     try:
-        return _load('assignments.json')
+        data = _load('assignments.json')
+        # Migrate old format {farm_id: int} → {farm_id: [int]}
+        return {k: v if isinstance(v, list) else [v] for k, v in data.items()}
     except FileNotFoundError:
         return {}
 
@@ -87,9 +89,11 @@ def dict_to_farmnode(d: dict) -> FarmNode:
         temperature    = d['temperature'],
         humidity       = d['humidity'],
         status         = d['status'],
-        current_crop_id = d.get('current_crop_id'),
-        cycle_end_date  = cycle_end,
-        yield_history   = {int(k): v for k, v in d.get('yield_history', {}).items()},
+        current_crop_id  = d.get('current_crop_id'),
+        cycle_end_date   = cycle_end,
+        yield_history    = {int(k): v for k, v in d.get('yield_history', {}).items()},
+        current_crop_ids = d.get('current_crop_ids', []),
+        preferred_crop_ids = d.get('preferred_crop_ids', []),
     )
 
 

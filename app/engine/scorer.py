@@ -1,6 +1,11 @@
 import numpy as np
 from .schemas import FarmNode, Crop, TOOL_RANK, BUDGET_RANK
 
+# Score assigned to a dimension when the crop requires it but the farm hasn't measured it.
+# Slightly optimistic (farmer may just not have tested yet) but below 1.0 to prevent
+# data-poor farms from outscoring data-rich farms with honest weak readings.
+_UNKNOWN_DEFAULT = 0.6
+
 
 def range_score(value: float, low: float, high: float) -> float:
     """1.0 if value is within [low, high], decays linearly outside."""
@@ -12,10 +17,74 @@ def range_score(value: float, low: float, high: float) -> float:
         return max(0.0, 1.0 - (value - high) / high)
 
 
+def _evaluate_dims(farm: FarmNode, crop: Crop) -> tuple:
+    """
+    Returns (scores, known_count) where:
+      scores      — list of per-dimension scores for every dim the crop cares about.
+                    Actual score if farm has data; _UNKNOWN_DEFAULT if farm has None.
+      known_count — number of dims where the farm provided actual data.
+
+    Only dimensions where the crop has an optimal range / preference are included.
+    Hard gates (size, tools, budget) are handled separately by the caller.
+    """
+    scores = []
+    known = 0
+
+    # Size — always present, always scored
+    size_score = min(1.0, farm.plot_size_sqft / crop.min_sqft)
+    scores.append(size_score)
+    known += 1
+
+    # Continuous dimensions: (farm_value, crop_optimal_range)
+    continuous = [
+        (farm.pH,                   crop.optimal_pH),
+        (farm.moisture,             crop.optimal_moisture),
+        (farm.temperature,          crop.optimal_temp),
+        (farm.soil_depth_cm,        crop.optimal_soil_depth_cm),
+        (farm.organic_matter_pct,   crop.optimal_organic_matter),
+        (farm.nitrogen_ppm,         crop.optimal_nitrogen_ppm),
+        (farm.phosphorus_ppm,       crop.optimal_phosphorus_ppm),
+        (farm.potassium_ppm,        crop.optimal_potassium_ppm),
+        (farm.salinity_ds_m,        crop.optimal_salinity_ds_m),
+        (farm.growing_season_days,  crop.optimal_growing_season_days),
+        (farm.sunlight_hours_day,   crop.optimal_sunlight_hours),
+        (farm.water_quality_ec,     crop.optimal_water_quality_ec),
+    ]
+    for farm_val, crop_range in continuous:
+        if crop_range is None:
+            continue  # crop has no preference for this dimension
+        if farm_val is None:
+            scores.append(_UNKNOWN_DEFAULT)
+        else:
+            scores.append(range_score(farm_val, *crop_range))
+            known += 1
+
+    # Categorical dimensions: (farm_value, crop_preferred_set)
+    categorical = [
+        (farm.soil_texture,          crop.optimal_soil_textures),
+        (farm.drainage,              crop.preferred_drainage),
+        (farm.rainfall_distribution, crop.preferred_rainfall),
+        (farm.water_availability,    crop.preferred_water_availability),
+        (farm.aspect,                crop.preferred_aspects),
+    ]
+    for farm_val, crop_pref in categorical:
+        if crop_pref is None:
+            continue  # crop has no preference for this dimension
+        if farm_val is None:
+            scores.append(_UNKNOWN_DEFAULT)
+        else:
+            scores.append(1.0 if farm_val in crop_pref else 0.0)
+            known += 1
+
+    return scores, known
+
+
 def compute_suitability(farm: FarmNode, crop: Crop) -> float:
     """
     Returns 0.0 if any hard gate fails.
-    Otherwise returns weighted soft score in [0, 1].
+    Otherwise returns mean soft score across all crop-relevant dimensions.
+    Unknown farm dimensions (None) score _UNKNOWN_DEFAULT rather than being skipped,
+    preventing data-poor farms from inflating their scores over data-rich ones.
     """
     # Hard gates — must all pass
     if farm.plot_size_sqft < crop.min_sqft:
@@ -25,13 +94,23 @@ def compute_suitability(farm: FarmNode, crop: Crop) -> float:
     if BUDGET_RANK[farm.budget] < BUDGET_RANK[crop.budget_requirement]:
         return 0.0
 
-    # Soft score — weighted average of condition fits
-    ph_score       = range_score(farm.pH,          *crop.optimal_pH)
-    moisture_score = range_score(farm.moisture,     *crop.optimal_moisture)
-    temp_score     = range_score(farm.temperature,  *crop.optimal_temp)
-    size_score     = min(1.0, farm.plot_size_sqft / crop.min_sqft)
+    scores, _ = _evaluate_dims(farm, crop)
+    return sum(scores) / len(scores) if scores else 0.5
 
-    return 0.25 * ph_score + 0.25 * moisture_score + 0.25 * temp_score + 0.25 * size_score
+
+def compute_data_completeness(farm: FarmNode, crop: Crop) -> float:
+    """
+    Returns fraction of crop-relevant dimensions where the farm has actual data.
+    1.0 = fully measured for this crop. 0.0 = no relevant data at all.
+    Hard gate failures return 1.0 (score is definitive; completeness is irrelevant).
+    """
+    if (farm.plot_size_sqft < crop.min_sqft
+            or TOOL_RANK[farm.tools] < TOOL_RANK[crop.tool_requirement]
+            or BUDGET_RANK[farm.budget] < BUDGET_RANK[crop.budget_requirement]):
+        return 1.0
+
+    scores, known = _evaluate_dims(farm, crop)
+    return known / len(scores) if scores else 0.0
 
 
 def build_yield_matrix(farms: list, crops: list) -> np.ndarray:

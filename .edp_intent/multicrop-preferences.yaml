@@ -1,0 +1,312 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07T00:00:00Z"
+originalIntent: >
+  Feature 1 — User crop preferences: farmers select preferred crops, engine gives soft
+  boost in ILP objective and greedy_insert scoring (same inertia pattern), API response
+  includes preference_match bool. Feature 2 — Multi-crop per farm: post-ILP greedy split
+  for large plots, assignments stored as list, scheduler/reporter/packager iterate crop
+  lists, GET /nodes and POST /nodes return list[BundleResponse].
+
+buildOrder:
+  - "Feature 1 first (preferences) — isolated, no API shape change"
+  - "Feature 2 second (multi-crop) — cascades API shape, coordinate with frontend"
+
+scope:
+  allowedPaths:
+    - "app/engine/schemas.py"
+    - "app/engine/optimizer.py"
+    - "app/engine/scheduler.py"
+    - "app/engine/reporter.py"
+    - "app/engine/packager.py"
+    - "app/api/models.py"
+    - "app/api/storage.py"
+    - "app/api/routes/nodes.py"
+    - "app/api/routes/optimize.py"
+  forbiddenPaths:
+    - "app/engine/scorer.py"
+    - "app/engine/router.py"
+    - "app/engine/data.py"
+    - "app/engine/main.py"
+    - "app/api/routes/coverage.py"
+    - "app/api/routes/hubs.py"
+    - "app/api/routes/report.py"
+    - "app/api/routes/config.py"
+  newFiles: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FEATURE 1 — PREFERENCES
+# ─────────────────────────────────────────────────────────────────────────────
+
+feature1_decisions:
+  preferenceType: "soft boost — preference_weight subtracted from ILP c_obj, same as inertia pattern"
+  fallback: "if preferred crop conflicts with network gap, network wins silently — preference_match=false in response"
+  preferenceWeight: 30.0  # same order of magnitude as inertia_weight=50.0
+
+feature1_schemas_changes:
+  FarmNode:
+    - "preferred_crop_ids: list[int] = field(default_factory=list)"
+  NetworkConfig:
+    - "preference_weight: float = 30.0"
+
+feature1_optimizer_changes:
+  run_ilp:
+    location: "after inertia bonus block (lines 46-48)"
+    pattern: "same loop structure as inertia; iterate farm.preferred_crop_ids instead of single current_crop_id"
+    code_pattern: >
+      for pref in farms[farm_i].preferred_crop_ids:
+          if 0 <= pref < M:
+              c_obj[idx * M + pref] -= config.preference_weight * yield_matrix[farm_i][pref]
+  greedy_insert:
+    location: "inside scores[c] computation loop"
+    pattern: "multiply score by 1.5 if c in farm.preferred_crop_ids"
+    note: "greedy_insert needs farm param added — currently takes yield_row not farm directly. Add preferred_crop_ids: list[int] = [] param instead to keep signature minimal"
+
+feature1_models_changes:
+  NewFarmRequest:
+    - "preferred_crop_ids: list[int] = []"
+  BundleResponse:
+    - "preference_match: bool = False"
+
+feature1_nodes_changes:
+  POST_nodes:
+    - "Pass preferred_crop_ids=req.preferred_crop_ids when constructing FarmNode"
+    - "Compute preference_match = (assigned crop_idx in farm.preferred_crop_ids)"
+    - "Include preference_match in BundleResponse"
+  note: "GET /nodes/{farm_id} also sets preference_match when building response"
+
+feature1_storage_changes:
+  dict_to_farmnode:
+    - "preferred_crop_ids = d.get('preferred_crop_ids', [])"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FEATURE 2 — MULTI-CROP
+# ─────────────────────────────────────────────────────────────────────────────
+
+feature2_decisions:
+  approach: "Option D — post-process greedy split; ILP untouched"
+  min_slot_sqft: 50.0  # floor(plot_size / 50) = num_slots; balcony 25sqft=1, backyard 120sqft=2, community 400sqft=4 (capped at reasonable max)
+  yieldSplit: "equal sqft per crop — yield[farm][crop] / num_slots"
+  duplicatePrevention: "zero out yield_row entries for already-assigned crops before each greedy_insert call"
+  backwardCompat:
+    current_crop_id: "kept as Optional[int], never removed"
+    current_crop_ids: "new list[int] field; FarmNode.__post_init__ populates from current_crop_id if current_crop_ids is empty"
+    assignments_json: "load_assignments() migrates {farm_id: int} → {farm_id: [int]} on read"
+
+feature2_schemas_changes:
+  FarmNode:
+    - "current_crop_ids: list[int] = field(default_factory=list)"
+    - "__post_init__ method: if not self.current_crop_ids and self.current_crop_id is not None: self.current_crop_ids = [self.current_crop_id]"
+  NetworkConfig:
+    - "min_slot_sqft: float = 50.0"
+  InstructionBundle:
+    - "sqft_allocated: float = 0.0"
+
+feature2_optimizer_changes:
+  new_function: "compute_multi_crop_assignments"
+  signature: >
+    compute_multi_crop_assignments(
+        available_indices: list,
+        farms: list,
+        crops: list,
+        hubs: list,
+        yield_matrix: np.ndarray,
+        reachability_matrix: np.ndarray,
+        gap_vector: np.ndarray,
+        config: NetworkConfig,
+        primary_assignment: np.ndarray,
+        locked_hub_supply: np.ndarray
+    ) -> list[list[int]]
+  logic: >
+    Returns list indexed by position in available_indices. Each element is a list of crop_ids.
+    For each farm:
+      num_slots = max(1, floor(farm.plot_size_sqft / config.min_slot_sqft))
+      result[idx] = [primary_assignment[idx]]
+      Build running_hub_supply starting from locked_hub_supply + primary assignments of all available farms
+      For slot in range(1, num_slots):
+        modified_yield_row = yield_row.copy(); modified_yield_row[already_assigned] = 0
+        next_crop = greedy_insert(modified_yield_row, reach_row, crops, hubs, gap_vector, running_hub_supply)
+        result[idx].append(next_crop)
+        Update running_hub_supply with next_crop contribution / num_slots
+  note: "greedy_insert signature unchanged — takes yield_row not farm"
+
+feature2_scheduler_changes:
+  compute_locked_supply:
+    old: "c = farms[i].current_crop_id; supply[c] += yield_matrix[i][c]"
+    new: >
+      crop_ids = farms[i].current_crop_ids
+      n = len(crop_ids)
+      for c in crop_ids:
+          supply[c] += yield_matrix[i][c] / n
+  compute_locked_supply_per_hub:
+    same_pattern: true
+
+feature2_reporter_changes:
+  signature_change: "assignment param changes from np.ndarray to list[list[int]]"
+  locked_supply_loop:
+    old: "c = farms[i].current_crop_id"
+    new: "iterate farms[i].current_crop_ids with yield / n split"
+  available_supply_loop:
+    old: "c = int(assignment[idx]); supply[c] += yield_matrix[farm_i][c]"
+    new: >
+      crop_ids = assignment[idx]
+      n = len(crop_ids)
+      for c in crop_ids:
+          supply[c] += yield_matrix[farm_i][c] / n
+  hub_supply_loop: "same pattern — iterate crop list with /n split"
+
+feature2_packager_changes:
+  logic: >
+    For each (idx, farm_i) in available:
+      crop_ids = assignment[idx]
+      num_slots = len(crop_ids)
+      sqft_per_slot = farm.plot_size_sqft / num_slots
+      For each crop_id in crop_ids:
+        produce one InstructionBundle with sqft_allocated = sqft_per_slot
+  note: "assignment param changes from np.ndarray to list[list[int]] — same as reporter"
+
+feature2_storage_changes:
+  load_assignments: >
+    Migrate on read: {k: v if isinstance(v, list) else [v] for k, v in data.items()}
+  dict_to_farmnode: >
+    current_crop_ids = d.get('current_crop_ids', [])
+    (FarmNode.__post_init__ handles populating from current_crop_id if needed)
+
+feature2_optimize_route_changes:
+  after_run_ilp: >
+    full_assignments = compute_multi_crop_assignments(
+        available, farms, crops, hubs,
+        yield_matrix, reachability_matrix,
+        gap_vector, config, assignment, locked_hub_supply
+    )
+  pass_to_reporter: "generate_report(..., full_assignments, ...)"
+  pass_to_packager: "package_instructions(..., full_assignments, ...)"
+  persist: "{str(farms[i].id): full_assignments[idx] for idx, i in enumerate(available)}"
+
+feature2_nodes_route_changes:
+  GET_nodes_farm_id:
+    response_model: "list[models.BundleResponse]"
+    logic: >
+      Load crop_ids list from assignments (now a list).
+      Return one BundleResponse per crop_id with sqft_allocated = plot_size / len(crop_ids).
+  POST_nodes:
+    response_model: "list[models.BundleResponse]"
+    logic: >
+      Compute num_slots = max(1, floor(plot_size / config.min_slot_sqft)).
+      Call greedy_insert once for primary crop (existing logic).
+      For slots 2..N: zero out already-assigned in yield_row, call greedy_insert again.
+      Return list of BundleResponse, one per crop.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API CONTRACTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiContracts:
+  - name: "BundleResponse"
+    change: "MODIFIED — two new fields added"
+    newFields:
+      - "preference_match: bool = False  (Feature 1)"
+      - "sqft_allocated: Optional[float] = None  (Feature 2)"
+    backwardCompat: "both fields have defaults — existing consumers unaffected"
+
+  - name: "GET /nodes/{farm_id}"
+    change: "BREAKING — response_model changes from BundleResponse to list[BundleResponse]"
+    feature: 2
+
+  - name: "POST /nodes"
+    change: "BREAKING — response_model changes from BundleResponse to list[BundleResponse]"
+    feature: 2
+
+  - name: "POST /optimize"
+    change: "NONE — OptimizeResponse shape unchanged"
+
+  - name: "compute_multi_crop_assignments"
+    type: "new function in optimizer.py"
+    returns: "list[list[int]]"
+
+  - name: "greedy_insert"
+    change: "MODIFIED signature — add preferred_crop_ids: list[int] = [] param"
+    returns: "int (unchanged)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACCEPTANCE CRITERIA
+# ─────────────────────────────────────────────────────────────────────────────
+
+acceptanceCriteria:
+  # Feature 1
+  - id: "AC-F1-001"
+    description: "Preferred crop gets boost in ILP"
+    given: "Farm with preferred_crop_ids=[0] (Tomato) and gap_vector showing Tomato needed"
+    when: "POST /optimize"
+    then: "Farm is assigned Tomato at higher rate than without preference"
+
+  - id: "AC-F1-002"
+    description: "preference_match=true when assigned crop is preferred"
+    given: "Farm prefers Tomato, engine assigns Tomato"
+    when: "POST /nodes or GET /nodes/{id}"
+    then: "preference_match=true in response"
+
+  - id: "AC-F1-003"
+    description: "preference_match=false when network overrides preference"
+    given: "Farm prefers Tomato, network oversupplied with Tomato, engine assigns Lettuce"
+    when: "POST /nodes"
+    then: "preference_match=false, assigned crop is Lettuce"
+
+  - id: "AC-F1-004"
+    description: "No preference = no change to existing behavior"
+    given: "Farm with preferred_crop_ids=[]"
+    when: "POST /optimize"
+    then: "Assignment identical to pre-feature behavior"
+
+  # Feature 2
+  - id: "AC-F2-001"
+    description: "Small farm gets one crop"
+    given: "Farm with plot_size_sqft=25 (< min_slot_sqft*2=100)"
+    when: "POST /optimize then GET /nodes/{id}"
+    then: "Returns list with exactly 1 BundleResponse"
+
+  - id: "AC-F2-002"
+    description: "Large farm gets multiple crops"
+    given: "Farm with plot_size_sqft=200 (min_slot_sqft=50, so 4 slots)"
+    when: "POST /optimize then GET /nodes/{id}"
+    then: "Returns list with exactly 4 BundleResponse items, all different crops"
+
+  - id: "AC-F2-003"
+    description: "sqft_allocated sums to plot_size_sqft"
+    given: "Farm with 3 crop zones"
+    when: "GET /nodes/{id}"
+    then: "sum(b.sqft_allocated for b in response) == farm.plot_size_sqft"
+
+  - id: "AC-F2-004"
+    description: "assignments.json migration is backward compatible"
+    given: "Existing assignments.json with {farm_id: int} format"
+    when: "API starts and POST /optimize runs"
+    then: "No crash; existing assignments loaded as single-element lists"
+
+  - id: "AC-F2-005"
+    description: "Locked farm supply uses current_crop_ids"
+    given: "Locked farm in data.py with current_crop_id=0"
+    when: "POST /optimize"
+    then: "Scheduler correctly accounts for that farm's Tomato supply"
+
+  - id: "AC-F2-006"
+    description: "Multi-crop assignments have no duplicate crops per farm"
+    given: "Farm with 3 slots"
+    when: "POST /optimize"
+    then: "All 3 crop_ids in assignment are distinct"
+
+nonGoals:
+  - "Changing the ILP formulation or integrality constraints"
+  - "Hard preference constraints (must-assign-preferred)"
+  - "UI or frontend changes"
+  - "app/engine/data.py changes"
+  - "app/engine/main.py changes"
+  - "Fractional sqft allocation in the ILP"
+  - "Variable slot size (non-equal sqft split)"
+  - "Capping maximum number of crops per farm (let min_slot_sqft handle it)"
+
+complexityBudget:
+  maxNewFunctions: 2  # compute_multi_crop_assignments, FarmNode.__post_init__
+  maxNewFiles: 0
+  maxLinesOfCode: 200
+  maxDependencies: 0

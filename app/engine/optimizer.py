@@ -46,6 +46,10 @@ def run_ilp(available_indices: list,
         prev = farms[farm_i].current_crop_id
         if prev is not None and 0 <= prev < M:
             c_obj[idx * M + prev] -= config.inertia_weight * yield_matrix[farm_i][prev]
+        # preference: boost farmer-preferred crops (same pattern as inertia)
+        for pref in farms[farm_i].preferred_crop_ids:
+            if 0 <= pref < M:
+                c_obj[idx * M + pref] -= config.preference_weight * yield_matrix[farm_i][pref]
 
     # --- Constraint 1: each farm grows exactly one crop ----------------------
     A_assign = lil_matrix((N_free, n_vars), dtype=float)
@@ -111,16 +115,19 @@ def greedy_insert(yield_row: np.ndarray,
                   crops: list,
                   hubs: list,
                   gap_vector: np.ndarray,
-                  current_hub_supply: np.ndarray = None) -> int:
+                  current_hub_supply: np.ndarray = None,
+                  preferred_crop_ids: list = None) -> int:
     """
     Fast O(M) assignment for a single new node joining mid-cycle.
 
-    yield_row  — precomputed yield for the new farm across all crops [M]
-    reach_row  — precomputed reachability for the new farm across all hubs [H]
+    yield_row          — precomputed yield for the new farm across all crops [M]
+    reach_row          — precomputed reachability for the new farm across all hubs [H]
+    preferred_crop_ids — farmer's preferred crops; these get a 1.5x score multiplier
     Returns the index of the assigned crop.
     """
     M = len(crops)
     scores = np.zeros(M, dtype=float)
+    preferred = set(preferred_crop_ids) if preferred_crop_ids else set()
 
     for c in range(M):
         if yield_row[c] == 0:
@@ -135,6 +142,67 @@ def greedy_insert(yield_row: np.ndarray,
                 supplied  = float(current_hub_supply[h][c]) if current_hub_supply is not None else 0.0
                 hub_urgency += max(0.0, demand - supplied)
 
-        scores[c] = yield_row[c] * (gap_weight + 1.0) * (1.0 + hub_urgency)
+        score = yield_row[c] * (gap_weight + 1.0) * (1.0 + hub_urgency)
+        if c in preferred:
+            score *= 1.5
+        scores[c] = score
 
     return int(np.argmax(scores))
+
+
+def compute_multi_crop_assignments(available_indices: list,
+                                   farms: list,
+                                   crops: list,
+                                   hubs: list,
+                                   yield_matrix: np.ndarray,
+                                   reachability_matrix: np.ndarray,
+                                   gap_vector: np.ndarray,
+                                   config,
+                                   primary_assignment: np.ndarray,
+                                   locked_hub_supply: np.ndarray) -> list:
+    """
+    Post-ILP pass: large farms get additional greedy-assigned crops for remaining sqft zones.
+
+    Returns list (indexed by position in available_indices) of lists of crop_ids.
+    Small farms (plot_size < 2 * min_slot_sqft) return a single-element list.
+    No duplicate crops per farm — already-assigned crops are zeroed out in yield_row.
+    """
+    H = len(hubs)
+    M = len(crops)
+
+    # Build baseline hub supply: locked + primary assignments of all available farms
+    running_hub_supply = locked_hub_supply.copy().astype(float)
+    for idx, farm_i in enumerate(available_indices):
+        c = int(primary_assignment[idx])
+        for h in range(H):
+            if reachability_matrix[farm_i][h]:
+                running_hub_supply[h][c] += yield_matrix[farm_i][c]
+
+    result = []
+    for idx, farm_i in enumerate(available_indices):
+        farm = farms[farm_i]
+        num_slots = max(1, int(farm.plot_size_sqft // config.min_slot_sqft))
+        assigned = [int(primary_assignment[idx])]
+
+        for _ in range(1, num_slots):
+            # Zero out already-assigned crops to prevent duplicates
+            modified_yield_row = yield_matrix[farm_i].copy()
+            for already in assigned:
+                modified_yield_row[already] = 0.0
+
+            reach_row = reachability_matrix[farm_i]
+            next_crop = greedy_insert(
+                modified_yield_row, reach_row, crops, hubs,
+                gap_vector, running_hub_supply,
+                preferred_crop_ids=farm.preferred_crop_ids,
+            )
+            assigned.append(next_crop)
+
+            # Update running supply with this slot's contribution (split equally)
+            slot_yield = yield_matrix[farm_i][next_crop] / num_slots
+            for h in range(H):
+                if reachability_matrix[farm_i][h]:
+                    running_hub_supply[h][next_crop] += slot_yield
+
+        result.append(assigned)
+    return result

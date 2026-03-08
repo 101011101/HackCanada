@@ -5,7 +5,7 @@ from .schemas import FarmNode, Crop, HubNode, NetworkConfig
 def generate_report(farms: list,
                     locked_indices: list,
                     available_indices: list,
-                    assignment: np.ndarray,
+                    assignment: list,
                     crops: list,
                     hubs: list,
                     yield_matrix: np.ndarray,
@@ -17,6 +17,9 @@ def generate_report(farms: list,
       - coverage_by_crop  {crop_name: {target_kg, supplied_kg, gap_pct, met}}
       - hub_coverage       {hub_name: {crop_name: {demand_kg, supplied_kg, met}}}
       - farms_assigned, farms_locked, network_health_pct
+
+    assignment — list of lists: assignment[idx] = [crop_id, ...] for available_indices[idx]
+    Yield is split equally across crops when a farm grows multiple.
     """
     M = len(crops)
     H = len(hubs)
@@ -24,12 +27,17 @@ def generate_report(farms: list,
     # Total supply per crop (locked + newly assigned)
     supply = np.zeros(M, dtype=float)
     for i in locked_indices:
-        c = farms[i].current_crop_id
-        if c is not None:
-            supply[c] += yield_matrix[i][c]
+        crop_ids = farms[i].current_crop_ids
+        if not crop_ids:
+            continue
+        n = len(crop_ids)
+        for c in crop_ids:
+            supply[c] += yield_matrix[i][c] / n
     for idx, farm_i in enumerate(available_indices):
-        c = int(assignment[idx])
-        supply[c] += yield_matrix[farm_i][c]
+        crop_ids = assignment[idx]
+        n = len(crop_ids)
+        for c in crop_ids:
+            supply[c] += yield_matrix[farm_i][c] / n
 
     # Coverage by crop
     coverage_by_crop = {}
@@ -48,16 +56,21 @@ def generate_report(farms: list,
     # Hub supply per (hub, crop)
     hub_supply = np.zeros((H, M), dtype=float)
     for i in locked_indices:
-        c = farms[i].current_crop_id
-        if c is not None:
+        crop_ids = farms[i].current_crop_ids
+        if not crop_ids:
+            continue
+        n = len(crop_ids)
+        for c in crop_ids:
             for h in range(H):
                 if reachability_matrix[i][h]:
-                    hub_supply[h][c] += yield_matrix[i][c]
+                    hub_supply[h][c] += yield_matrix[i][c] / n
     for idx, farm_i in enumerate(available_indices):
-        c = int(assignment[idx])
-        for h in range(H):
-            if reachability_matrix[farm_i][h]:
-                hub_supply[h][c] += yield_matrix[farm_i][c]
+        crop_ids = assignment[idx]
+        n = len(crop_ids)
+        for c in crop_ids:
+            for h in range(H):
+                if reachability_matrix[farm_i][h]:
+                    hub_supply[h][c] += yield_matrix[farm_i][c] / n
 
     # Hub coverage report
     hub_coverage = {}

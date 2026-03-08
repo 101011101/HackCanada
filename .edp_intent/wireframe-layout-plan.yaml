@@ -1,0 +1,93 @@
+version: "1.0.0"
+generatedBy: "edp-6-mcp"
+timestamp: "2026-03-07"
+originalIntent: "Build skeleton wireframes for MyCelium farmer app with 3 main tabs (My Farm, My Food, Suggestions). Multiple agents work in parallel. HTML wireframes use final-kits design system. Desktop + mobile via kit responsive classes."
+
+scope:
+  allowedPaths:
+    - "frontend-PRD/04-layouts.md"
+    - "app/frontend/wireframes/*.html"
+    - ".edp_intent/"
+  forbiddenPaths:
+    - "app/engine/"
+    - "app/api/"
+    - "final-kits/"
+    - "PRD/"
+    - "MVP/"
+  newFiles:
+    - "app/frontend/wireframes/01-my-farm-dashboard.html"
+    - "app/frontend/wireframes/02-my-farm-cycle-update.html"
+    - "app/frontend/wireframes/03-suggestions-entry.html"
+    - "app/frontend/wireframes/04-suggestions-form.html"
+    - "app/frontend/wireframes/05-suggestions-results.html"
+    - "app/frontend/wireframes/06-onboarding-step.html"
+    - "app/frontend/wireframes/07-onboarding-review.html"
+    - "app/frontend/wireframes/08-my-food-wallet.html"
+    - "app/frontend/wireframes/09-my-food-delivery.html"
+
+agentAssignments:
+  agentA:
+    name: "My Farm Agent"
+    files:
+      - "app/frontend/wireframes/01-my-farm-dashboard.html"
+      - "app/frontend/wireframes/02-my-farm-cycle-update.html"
+    readFirst:
+      - "frontend-PRD/04-layouts.md §My Farm"
+      - "final-kits/ui-kit-responsive.html"
+      - "final-kits/styles.css"
+  agentB:
+    name: "Suggestions + Onboarding Agent"
+    files:
+      - "app/frontend/wireframes/03-suggestions-entry.html"
+      - "app/frontend/wireframes/04-suggestions-form.html"
+      - "app/frontend/wireframes/05-suggestions-results.html"
+      - "app/frontend/wireframes/06-onboarding-step.html"
+      - "app/frontend/wireframes/07-onboarding-review.html"
+    readFirst:
+      - "frontend-PRD/04-layouts.md §Suggestions"
+      - "frontend-PRD/04-layouts.md §Onboarding"
+      - "final-kits/ui-kit-responsive.html"
+      - "final-kits/styles.css"
+  agentC:
+    name: "My Food Agent"
+    files:
+      - "app/frontend/wireframes/08-my-food-wallet.html"
+      - "app/frontend/wireframes/09-my-food-delivery.html"
+    readFirst:
+      - "frontend-PRD/04-layouts.md §My Food"
+      - "final-kits/ui-kit-responsive.html"
+      - "final-kits/styles.css"
+
+acceptanceCriteria:
+  - id: "AC-001"
+    description: "Each wireframe is a standalone HTML file"
+    given: "Wireframe file opened in browser"
+    when: "No server required"
+    then: "Page renders correctly using relative path to final-kits/styles.css"
+  - id: "AC-002"
+    description: "Mobile layout correct at 375px"
+    given: "Browser width set to 375px"
+    when: "Page loaded"
+    then: "Mobile kit classes active, tabbar visible, topbar visible"
+  - id: "AC-003"
+    description: "Desktop layout correct at 768px+"
+    given: "Browser width set to 1024px"
+    when: "Page loaded"
+    then: "Desktop kit classes active, sidebar or wide layout visible"
+  - id: "AC-004"
+    description: "Only kit classes used — no custom CSS"
+    given: "Wireframe HTML inspected"
+    when: "Checking class names"
+    then: "All classes exist in final-kits/styles.css or final-kits/ui-kit-responsive.html"
+  - id: "AC-005"
+    description: "3-tab nav present on all authenticated screens"
+    given: "Any of frames 01, 02, 08, 09"
+    when: "Page loaded"
+    then: "Bottom tabbar shows My Farm, My Food, and a third tab"
+
+nonGoals:
+  - "No JavaScript functionality — static HTML only"
+  - "No real API calls or data fetching"
+  - "No React/TypeScript — HTML wireframes only at this stage"
+  - "No custom CSS beyond kit classes"
+  - "No dark theme or MyCelium organic aesthetic — use kit as-is"

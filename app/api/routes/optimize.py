@@ -6,7 +6,7 @@ from app.engine.scorer    import build_yield_matrix
 from app.engine.router    import build_reachability_matrix
 from app.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
-from app.engine.optimizer import run_ilp
+from app.engine.optimizer import run_ilp, compute_multi_crop_assignments
 from app.engine.reporter  import generate_report
 
 router = APIRouter()
@@ -26,20 +26,27 @@ def optimize():
     locked_hub_supply   = compute_locked_supply_per_hub(
         farms, locked, yield_matrix, hubs, reachability_matrix, M)
 
-    assignment = run_ilp(
+    primary_assignment = run_ilp(
         available, farms, crops, hubs,
         yield_matrix, reachability_matrix,
         gap_vector, config, locked_hub_supply,
     )
 
+    # Post-process: expand large farms to multiple crops
+    full_assignments = compute_multi_crop_assignments(
+        available, farms, crops, hubs,
+        yield_matrix, reachability_matrix,
+        gap_vector, config, primary_assignment, locked_hub_supply,
+    )
+
     report = generate_report(
-        farms, locked, available, assignment,
+        farms, locked, available, full_assignments,
         crops, hubs, yield_matrix, reachability_matrix, config,
     )
 
-    # Persist assignments: {str(farm_id): crop_id}
+    # Persist assignments: {str(farm_id): [crop_id, ...]}
     assignments_dict = {
-        str(farms[i].id): int(assignment[idx])
+        str(farms[i].id): full_assignments[idx]
         for idx, i in enumerate(available)
     }
     storage.save_assignments(assignments_dict)
