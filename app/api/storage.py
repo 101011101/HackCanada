@@ -7,7 +7,7 @@ import dataclasses
 from pathlib import Path
 from datetime import date
 
-from app.engine.schemas import FarmNode, Crop, HubNode, NetworkConfig
+from app.engine.schemas import FarmNode, Crop, HubNode, NetworkConfig, HubInventoryEntry, Request, LedgerEntry
 
 DATA_DIR = Path(__file__).parent.parent / 'data'
 
@@ -41,6 +41,30 @@ def load_hubs() -> list[dict]:
 def load_config() -> dict:
     return _load('config.json')
 
+def load_requests() -> list[dict]:
+    try:
+        return _load('requests.json')
+    except FileNotFoundError:
+        return []
+
+def load_ledger() -> list[dict]:
+    try:
+        return _load('ledger.json')
+    except FileNotFoundError:
+        return []
+
+def load_hub_inventory() -> list[dict]:
+    try:
+        return _load('hub_inventory.json')
+    except FileNotFoundError:
+        return []
+
+def load_current_rates() -> dict:
+    try:
+        return _load('current_rates.json')
+    except FileNotFoundError:
+        return {}
+
 def load_assignments() -> dict:
     try:
         data = _load('assignments.json')
@@ -59,6 +83,18 @@ def save_farms(farms: list[dict]) -> None:
 
 def save_assignments(assignments: dict) -> None:
     _save('assignments.json', assignments)
+
+def save_requests(requests: list[dict]) -> None:
+    _save('requests.json', requests)
+
+def save_ledger(entries: list[dict]) -> None:
+    _save('ledger.json', entries)
+
+def save_hub_inventory(inventory: list[dict]) -> None:
+    _save('hub_inventory.json', inventory)
+
+def save_current_rates(rates: dict) -> None:
+    _save('current_rates.json', rates)
 
 def save_hubs(hubs: list[dict]) -> None:
     _save('hubs.json', hubs)
@@ -94,6 +130,24 @@ def dict_to_farmnode(d: dict) -> FarmNode:
         yield_history    = {int(k): v for k, v in d.get('yield_history', {}).items()},
         current_crop_ids = d.get('current_crop_ids', []),
         preferred_crop_ids = d.get('preferred_crop_ids', []),
+        currency_balance = d.get('currency_balance', 0.0),
+        crops_on_hand    = {int(k): v for k, v in d.get('crops_on_hand', {}).items()},
+        crops_lifetime   = {int(k): v for k, v in d.get('crops_lifetime', {}).items()},
+        # DataKit fields
+        soil_texture          = d.get('soil_texture'),
+        soil_depth_cm         = d.get('soil_depth_cm'),
+        drainage              = d.get('drainage'),
+        organic_matter_pct    = d.get('organic_matter_pct'),
+        nitrogen_ppm          = d.get('nitrogen_ppm'),
+        phosphorus_ppm        = d.get('phosphorus_ppm'),
+        potassium_ppm         = d.get('potassium_ppm'),
+        salinity_ds_m         = d.get('salinity_ds_m'),
+        growing_season_days   = d.get('growing_season_days'),
+        rainfall_distribution = d.get('rainfall_distribution'),
+        sunlight_hours_day    = d.get('sunlight_hours_day'),
+        water_availability    = d.get('water_availability'),
+        water_quality_ec      = d.get('water_quality_ec'),
+        aspect                = d.get('aspect'),
     )
 
 
@@ -111,6 +165,7 @@ def dict_to_crop(d: dict) -> Crop:
         base_yield_per_sqft  = d['base_yield_per_sqft'],
         grow_weeks           = d['grow_weeks'],
         network_target_share = d['network_target_share'],
+        base_currency_rate   = d.get('base_currency_rate', 1.0),
     )
 
 
@@ -171,3 +226,22 @@ def seed_if_missing() -> None:
 
     if not (DATA_DIR / 'assignments.json').exists():
         _save('assignments.json', {})
+
+    if not (DATA_DIR / 'requests.json').exists():
+        _save('requests.json', [])
+
+    if not (DATA_DIR / 'ledger.json').exists():
+        _save('ledger.json', [])
+
+    if not (DATA_DIR / 'hub_inventory.json').exists():
+        from app.engine.data import hubs as seed_hubs, crops as seed_crops
+        inventory = [
+            {'hub_id': h.id, 'crop_id': c.id, 'quantity_kg': 0.0, 'last_updated': '2026-03-07T00:00:00'}
+            for h in seed_hubs for c in seed_crops
+        ]
+        _save('hub_inventory.json', inventory)
+
+    if not (DATA_DIR / 'current_rates.json').exists():
+        from app.engine.data import crops as seed_crops
+        rates = {str(c.id): 1.0 for c in seed_crops}
+        _save('current_rates.json', rates)

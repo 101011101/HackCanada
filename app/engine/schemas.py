@@ -27,6 +27,10 @@ class FarmNode:
     # --- Multi-crop & preferences ---
     current_crop_ids:    list = field(default_factory=list)  # list[int]; populated from current_crop_id if empty
     preferred_crop_ids:  list = field(default_factory=list)  # list[int]; farmer-selected preferred crops
+    # --- Transaction / currency ---
+    currency_balance:    float = 0.0                          # Hub Currency balance
+    crops_on_hand:       dict  = field(default_factory=dict)  # {crop_id: kg} — self-reported, display only
+    crops_lifetime:      dict  = field(default_factory=dict)  # {crop_id: kg} — cumulative total ever produced
     # --- DataKit variables (all Optional: None = not measured, 0.0 = measured as zero) ---
     # Soil Physical
     soil_texture:           Optional[str]   = None  # 'sand'|'sandy_loam'|'loam'|'silt_loam'|'clay_loam'|'clay'
@@ -68,6 +72,7 @@ class Crop:
     base_yield_per_sqft:  float          # kg per sqft per cycle (ideal conditions)
     grow_weeks:           int
     network_target_share: float          # ideal fraction of network growing this
+    base_currency_rate:   float = 1.0   # Hub Currency earned/spent per kg at balanced supply
     # --- DataKit optimal ranges (None = crop has no preference for this variable) ---
     # Continuous dims: (min, max) tuples. Categorical dims: tuple of accepted strings.
     # Soil Physical
@@ -111,6 +116,40 @@ class NetworkConfig:
     overproduction_buffer: float   # allowed surplus fraction e.g. 0.20
     preference_weight:     float = 30.0   # boost for farmer-preferred crops in ILP objective
     min_slot_sqft:         float = 50.0   # minimum sqft per crop zone (controls multi-crop split)
+
+
+@dataclass
+class HubInventoryEntry:
+    hub_id:       int
+    crop_id:      int
+    quantity_kg:  float   # current stock on hand at this hub for this crop
+    last_updated: str     # ISO datetime string
+
+
+@dataclass
+class Request:
+    id:           int
+    type:         str            # 'give' | 'receive'
+    node_id:      int
+    hub_id:       int
+    crop_id:      int
+    quantity_kg:  float
+    status:       str            # 'pending' | 'matched' | 'confirmed' | 'cancelled'
+    created_at:   str            # ISO datetime
+    matched_at:   Optional[str] = None
+    confirmed_at: Optional[str] = None
+
+
+@dataclass
+class LedgerEntry:
+    id:            int
+    type:          str    # 'credit' | 'debit'
+    node_id:       int
+    request_id:    int
+    amount:        float  # Hub Currency amount (always positive)
+    balance_after: float  # node balance after this entry
+    created_at:    str    # ISO datetime
+    note:          str    # e.g. "Deposit 8kg Tomato at Hub #1"
 
 
 @dataclass
