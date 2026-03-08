@@ -18,8 +18,9 @@ import { Legend } from "./nodal-network/Legend";
 import { FarmPanel, EMPTY_FORM, farmToForm, type PanelMode, type FarmForm } from "./nodal-network/FarmPanel";
 import DataInformation from "./DataInformation";
 import Charts from "./Charts";
+import MyHubAdminView from "./MyHubAdminView";
 
-type ActivePage = "network-map" | "data-info" | "charts";
+type ActivePage = "network-map" | "data-info" | "charts" | "myhub";
 
 // ── Sidebar nav icons (inline SVG as JSX) ───────────────────────────────────
 
@@ -40,6 +41,9 @@ const IconAlerts = () => (
 );
 const IconProfile = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+);
+const IconHub = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><path d="M2 6l6-4 6 4v7a1 1 0 01-1 1H3a1 1 0 01-1-1V6z"/><path d="M6 14V9h4v5"/></svg>
 );
 
 // ── Style constants ─────────────────────────────────────────────────────────
@@ -389,6 +393,11 @@ export default function AdminDashboard() {
           <IconData /> Data Information <span style={S.navDot(activePage === "data-info")} />
         </button>
 
+        <div style={S.sectionLabel}>Hub</div>
+        <button style={S.navItem(activePage === "myhub")} onClick={() => setActivePage("myhub")}>
+          <IconHub /> MyHub <span style={S.navDot(activePage === "myhub")} />
+        </button>
+
         <div style={S.sectionLabel}>Infrastructure</div>
         <button style={S.navItem(false)}>
           <IconNetwork /> Network Info <span style={S.navDot(false)} />
@@ -406,35 +415,39 @@ export default function AdminDashboard() {
 
       {/* ── Content area ── */}
       <div style={S.contentArea}>
-        {/* Topbar */}
-        <div style={S.topbar}>
-          <div style={S.topbarTitle}>
-            {activePage === "data-info" ? "Data Information" : "Data Visualization"}
+        {/* Topbar — hide for MyHub (it has its own) */}
+        {activePage !== "myhub" && (
+          <div style={S.topbar}>
+            <div style={S.topbarTitle}>
+              {activePage === "data-info" ? "Data Information" : "Data Visualization"}
+            </div>
+            <span style={S.topbarSub}>Admin Dashboard</span>
+            <div style={S.topbarActions}>
+              {activePage === "data-info" ? (
+                <>
+                  <span style={S.badge(T.info, "rgba(91,141,239,0.12)")}>Live Data</span>
+                  <button style={S.btn("secondary")}>Export CSV</button>
+                </>
+              ) : activePage === "charts" ? (
+                <>
+                  <button style={S.btn("secondary")}>Export Charts</button>
+                </>
+              ) : (
+                <>
+                  <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
+                  <button style={S.btn("secondary")}>Export</button>
+                  <button style={S.btn("accent")} onClick={handleOptimize}>Run Optimization</button>
+                </>
+              )}
+            </div>
           </div>
-          <span style={S.topbarSub}>Admin Dashboard</span>
-          <div style={S.topbarActions}>
-            {activePage === "data-info" ? (
-              <>
-                <span style={S.badge(T.info, "rgba(91,141,239,0.12)")}>Live Data</span>
-                <button style={S.btn("secondary")}>Export CSV</button>
-              </>
-            ) : activePage === "charts" ? (
-              <>
-                <button style={S.btn("secondary")}>Export Charts</button>
-              </>
-            ) : (
-              <>
-                <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
-                <button style={S.btn("secondary")}>Export</button>
-                <button style={S.btn("accent")} onClick={handleOptimize}>Run Optimization</button>
-              </>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Scrollable content */}
         <div style={S.scrollContent}>
-          {activePage === "data-info" ? (
+          {activePage === "myhub" ? (
+            <MyHubAdminView />
+          ) : activePage === "data-info" ? (
             <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
           ) : activePage === "charts" ? (
             <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />

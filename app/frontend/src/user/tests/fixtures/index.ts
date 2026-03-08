@@ -167,11 +167,11 @@ export const SOIL_READING_STRESS: SoilReadingResponse = {
 // ---------------------------------------------------------------------------
 
 export const READINGS_HISTORY: ReadingEntryResponse[] = [
-  { farm_id: 1, timestamp: '2026-02-01T08:00:00', pH: 6.4, moisture: 62, temperature: 20, humidity: 63 },
-  { farm_id: 1, timestamp: '2026-02-08T08:00:00', pH: 6.5, moisture: 65, temperature: 22, humidity: 65 },
-  { farm_id: 1, timestamp: '2026-02-15T08:00:00', pH: 6.6, moisture: 68, temperature: 23, humidity: 67 },
-  { farm_id: 1, timestamp: '2026-02-22T08:00:00', pH: 6.3, moisture: 60, temperature: 21, humidity: 61 },
-  { farm_id: 1, timestamp: '2026-03-01T08:00:00', pH: 6.5, moisture: 65, temperature: 22, humidity: 65 },
+  { id: 1, farm_id: 1, crop_id: 0, recorded_at: '2026-02-01T08:00:00', pH: 6.4, moisture: 62, temperature: 20, humidity: 63 },
+  { id: 2, farm_id: 1, crop_id: 0, recorded_at: '2026-02-08T08:00:00', pH: 6.5, moisture: 65, temperature: 22, humidity: 65 },
+  { id: 3, farm_id: 1, crop_id: 0, recorded_at: '2026-02-15T08:00:00', pH: 6.6, moisture: 68, temperature: 23, humidity: 67 },
+  { id: 4, farm_id: 1, crop_id: 0, recorded_at: '2026-02-22T08:00:00', pH: 6.3, moisture: 60, temperature: 21, humidity: 61 },
+  { id: 5, farm_id: 1, crop_id: 0, recorded_at: '2026-03-01T08:00:00', pH: 6.5, moisture: 65, temperature: 22, humidity: 65 },
 ];
 
 // ---------------------------------------------------------------------------
