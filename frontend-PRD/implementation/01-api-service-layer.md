@@ -1,8 +1,9 @@
 # API Service Layer
 
-[MODE: DISCOVER]
+[MODE: DISCOVER — Updated after reading app/backend/]
 
-All API calls go through `src/user/services/api.ts`. No raw `fetch` in components.
+Base URL: `app/backend/api/main.py` — FastAPI at `http://localhost:8000`
+All calls go through `src/user/services/api.ts`. No raw fetch in components.
 
 ---
 
@@ -10,6 +11,10 @@ All API calls go through `src/user/services/api.ts`. No raw `fetch` in component
 
 ```ts
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -22,20 +27,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return res.json();
 }
-
-export class ApiError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
-}
 ```
 
 ---
 
-## Types (from backend models)
+## TypeScript Types (matching backend models.py exactly)
 
 ```ts
-// POST /nodes request
+// POST /nodes
 export interface NewFarmRequest {
   name: string;
   lat: number;
@@ -61,38 +60,102 @@ export interface BundleResponse {
   reason: string;
   preference_match: boolean;
   sqft_allocated: number | null;
+  cycle_start_date: string | null;   // ISO date e.g. "2026-03-08"
+  cycle_number: number | null;
+  joined_at: string | null;          // ISO datetime
 }
 
-export interface BalanceResponse {
-  node_id: number;
-  currency_balance: number;
-  crops_on_hand: Record<string, number>;   // {crop_id_str: kg}
-  crops_lifetime: Record<string, number>;
-}
-
-export interface SoilUpdateRequest {
+export interface SoilReadingResponse {
+  farm_id: number;
   pH: number;
   moisture: number;
   temperature: number;
   humidity: number;
 }
 
+export interface ReadingEntry {
+  pH: number;
+  moisture: number;
+  temperature: number;
+  humidity: number;
+}
+
+export interface ReadingEntryResponse extends ReadingEntry {
+  farm_id: number;
+  timestamp: string;
+}
+
+export interface TaskItem {
+  id: number;
+  crop_id: number;
+  crop_name: string;
+  title: string;
+  subtitle: string;
+  why: string;
+  how: string;
+  target: string;
+  tools_required: string;
+  day_from_start: number;
+  due_date: string | null;
+  status: 'done' | 'upcoming' | 'future' | null;
+}
+
+export interface RiskFlag {
+  type: string;
+  message: string;
+  severity: 'low' | 'medium' | 'high';
+}
+
+export interface SuggestionRequest {
+  plot_size_sqft: number;
+  plot_type: string;
+  tools: string;
+  budget: string;
+  pH?: number;
+  moisture?: number;
+  temperature?: number;
+  preferred_crop_ids?: number[];
+}
+
+export interface SuggestionItem {
+  crop_id: number;
+  crop_name: string;
+  suitability_pct: number;
+  estimated_yield_kg: number;
+  grow_weeks: number;
+  reason: string;
+}
+
+export interface BalanceResponse {
+  node_id: number;
+  currency_balance: number;
+  crops_on_hand: Record<string, number>;
+  crops_lifetime: Record<string, number>;
+}
+
 export interface RequestBody {
   type: 'give' | 'receive';
   node_id: number;
-  hub_id: number;
+  hub_id?: number | null;   // optional — engine assigns hub options
   crop_id: number;
   quantity_kg: number;
+}
+
+export interface HubOption {
+  hub_id: number;
+  hub_name: string;
+  distance_km?: number;
 }
 
 export interface RequestResponse {
   id: number;
   type: 'give' | 'receive';
   node_id: number;
-  hub_id: number;
+  hub_id: number | null;
   crop_id: number;
   quantity_kg: number;
-  status: 'pending' | 'matched' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'options_ready' | 'matched' | 'confirmed' | 'cancelled';
+  hub_options: HubOption[];
   created_at: string;
   matched_at: string | null;
   confirmed_at: string | null;
@@ -115,8 +178,7 @@ export interface Hub {
   lat: number;
   lng: number;
   capacity_kg: number;
-  priority: string;
-  // address not in current model — derive from name for display
+  priority: 'critical' | 'standard';
 }
 
 export interface Crop {
@@ -128,9 +190,29 @@ export interface Crop {
   optimal_pH?: [number, number];
 }
 
-export interface CropsOnHandBody {
+export interface RateItem {
+  crop_id: number;
+  crop_name: string;
+  rate: number;
+}
+
+export interface RateCostResponse {
   crop_id: number;
   quantity_kg: number;
+  action: 'give' | 'receive';
+  rate: number;
+  earn?: number;
+  cost?: number;
+}
+
+export interface CycleEndRequest {
+  actual_yield_kg: Record<string, number>;  // { "crop_id_str": kg }
+}
+
+export interface CropGuide {
+  crop_id: number;
+  crop_name: string;
+  guide: string;
 }
 ```
 
@@ -141,51 +223,91 @@ export interface CropsOnHandBody {
 ### Node / Farm
 
 ```ts
-// Create new farm node — called at end of onboarding
+// Onboarding — create farm node
 export const createNode = (body: NewFarmRequest) =>
   request<BundleResponse[]>('/nodes', { method: 'POST', body: JSON.stringify(body) });
 
-// Get current crop bundle for a farm
+// Dashboard — get current crop assignment + cycle info
 export const getNode = (farmId: number) =>
   request<BundleResponse[]>(`/nodes/${farmId}`);
 
-// Update soil/climate readings
-export const updateNodeData = (farmId: number, body: SoilUpdateRequest) =>
-  request<{ status: string; farm_id: number }>(`/nodes/${farmId}/data`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+// Cycle end — log actual yield, get new assignment
+export const cycleEnd = (farmId: number, body: CycleEndRequest) =>
+  request<BundleResponse[]>(`/nodes/${farmId}/cycle-end`, {
+    method: 'POST', body: JSON.stringify(body),
   });
 
-// Get balance + crops on hand
+// Balance + crops on hand
 export const getBalance = (nodeId: number) =>
   request<BalanceResponse>(`/nodes/${nodeId}/balance`);
 
-// Update crops on hand (after harvest / self-consumption)
-export const updateCropsOnHand = (nodeId: number, body: CropsOnHandBody) =>
+// Update crops on hand after harvest
+export const updateCropsOnHand = (nodeId: number, crop_id: number, quantity_kg: number) =>
   request<{ crops_on_hand: Record<string, number> }>(`/nodes/${nodeId}/crops-on-hand`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+    method: 'PATCH', body: JSON.stringify({ crop_id, quantity_kg }),
   });
 ```
 
-### Requests (Deliveries)
+### Soil Readings
 
 ```ts
-// Submit a give (delivery to hub) or receive request
+// Get current soil readings
+export const getSoilData = (farmId: number) =>
+  request<SoilReadingResponse>(`/nodes/${farmId}/data`);
+
+// Update current soil readings (lightweight, no history)
+export const updateSoilData = (farmId: number, body: ReadingEntry) =>
+  request<{ status: string; farm_id: number }>(`/nodes/${farmId}/data`, {
+    method: 'PATCH', body: JSON.stringify(body),
+  });
+
+// Post a reading to the history log (also updates current values)
+export const postReading = (farmId: number, body: ReadingEntry) =>
+  request<ReadingEntryResponse>(`/nodes/${farmId}/readings`, {
+    method: 'POST', body: JSON.stringify(body),
+  });
+
+// Get reading history for chart
+export const getReadings = (farmId: number, limit = 30) =>
+  request<ReadingEntryResponse[]>(`/nodes/${farmId}/readings?limit=${limit}`);
+```
+
+### Tasks & Risks
+
+```ts
+// Get task list for current crop assignment
+export const getTasks = (farmId: number) =>
+  request<TaskItem[]>(`/nodes/${farmId}/tasks`);
+
+// Get risk flags (frost, overwatering, etc.)
+export const getRisks = (farmId: number) =>
+  request<RiskFlag[]>(`/nodes/${farmId}/risks`);
+
+// Get crop growing guide
+export const getGuide = (farmId: number) =>
+  request<{ farm_id: number; guides: CropGuide[] }>(`/nodes/${farmId}/guide`);
+```
+
+### Requests (Delivery flow — 4-step state machine)
+
+```ts
+// Step 1: Submit delivery (hub_id omitted — engine will suggest options)
 export const submitRequest = (body: RequestBody) =>
   request<RequestResponse>('/requests', { method: 'POST', body: JSON.stringify(body) });
 
-// List requests — filter by node for user's history
+// Step 3: Select hub from options (after engine sets status to 'options_ready')
+export const selectHub = (requestId: number, hub_id: number) =>
+  request<{ status: string; hub_id: number; message: string }>(
+    `/requests/${requestId}/select-hub`,
+    { method: 'POST', body: JSON.stringify({ hub_id }) }
+  );
+
+// List requests for a node (poll for status changes)
 export const listRequests = (params: {
-  node_id?: number;
-  hub_id?: number;
-  status?: string;
-  type?: string;
+  node_id?: number; hub_id?: number; status?: string; type?: string;
 }) => {
   const qs = new URLSearchParams(
-    Object.entries(params)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)])
+    Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
   );
   return request<RequestResponse[]>(`/requests?${qs}`);
 };
@@ -194,9 +316,7 @@ export const getRequest = (requestId: number) =>
   request<RequestResponse>(`/requests/${requestId}`);
 
 export const cancelRequest = (requestId: number) =>
-  request<{ status: string; request_id: number }>(`/requests/${requestId}`, {
-    method: 'DELETE',
-  });
+  request<{ status: string; request_id: number }>(`/requests/${requestId}`, { method: 'DELETE' });
 ```
 
 ### Ledger
@@ -210,44 +330,49 @@ export const getLedger = (nodeId: number) =>
 
 ```ts
 export const getHubs = () => request<Hub[]>('/hubs');
-
 export const getCrops = () => request<Crop[]>('/crops');
-
 export const getHubInventory = (hubId: number) =>
   request<{ hub_id: number; inventory: Array<{ crop_id: number; crop_name: string; quantity_kg: number }>; total_kg: number; capacity_kg: number }>(
     `/hubs/${hubId}/inventory`
   );
 ```
 
----
-
-## What the Staged PRD Planned That Doesn't Exist
-
-| Planned endpoint | Status | MVP decision |
-|-----------------|--------|-------------|
-| `POST /suggestions` | ❌ Not built | Client-side: GET /crops + score against user inputs |
-| `GET /farms/:id/bundle/current` | ❌ Not built | Use `GET /nodes/{id}` (returns BundleResponse[], not full bundle) |
-| `POST /farms/:id/updates` (cycle update) | ❌ Not built | Use `PATCH /nodes/{id}/data` for soil update; yield logging is local-only for MVP |
-| `GET /users/:id/wallet` | ❌ Not built | Compose from `GET /nodes/{id}/balance` + `GET /ledger?node_id=X` |
-| `POST /deliveries` | ❌ Not built | Use `POST /requests` with `type: "give"` |
-| `GET /hubs/nearby` | ❌ Not built | Use `GET /hubs` (returns all) + client-side distance sort using farm lat/lng |
-| `POST /ocr/extract` | ❌ Not built | Omit for MVP — manual entry only |
-| Auth (Supabase) | ❌ Not applicable | No auth — localStorage farm_id only |
-| Supabase Realtime | ❌ Not applicable | Poll balance every 30s when wallet page is open |
-
----
-
-## Polling Strategy (no Realtime)
+### Rates
 
 ```ts
-// In useBalance hook
-useEffect(() => {
-  if (!farmId) return;
-  const fetchBalance = () => getBalance(farmId).then(setBalance).catch(setError);
-  fetchBalance();
-  const id = setInterval(fetchBalance, 30_000); // 30s
-  return () => clearInterval(id);
-}, [farmId]);
+export const getRates = () => request<RateItem[]>('/rates');
+
+export const getDeliveryCost = (crop_id: number, quantity_kg: number, action: 'give' | 'receive') =>
+  request<RateCostResponse>(`/rates/cost?crop_id=${crop_id}&quantity_kg=${quantity_kg}&action=${action}`);
 ```
 
-Same pattern for `listRequests` on wallet page — poll every 30s to catch hub confirmations.
+### Suggestions
+
+```ts
+export const getSuggestions = (body: SuggestionRequest) =>
+  request<SuggestionItem[]>('/suggestions', { method: 'POST', body: JSON.stringify(body) });
+```
+
+---
+
+## Polling Strategy
+
+No Supabase Realtime. Use setInterval.
+
+**Wallet page — poll every 30s:**
+- `listRequests({ node_id: farmId })` → detect options_ready (show hub picker) and confirmed (update balance)
+- `getBalance(farmId)` → update HC balance display
+
+**When engine detects options_ready on a request, show hub picker to user inline in the
+transaction list without needing a page reload.**
+
+---
+
+## What Still Doesn't Exist
+
+| Item | Status |
+|------|--------|
+| Task user-completion tracking | ❌ No endpoint — localStorage only |
+| Sunlight hours | ❌ Not in any model — localStorage from onboarding |
+| My Food / marketplace | ❌ Not built — stub page |
+| Hub distance info in hub_options | ❓ `hub_options` shape TBD — may just have hub_id |

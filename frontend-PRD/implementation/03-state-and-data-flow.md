@@ -1,175 +1,192 @@
 # State & Data Flow
 
-[MODE: DISCOVER]
+[MODE: DISCOVER — Updated after reading app/backend/]
 
 ---
 
-## localStorage Schema
-
-All keys are namespaced. Farm identity is the root of everything.
+## localStorage Schema (slimmed down — API now handles most state)
 
 ```ts
-// Farm identity — set once during onboarding
-localStorage['mycelium:farm_id']       // number (e.g. "42")
-localStorage['mycelium:farm_name']     // string
-localStorage['mycelium:farm_lat']      // number
-localStorage['mycelium:farm_lng']      // number
-localStorage['mycelium:farm_data']     // JSON: { pH, moisture, temperature, humidity, plot_size_sqft, plot_type, tools, budget }
+// Farm identity — set once during onboarding, never changes
+localStorage['mycelium:farm_id']        // number string e.g. "42"
+localStorage['mycelium:farm_lat']       // number string
+localStorage['mycelium:farm_lng']       // number string
 
 // Onboarding draft — cleared on successful submit
-localStorage['mycelium:setup_draft']   // JSON: partial NewFarmRequest (for resume)
-localStorage['mycelium:setup_step']    // number: current step 1–4
+localStorage['mycelium:setup_draft']    // JSON: partial NewFarmRequest
+localStorage['mycelium:setup_step']     // number: current step 1–4
 
-// Task state — keyed by farm + cycle
-localStorage['mycelium:tasks:{farmId}:{cycleKey}']  // JSON: Record<taskId, 'pending'|'done'|'skipped'>
-// cycleKey = derived from crop grow_weeks + join date: e.g. "spinach-c3"
+// User task completion — server tracks time-based status only, not user actions
+localStorage['mycelium:task_done:{farmId}:{taskId}']   // "true" | "skipped"
 
-// Last known sensor readings (no GET endpoint exists for these)
-localStorage['mycelium:last_readings:{farmId}']     // JSON: { pH, moisture, temperature, humidity, updatedAt }
-
-// Condition history for charts (local time-series)
-localStorage['mycelium:reading_history:{farmId}']   // JSON: Array<{ date, pH, moisture, temperature, humidity }>
-// Capped at 30 entries (appended on each PATCH /data submit)
+// Sunlight hours — not in any API model
+localStorage['mycelium:sunlight_hours:{farmId}']  // number string from onboarding Step 1
 ```
+
+**What moved off localStorage (now in API):**
+- cycle_start_date, cycle_number, joined_at → in BundleResponse
+- current soil readings → GET /nodes/{id}/data
+- reading history → GET /nodes/{id}/readings
+- total grown, crops_lifetime → in BalanceResponse
 
 ---
 
 ## FarmContext
 
-The root context. Loaded once on app mount.
-
 ```ts
 interface FarmContextValue {
-  farmId: number | null;          // null = not joined
-  farmName: string | null;
+  farmId: number | null;
   farmLat: number | null;
   farmLng: number | null;
-  joined: boolean;                // !!farmId
-  join: (farmId: number, name: string, lat: number, lng: number, data: object) => void;
-  leave: () => void;              // clears all localStorage keys
+  joined: boolean;
+  join: (farmId: number, lat: number, lng: number) => void;
+  leave: () => void;  // clears localStorage, resets context
 }
 ```
 
-**Routing gate:** If `!joined`, any route under `/dashboard`, `/update`, `/wallet`, `/profile`
-redirects to `/`. Implemented as a `<ProtectedRoute>` wrapper component.
+Gate: any route under `/dashboard`, `/update`, `/wallet`, `/profile` redirects to `/` if `!joined`.
 
 ---
 
 ## Per-Page Data Flow
 
 ### Landing (`/`)
-- No API calls.
-- Reads `FarmContext.joined` — if true, immediately redirect to `/dashboard`.
-- Renders: network animation (static SVG or animation), two CTAs.
+- No API. Read FarmContext — if joined, redirect to `/dashboard`.
 
 ### Suggestions (`/suggestions`)
-- On mount: `GET /crops` (cached in session, not localStorage).
-- On form submit: client-side scoring — no API call.
-- "Join with X crop" → navigate to `/setup?crop_id=X&plot_size=Y` (query params pre-fill setup).
+```
+mount → nothing
+
+form submit →
+  POST /suggestions { plot_size_sqft, plot_type, tools, budget, pH?, moisture?, temp? }
+  → render SuggestionItem[] sorted by suitability_pct desc
+
+"Join with X" →
+  navigate to /setup?crop_id=X&plot_size=Y
+```
 
 ### Setup (`/setup`)
-- Reads query params for pre-fill from suggestions.
-- Reads `mycelium:setup_draft` on mount for resume.
-- On each step advance: writes draft to localStorage.
-- On final submit: `POST /nodes` → on success, calls `FarmContext.join()` → navigate `/dashboard`.
-- On error: show inline error with retry.
+```
+mount →
+  read localStorage setup_draft for resume
+  read query params (crop_id, plot_size from suggestions)
+
+each step advance →
+  write draft to localStorage
+
+final submit →
+  POST /nodes → BundleResponse[]
+  save farm_id, lat, lng to localStorage
+  FarmContext.join()
+  navigate /dashboard
+```
 
 ### Dashboard (`/dashboard`)
 ```
 mount →
-  1. read farmId from context
-  2. GET /nodes/{farmId}          → bundle (BundleResponse[])
-  3. derive tasks from bundle     → generate task list (see gaps doc)
-  4. read task states from localStorage
-  5. read last_readings from localStorage → populate DataWidget
-  6. render
+  GET /nodes/{farmId}       → BundleResponse[] (crop, cycle_start_date, cycle_number, joined_at)
+  GET /nodes/{farmId}/tasks → TaskItem[] (title, subtitle, due_date, time-based status)
+  GET /nodes/{farmId}/risks → RiskFlag[]
+  GET /nodes/{farmId}/data  → SoilReadingResponse (current pH/moisture/temp/humidity)
+  read localStorage task_done states
+
+render →
+  HeroSection: crop_name, cycle_number, cycle_start_date + grow_weeks → compute dates + progress
+  TaskList: merge API tasks with localStorage done states
+  RiskFlags: banner above tasks if any high/medium severity
+  DataWidget: from SoilReadingResponse
+  StatsRow: total_grown = sum(crops_lifetime from balance), cycle target = quantity_kg from bundle
+  "Cycle ending soon" banner: if dayOfCycle >= totalDays - 3
+
+refresh → re-fetch all 4 endpoints on pull-to-refresh or page focus
 ```
-No polling on dashboard — data is relatively static within a cycle.
-"Refresh" pull-to-refresh (or manual button on desktop) re-fetches bundle.
 
 ### Update (`/update`)
 ```
 mount →
-  1. read farmId + last_readings from localStorage
-  2. render pre-filled form
+  GET /nodes/{farmId}/data → pre-fill conditions form
+  GET /nodes/{farmId}/tasks → render task checklist
 
 submit conditions →
-  1. PATCH /nodes/{farmId}/data
-  2. on success: update last_readings in localStorage + append to reading_history
-  3. show success toast
+  POST /nodes/{farmId}/readings { pH, moisture, temperature, humidity }
+  → on success: show "Readings logged" toast
+  → DataWidget on dashboard will refresh on next visit
 
 submit task progress →
-  1. update localStorage task states
-  2. show success toast
+  write task_done states to localStorage per task
+  show "Progress saved" toast
+
+end of cycle (separate action) →
+  POST /nodes/{farmId}/cycle-end { actual_yield_kg: { "crop_id": kg } }
+  → on success: navigate to /dashboard (dashboard will fetch new bundle)
 ```
-No round-trip for task progress — local only for MVP.
 
 ### Wallet (`/wallet`)
 ```
 mount →
-  1. GET /nodes/{farmId}/balance  → currency_balance, crops_on_hand
-  2. GET /ledger?node_id={farmId} → ledger entries (confirmed transactions)
-  3. GET /requests?node_id={farmId}&status=pending → pending deliveries
-  4. GET /hubs                    → hub list for delivery form
-  5. GET /crops                   → crop definitions (for names)
+  GET /nodes/{farmId}/balance        → currency_balance, crops_lifetime
+  GET /ledger?node_id={farmId}       → confirmed transaction history
+  GET /requests?node_id={farmId}     → all requests (all statuses)
+  GET /hubs                          → hub list for delivery form
+  GET /crops                         → crop definitions for delivery form
+  GET /rates                         → exchange rates for earn preview
 
-interval (30s) →
-  1. re-fetch balance + requests → check for newly confirmed deliveries
-  2. if balance changed: update display + show "Balance updated" toast
+interval 30s →
+  GET /requests?node_id={farmId}
+  → if any request changed to 'options_ready': show hub picker inline for that request
+  → if any changed to 'confirmed': re-fetch balance, show "Balance updated" toast
+  GET /nodes/{farmId}/balance        → update HC balance display
 
-submit delivery →
-  1. POST /requests { type: 'give', node_id, hub_id, crop_id, quantity_kg }
-  2. on success: add to local pending list + show "Delivery logged" toast
-  3. next poll will show it as pending in the list
+delivery flow →
+  Step 1: user enters crop + quantity
+    GET /rates/cost?crop_id=X&quantity_kg=Y&action=give → show estimated earn
+  Step 2: user submits
+    POST /requests { type: 'give', node_id, crop_id, quantity_kg }  (no hub_id)
+  Step 3: wait for engine (poll detects 'options_ready')
+    show hub_options from request → user selects
+    POST /requests/{id}/select-hub { hub_id }
+  Step 4: user goes to hub physically — hub staff confirms on admin side
+    poll detects 'confirmed' → balance updated, toast shown
 ```
 
 ### Profile (`/profile`)
 ```
 mount →
-  1. read all farm data from localStorage (no GET /nodes endpoint for full farm object)
-  2. render farm details
+  GET /nodes/{farmId}          → bundle for crop/cycle info
+  GET /nodes/{farmId}/balance  → lifetime stats
 
 leave network →
-  1. confirm dialog
-  2. FarmContext.leave() → clears localStorage
-  3. navigate to /
+  confirm dialog
+  FarmContext.leave() → clear localStorage
+  navigate to /
 ```
 
 ---
 
 ## Loading / Error / Empty States
 
-Every page that fetches data follows this pattern:
-
-```ts
-type AsyncState<T> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: string }
-```
-
-| Screen | Loading state | Error state | Empty state |
-|--------|--------------|-------------|-------------|
-| Dashboard | Skeleton cards (pulsing) | "Couldn't load your farm data. [Retry]" | "Your first instructions are being prepared" |
-| Tasks | Skeleton list items | Show stale localStorage data if available | "No tasks for today" |
-| DataWidget | Skeleton readings | Show last_readings from localStorage | "No readings yet — log your first update" |
-| Wallet balance | "—" placeholder | "Couldn't load balance. [Retry]" | "0 HC" (still valid, show it) |
-| Transaction list | Skeleton rows | "Couldn't load history. [Retry]" | "No transactions yet — make your first delivery" |
-| Suggestions | Skeleton cards | "Couldn't load crop data. [Retry]" | — (shouldn't happen if /crops works) |
-| Hub list (delivery) | Spinner | "Couldn't load hubs. [Retry]" | "No hubs available in your area" |
+| Screen | Loading | Error | Empty |
+|--------|---------|-------|-------|
+| Dashboard bundle | Skeleton hero + task placeholders | "Couldn't load farm data. [Retry]" | "Your first assignment is being prepared" |
+| Task list | Skeleton rows | Show stale if cached, else error | "No tasks yet for this cycle" |
+| Risk flags | Silent (no indicator) | Ignore — non-critical | Nothing shown (no risks = good) |
+| DataWidget | Skeleton readings | "No readings available" | "Log your first reading to see conditions" |
+| Chart | Skeleton line | Error banner | "Log readings to see trends here" |
+| Wallet balance | "— HC" | "Couldn't load balance. [Retry]" | "0 HC" (valid, show it) |
+| Transaction list | Skeleton rows | "[Retry]" | "No transactions yet — make your first delivery" |
+| Delivery hub options | Spinner on request row | "Couldn't load options. [Retry]" | — (engine not run yet — show "Options loading...") |
+| Suggestions results | Spinner | "Couldn't load suggestions. [Retry]" | — (always has crops) |
 
 ---
 
-## Chart Data Strategy
+## Delivery Request Status Display
 
-No time-series endpoint exists. Strategy:
+The wallet transaction list must handle all statuses:
 
-1. Every time user submits a condition update, append to `mycelium:reading_history:{farmId}`:
-   ```ts
-   { date: new Date().toISOString(), moisture, temperature, pH, humidity }
-   ```
-2. Cap at 30 entries (drop oldest).
-3. Dashboard chart reads this array.
-4. **On first load with no history:** show a 7-day mock seed as "example data" with a disclaimer label
-   until real readings are submitted. Alternatively show empty state.
+| Status | Display |
+|--------|---------|
+| `pending` | "Pending — waiting for hub options" |
+| `options_ready` | "Select a hub →" (interactive — shows hub picker inline) |
+| `matched` | "Ready — go to [Hub Name] to drop off" |
+| `confirmed` | "Confirmed · +X HC" (credit shown) |
+| `cancelled` | "Cancelled" (greyed out) |
