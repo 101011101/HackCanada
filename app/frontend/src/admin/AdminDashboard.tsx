@@ -661,6 +661,19 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Add-farm toolbar (only shown when panel is closed) */}
+              {panelMode === "closed" && (
+                <FarmPanel
+                  mode="closed"
+                  form={form}
+                  onFormChange={setForm}
+                  onModeChange={setPanelMode}
+                  onSubmit={handleSubmit}
+                  onCancel={handleCancel}
+                  style={{ marginBottom: 8 }}
+                />
+              )}
+
               {/* Map with overlays (Legend, FarmPanel) */}
               <div style={S.mapContainer}>
                 <div style={S.mapClip}>
@@ -681,17 +694,19 @@ export default function AdminDashboard() {
                   style={{ position: "absolute", bottom: 12, left: 12, zIndex: 10 }}
                 />
 
-                <FarmPanel
-                  mode={panelMode}
-                  form={form}
-                  onFormChange={setForm}
-                  onModeChange={setPanelMode}
-                  onSubmit={handleSubmit}
-                  farmId={editFarmId ?? undefined}
-                  onDelete={(id) => { deleteFarm(id).then(loadAll).catch(console.error); setPanelMode("closed"); setEditFarmId(null); }}
-                  onCancel={handleCancel}
-                  style={{ position: "absolute", top: 12, right: 52, zIndex: 10 }}
-                />
+                {panelMode !== "closed" && (
+                  <FarmPanel
+                    mode={panelMode}
+                    form={form}
+                    onFormChange={setForm}
+                    onModeChange={setPanelMode}
+                    onSubmit={handleSubmit}
+                    farmId={editFarmId ?? undefined}
+                    onDelete={(id) => { deleteFarm(id).then(loadAll).catch(console.error); setPanelMode("closed"); setEditFarmId(null); }}
+                    onCancel={handleCancel}
+                    style={{ position: "absolute", top: 12, left: 12, zIndex: 10 }}
+                  />
+                )}
               </div>
 
               {/* Node Status Table */}
