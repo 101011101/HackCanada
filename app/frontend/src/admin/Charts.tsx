@@ -263,8 +263,8 @@ export default function Charts({ farmList, crops, assignments, hubs }: Props) {
               <YAxis tick={AXIS_STYLE} tickLine={false} axisLine={false} allowDecimals={false} />
               <Tooltip content={<CropTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
               <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={32}>
-                {chartData.cropDistribution.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
+                {chartData.cropDistribution.map((d) => (
+                  <Cell key={d.name} fill={d.color} />
                 ))}
               </Bar>
             </BarChart>

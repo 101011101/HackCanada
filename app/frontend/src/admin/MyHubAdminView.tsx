@@ -209,7 +209,7 @@ export default function MyHubAdminView() {
     setKeyLoading(true);
     setKeyError(null);
     try {
-      const result = await authHub(keyInput.trim());
+      const result = await api.authHub(keyInput.trim());
       localStorage.setItem('hub_key', keyInput.trim());
       localStorage.setItem('hub_id', String(result.hub_id));
       localStorage.setItem('hub_name', result.hub_name);
@@ -315,11 +315,12 @@ export default function MyHubAdminView() {
 
   if (error) {
     return (
-      <div style={S.content}>
-        <div style={S.hubSelect}>
-          <span style={S.hubSelectLabel}>Hub:</span>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+        <div style={S.topbar}>
+          <div style={S.topbarTitle}>MyHub</div>
+          <span style={S.topbarSub}>·</span>
           <select
-            style={S.hubSelectSelect}
+            style={{ ...S.hubSelectSelect, fontSize: 12, height: 26, padding: "3px 8px" }}
             value={selectedHubId ?? ""}
             onChange={(e) => setSelectedHubId(Number(e.target.value))}
           >
@@ -328,7 +329,9 @@ export default function MyHubAdminView() {
             ))}
           </select>
         </div>
-        <p style={{ color: T.error }}>{error}</p>
+        <div style={S.content}>
+          <p style={{ color: T.error }}>{error}</p>
+        </div>
       </div>
     );
   }
@@ -338,19 +341,10 @@ export default function MyHubAdminView() {
       <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
         <div style={S.topbar}>
           <div style={S.topbarTitle}>MyHub</div>
-          <span style={S.topbarSub}>Admin Dashboard</span>
-          <div style={S.topbarActions}>
-            <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>Ledger Synced</span>
-            <button style={S.btn("secondary")}>Export CSV</button>
-            <button style={S.btn("ghost")} onClick={handleSignOut}>Sign out</button>
-          </div>
-        </div>
-
-        <div style={S.hubSelect}>
-          <span style={S.hubSelectLabel}>Hub:</span>
+          <span style={S.topbarSub}>·</span>
           {demoMode ? (
             <select
-              style={S.hubSelectSelect}
+              style={{ ...S.hubSelectSelect, fontSize: 12, height: 26, padding: "3px 8px" }}
               value={selectedHubId ?? ""}
               onChange={e => setSelectedHubId(Number(e.target.value))}
             >
@@ -359,6 +353,11 @@ export default function MyHubAdminView() {
           ) : (
             <span style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{authState.hub_name}</span>
           )}
+          <div style={S.topbarActions}>
+            <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>Ledger Synced</span>
+            <button style={S.btn("secondary")}>Export CSV</button>
+            <button style={S.btn("ghost")} onClick={handleSignOut}>Sign out</button>
+          </div>
         </div>
 
         <div style={S.primaryTabs}>

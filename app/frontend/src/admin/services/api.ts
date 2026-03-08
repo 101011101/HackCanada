@@ -237,3 +237,44 @@ export function generateHubKey(hubId: number): Promise<{ hub_id: number; key: st
 export function getHubKeys(): Promise<Record<string, string>> {
   return request<Record<string, string>>('/hubs/keys');
 }
+
+export function generateNodeKey(farmId: number): Promise<{ farm_id: number; key: string }> {
+  return request<{ farm_id: number; key: string }>(`/nodes/${farmId}/key/generate`, {
+    method: 'POST',
+  });
+}
+
+export function getNodeKeys(): Promise<Record<string, string>> {
+  return request<Record<string, string>>('/nodes/keys');
+}
+
+export function authHub(key: string): Promise<{ hub_id: number; hub_name: string }> {
+  return request<{ hub_id: number; hub_name: string }>('/auth/hub', {
+    method: 'POST',
+    body: JSON.stringify({ key }),
+  });
+}
+
+export function authNode(key: string): Promise<{ farm_id: number; farm_name: string }> {
+  return request<{ farm_id: number; farm_name: string }>('/auth/node', {
+    method: 'POST',
+    body: JSON.stringify({ key }),
+  });
+}
+
+export function generateInvite(): Promise<{ token: string }> {
+  return request<{ token: string }>('/invite/generate', { method: 'POST' });
+}
+
+export interface ClaimInvitePayload {
+  token: string; name: string; lat: number; lng: number;
+  plot_size_sqft: number; plot_type: string; tools: string; budget: string;
+  pH: number; moisture: number; temperature: number; humidity: number;
+}
+
+export function claimInvite(payload: ClaimInvitePayload): Promise<{ farm_id: number; farm_name: string; key: string }> {
+  return request<{ farm_id: number; farm_name: string; key: string }>('/invite/claim', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

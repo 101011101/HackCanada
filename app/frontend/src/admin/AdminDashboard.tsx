@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getNearestHub,
   buildNetworkEdges,
@@ -19,8 +20,9 @@ import Instructions from "./Instructions";
 import AdminLedger from "./AdminLedger";
 import MyHubAdminView from "./MyHubAdminView";
 import HubManager from "./HubManager";
+import NetworkInfoView from "./NetworkInfoView";
 
-type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger" | "myhub" | "hub-manager";
+type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger" | "myhub" | "hub-manager" | "network-info";
 
 // ── Sidebar nav icons (inline SVG as JSX) ───────────────────────────────────
 
@@ -261,12 +263,20 @@ export default function AdminDashboard() {
   const [report, setReport] = useState<ReportResponse | null>(null);
   const [hubRouting, setHubRouting] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("closed");
   const [form, setForm] = useState<FarmForm>({ ...EMPTY_FORM });
   const [editFarmId, setEditFarmId] = useState<number | null>(null);
-  const [activePage, setActivePage] = useState<ActivePage>("network-map");
+  const [activePage, setActivePage] = useState<ActivePage>(
+    () => (sessionStorage.getItem("admin:activePage") as ActivePage | null) ?? "network-map"
+  );
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const navigate = (page: ActivePage) => {
+    sessionStorage.setItem("admin:activePage", page);
+    setActivePage(page);
+  };
 
   useEffect(() => {
     if (window.innerWidth < 900) setSidebarCollapsed(true);
@@ -293,6 +303,7 @@ export default function AdminDashboard() {
       setLoading(false);
     }).catch(err => {
       console.error(err);
+      setLoadError(err?.message ?? 'Failed to load dashboard data. Please refresh.');
       setLoading(false);
     });
   }, []);
@@ -406,6 +417,16 @@ export default function AdminDashboard() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "sans-serif", flexDirection: "column", gap: 12 }}>
+        <span style={{ color: "#D94F4F", fontWeight: 600 }}>Error loading dashboard</span>
+        <span style={{ color: "#888", fontSize: 13 }}>{loadError}</span>
+        <button style={{ marginTop: 8, padding: "8px 16px", borderRadius: 8, border: "1px solid #ddd", cursor: "pointer" }} onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
   return (
     <div style={S.layout(sidebarCollapsed)}>
       {/* ── Sidebar ── */}
@@ -416,43 +437,43 @@ export default function AdminDashboard() {
         </div>
 
         <div style={S.sectionLabel(sidebarCollapsed)}>Visualization</div>
-        <button style={S.navItem(activePage === "network-map")} onClick={() => setActivePage("network-map")}>
+        <button style={S.navItem(activePage === "network-map")} onClick={() => navigate("network-map")}>
           <IconMap />
           {!sidebarCollapsed && <>Network Map <span style={S.navDot(activePage === "network-map")} /></>}
         </button>
-        <button style={S.navItem(activePage === "charts")} onClick={() => setActivePage("charts")}>
+        <button style={S.navItem(activePage === "charts")} onClick={() => navigate("charts")}>
           <IconChart />
           {!sidebarCollapsed && <>Charts <span style={S.navDot(activePage === "charts")} /></>}
         </button>
 
         <div style={S.sectionLabel(sidebarCollapsed)}>Data</div>
-        <button style={S.navItem(activePage === "data-info")} onClick={() => setActivePage("data-info")}>
+        <button style={S.navItem(activePage === "data-info")} onClick={() => navigate("data-info")}>
           <IconData />
           {!sidebarCollapsed && <>Data Information <span style={S.navDot(activePage === "data-info")} /></>}
         </button>
-        <button style={S.navItem(activePage === "instructions")} onClick={() => setActivePage("instructions")}>
+        <button style={S.navItem(activePage === "instructions")} onClick={() => navigate("instructions")}>
           <IconTasks />
           {!sidebarCollapsed && <>Instructions <span style={S.navDot(activePage === "instructions")} /></>}
         </button>
-        <button style={S.navItem(activePage === "ledger")} onClick={() => setActivePage("ledger")}>
+        <button style={S.navItem(activePage === "ledger")} onClick={() => navigate("ledger")}>
           <IconLedger />
           {!sidebarCollapsed && <>Ledger <span style={S.navDot(activePage === "ledger")} /></>}
         </button>
 
         <div style={S.sectionLabel(sidebarCollapsed)}>Hub</div>
-        <button style={S.navItem(activePage === "myhub")} onClick={() => setActivePage("myhub")}>
+        <button style={S.navItem(activePage === "myhub")} onClick={() => navigate("myhub")}>
           <IconHub />
           {!sidebarCollapsed && <>MyHub <span style={S.navDot(activePage === "myhub")} /></>}
         </button>
-        <button style={S.navItem(activePage === "hub-manager")} onClick={() => setActivePage("hub-manager")}>
+        <button style={S.navItem(activePage === "hub-manager")} onClick={() => navigate("hub-manager")}>
           <IconHub />
           {!sidebarCollapsed && <>Hub Manager <span style={S.navDot(activePage === "hub-manager")} /></>}
         </button>
 
         <div style={S.sectionLabel(sidebarCollapsed)}>Infrastructure</div>
-        <button style={S.navItem(false)}>
+        <button style={S.navItem(activePage === "network-info")} onClick={() => navigate("network-info")}>
           <IconNetwork />
-          {!sidebarCollapsed && <>Network Info <span style={S.navDot(false)} /></>}
+          {!sidebarCollapsed && <>Network Info <span style={S.navDot(activePage === "network-info")} /></>}
         </button>
         <button style={S.navItem(false)} onClick={() => setAlertsOpen(o => !o)}>
           <IconAlerts />
@@ -480,14 +501,21 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Alerts slide-out panel ── */}
+      <AnimatePresence>
       {alertsOpen && (
-        <div style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 320,
-          background: T.bgElev, zIndex: 200, boxShadow: T.shLg,
-          borderLeft: `1px solid ${T.borderLt}`,
-          display: "flex", flexDirection: "column",
-          fontFamily: T.fb,
-        }}>
+        <motion.div
+          style={{
+            position: "fixed", top: 0, right: 0, bottom: 0, width: 320,
+            background: T.bgElev, zIndex: 200, boxShadow: T.shLg,
+            borderLeft: `1px solid ${T.borderLt}`,
+            display: "flex", flexDirection: "column",
+            fontFamily: T.fb,
+          }}
+          initial={{ x: '100%', opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: '100%', opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "16px 20px", borderBottom: `1px solid ${T.borderLt}`,
@@ -529,8 +557,9 @@ export default function AdminDashboard() {
               <div style={{ color: T.ink3, fontSize: 12, textAlign: "center", marginTop: 40 }}>No active alerts</div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* ── Content area ── */}
       <div style={S.contentArea}>
@@ -541,6 +570,7 @@ export default function AdminDashboard() {
               {activePage === "data-info" ? "Data Information"
                 : activePage === "instructions" ? "Instructions"
                 : activePage === "ledger" ? "Ledger"
+                : activePage === "network-info" ? "Network Info"
                 : "Data Visualization"}
             </div>
             <span style={S.topbarSub}>Admin Dashboard</span>
@@ -574,19 +604,37 @@ export default function AdminDashboard() {
 
         {/* Scrollable content */}
         <div style={S.scrollContent}>
+          <AnimatePresence mode="wait">
           {activePage === "hub-manager" ? (
-            <HubManager hubList={hubList} hubRouting={hubRouting} crops={crops} onRefresh={loadAll} />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <HubManager hubList={hubList} hubRouting={hubRouting} crops={crops} onRefresh={loadAll} />
+            </motion.div>
           ) : activePage === "myhub" ? (
-            <MyHubAdminView />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <MyHubAdminView />
+            </motion.div>
           ) : activePage === "data-info" ? (
-            <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
+            </motion.div>
           ) : activePage === "charts" ? (
-            <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />
+            </motion.div>
           ) : activePage === "instructions" ? (
-            <Instructions farmList={farmList} assignments={assignments} crops={crops} />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <Instructions farmList={farmList} assignments={assignments} crops={crops} />
+            </motion.div>
           ) : activePage === "ledger" ? (
-            <AdminLedger />
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <AdminLedger />
+            </motion.div>
+          ) : activePage === "network-info" ? (
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <NetworkInfoView />
+            </motion.div>
           ) : (
+            <motion.div key={activePage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
             <div style={S.contentPad}>
               {/* KPI Row */}
               <div style={S.kpiRow}>
@@ -692,7 +740,9 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
