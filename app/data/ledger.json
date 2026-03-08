@@ -38,5 +38,15 @@
     "balance_after": 74.0,
     "created_at": "2026-03-08T11:48:22",
     "note": "Withdrawal 4.0kg crop#2 at hub#2"
+  },
+  {
+    "id": 5,
+    "type": "credit",
+    "node_id": 105,
+    "request_id": 15,
+    "amount": 4.0,
+    "balance_after": 26.0,
+    "created_at": "2026-03-08T12:38:49",
+    "note": "Deposit 1.0kg crop#1 at hub#2"
   }
 ]

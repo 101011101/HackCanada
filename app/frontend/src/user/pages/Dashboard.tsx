@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFarm } from '../store/FarmContext';
 import { useAsync } from '../hooks/useAsync';
 import { useTaskCompletion } from '../hooks/useTaskCompletion';
@@ -19,6 +19,7 @@ import MenuSheet from '../components/sheets/MenuSheet';
 import AddPlotSheet from '../components/sheets/AddPlotSheet';
 import LogDataSheet from '../components/sheets/LogDataSheet';
 import BundlePicker from '../components/shared/BundlePicker';
+import MyFoodContentFull from '@/components/myfood/MyFoodContentFull';
 import type { HubEntry } from '../types';
 
 type Metric = 'moisture' | 'temperature' | 'pH' | 'humidity';
@@ -34,6 +35,7 @@ function kmBetween(lat1: number, lng1: number, lat2: number, lng2: number): numb
 export default function Dashboard() {
   const { farmId, farmLat, farmLng } = useFarm();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [cropSheetOpen, setCropSheetOpen] = useState(false);
@@ -45,6 +47,22 @@ export default function Dashboard() {
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [logSheetCropId, setLogSheetCropId] = useState<number | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'farm' | 'food'>(() =>
+    searchParams.get('tab') === 'food' ? 'food' : 'farm'
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'food') setActiveTab('food');
+    else if (tab !== 'food' && tab !== null) setActiveTab('farm');
+  }, [searchParams]);
+
+  const setActiveTabWithUrl = (tab: 'farm' | 'food') => {
+    setActiveTab(tab);
+    const next = new URLSearchParams(searchParams);
+    if (tab === 'food') next.set('tab', 'food'); else next.delete('tab');
+    setSearchParams(next, { replace: true });
+  };
 
   // Parallel data fetches
   const nodeState = useAsync(() => getNode(farmId!), [farmId]);
@@ -126,6 +144,10 @@ export default function Dashboard() {
       <div className="shell m-only">
         <MobileTopbar onOpenMenu={() => setMenuOpen(true)} />
 
+        {activeTab === 'food' ? (
+          <MyFoodContentFull nodeId={farmId} />
+        ) : (
+        <>
         {/* Hero */}
         {nodeState.loading && (
           <div className="m-hero">
@@ -352,67 +374,76 @@ export default function Dashboard() {
           </div>
         )}
 
+        </>
+        )}
+
         <BottomTabBar
-          activeTab="farm"
-          onTabChange={(tab) => { if (tab === 'food') navigate('/wallet'); }}
+          activeTab={activeTab}
+          onTabChange={setActiveTabWithUrl}
           onAddPlot={() => setCropSheetOpen(true)}
         />
       </div>
 
       {/* ── DESKTOP LAYOUT ── */}
       <div className="shell d-only">
-        <DesktopTopbar />
-        {bundle && (
-          <HeroSection
-            bundle={bundle}
-            totalGrownKg={totalGrownKg}
-            monthsFarming={monthsFarming}
-            dayOfCycle={dayOfCycle}
-            totalDays={totalDays}
-            progressPct={progressPct}
-            cycleStartLabel={cycleStartLabel}
-            cycleEndLabel={cycleEndLabel}
-          />
-        )}
-        <DesktopNav
-          activeView={desktopView}
-          onSelect={setDesktopView}
-          onOpenCropPicker={() => setCropSheetOpen(true)}
-        />
-
-        {desktopView === 'tasks' && (
-          <DesktopTaskPanel
-            tasks={tasks}
-            selectedId={selectedTaskId}
-            onSelect={setSelectedTaskId}
-            onMarkDone={markDone}
-            onSkip={markSkipped}
-            getState={getState}
-          />
-        )}
-
-        {desktopView === 'zone' && (
-          <div className="d-data-body">
-            <div>
-              <DataWidget
-                farmId={farmId}
-                zoneName={bundle ? `${bundle.crop_name} zone` : 'Your zone'}
-                updatedMinutesAgo={updatedMinutesAgo}
-                moisture={moisture}
-                temperature={temperature}
-                pH={soil?.pH ?? null}
-              />
-            </div>
-            <div>
-              <DataTrendsChart
-                readings={readings}
-                metric={chartMetric}
-                onMetricChange={setChartMetric}
-                desktop
-              />
-            </div>
+        <DesktopTopbar activeTab={activeTab} onTabChange={setActiveTabWithUrl} />
+        {activeTab === 'food' ? (
+          <div className="d-data-body" style={{ padding: 24 }}>
+            <MyFoodContentFull nodeId={farmId} />
           </div>
-        )}
+        ) : bundle ? (
+          <>
+            <HeroSection
+              bundle={bundle}
+              totalGrownKg={totalGrownKg}
+              monthsFarming={monthsFarming}
+              dayOfCycle={dayOfCycle}
+              totalDays={totalDays}
+              progressPct={progressPct}
+              cycleStartLabel={cycleStartLabel}
+              cycleEndLabel={cycleEndLabel}
+            />
+            <DesktopNav
+              activeView={desktopView}
+              onSelect={setDesktopView}
+              onOpenCropPicker={() => setCropSheetOpen(true)}
+            />
+
+            {desktopView === 'tasks' && (
+              <DesktopTaskPanel
+                tasks={tasks}
+                selectedId={selectedTaskId}
+                onSelect={setSelectedTaskId}
+                onMarkDone={markDone}
+                onSkip={markSkipped}
+                getState={getState}
+              />
+            )}
+
+            {desktopView === 'zone' && (
+              <div className="d-data-body">
+                <div>
+                  <DataWidget
+                    farmId={farmId}
+                    zoneName={bundle ? `${bundle.crop_name} zone` : 'Your zone'}
+                    updatedMinutesAgo={updatedMinutesAgo}
+                    moisture={moisture}
+                    temperature={temperature}
+                    pH={soil?.pH ?? null}
+                  />
+                </div>
+                <div>
+                  <DataTrendsChart
+                    readings={readings}
+                    metric={chartMetric}
+                    onMetricChange={setChartMetric}
+                    desktop
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
 
       {/* ── SHEETS (rendered once, outside both shells) ── */}
