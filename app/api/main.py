@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import storage
-from app.api.routes import optimize, nodes, coverage, hubs, report, config as config_router
+from app.api.routes import optimize, nodes, coverage, hubs, report, config as config_router, requests as requests_router, ledger as ledger_router
 
 
 @asynccontextmanager
@@ -31,3 +31,5 @@ app.include_router(coverage.router)
 app.include_router(hubs.router)
 app.include_router(report.router)
 app.include_router(config_router.router)
+app.include_router(requests_router.router)
+app.include_router(ledger_router.router)

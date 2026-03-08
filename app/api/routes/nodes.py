@@ -14,6 +14,33 @@ from app.engine.optimizer import greedy_insert
 router = APIRouter()
 
 
+@router.get('/nodes/{node_id}/balance', response_model=models.BalanceResponse)
+def get_balance(node_id: int):
+    farms = storage.load_farms()
+    farm  = next((f for f in farms if f['id'] == node_id), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail=f'Node {node_id} not found')
+    return models.BalanceResponse(
+        node_id          = node_id,
+        currency_balance = farm.get('currency_balance', 0.0),
+        crops_on_hand    = farm.get('crops_on_hand', {}),
+        crops_lifetime   = farm.get('crops_lifetime', {}),
+    )
+
+
+@router.patch('/nodes/{node_id}/crops-on-hand')
+def update_crops_on_hand(node_id: int, body: models.CropsOnHandBody):
+    farms = storage.load_farms()
+    farm  = next((f for f in farms if f['id'] == node_id), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail=f'Node {node_id} not found')
+    crops_on_hand = farm.get('crops_on_hand', {})
+    crops_on_hand[str(body.crop_id)] = body.quantity_kg
+    farm['crops_on_hand'] = crops_on_hand
+    storage.save_farms(farms)
+    return {'crops_on_hand': crops_on_hand}
+
+
 @router.post('/nodes', response_model=list[models.BundleResponse])
 def add_node(req: models.NewFarmRequest):
     farms, crops, hubs, config = storage.load_engine_state()
@@ -122,7 +149,7 @@ def add_node(req: models.NewFarmRequest):
     return bundles
 
 
-@router.post('/nodes/{farm_id}/data')
+@router.patch('/nodes/{farm_id}/data')
 def update_soil(farm_id: int, req: models.SoilUpdateRequest):
     farm_dicts = storage.load_farms()
     for d in farm_dicts:

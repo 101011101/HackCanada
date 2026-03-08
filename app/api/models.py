@@ -73,12 +73,86 @@ class ConfigUpdateRequest(BaseModel):
     epoch_weeks:           Optional[int]   = None
     inertia_weight:        Optional[float] = None
     overproduction_buffer: Optional[float] = None
+    preference_weight:     Optional[float] = None
+    min_slot_sqft:         Optional[float] = None
 
 
 class HubUpdateRequest(BaseModel):
     local_demand: Optional[dict]  = None   # {str(crop_id): kg}
     capacity_kg:  Optional[float] = None
     priority:     Optional[str]   = None   # 'critical' | 'standard'
+
+
+# ---------------------------------------------------------------------------
+# Transaction — request bodies & responses
+# ---------------------------------------------------------------------------
+
+class RequestBody(BaseModel):
+    type:        str    # 'give' | 'receive'
+    node_id:     int
+    hub_id:      int
+    crop_id:     int
+    quantity_kg: float
+
+
+class RequestResponse(BaseModel):
+    id:           int
+    type:         str
+    node_id:      int
+    hub_id:       int
+    crop_id:      int
+    quantity_kg:  float
+    status:       str
+    created_at:   str
+    matched_at:   Optional[str] = None
+    confirmed_at: Optional[str] = None
+
+
+class ConfirmBody(BaseModel):
+    actual_quantity_kg: float
+
+
+class ConfirmResponse(BaseModel):
+    status:              str
+    currency_delta:      float
+    node_balance_after:  float
+    hub_inventory_after: float
+
+
+class BalanceResponse(BaseModel):
+    node_id:          int
+    currency_balance: float
+    crops_on_hand:    dict
+    crops_lifetime:   dict
+
+
+class CropsOnHandBody(BaseModel):
+    crop_id:     int
+    quantity_kg: float
+
+
+class HubInventoryItemResponse(BaseModel):
+    crop_id:     int
+    crop_name:   str
+    quantity_kg: float
+
+
+class HubInventoryResponse(BaseModel):
+    hub_id:      int
+    inventory:   list[HubInventoryItemResponse]
+    total_kg:    float
+    capacity_kg: float
+
+
+class LedgerEntryResponse(BaseModel):
+    id:            int
+    type:          str
+    node_id:       int
+    request_id:    int
+    amount:        float
+    balance_after: float
+    created_at:    str
+    note:          str
 
 
 # ---------------------------------------------------------------------------
