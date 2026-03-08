@@ -25,8 +25,9 @@ function loadEnvFile(dir: string): Record<string, string> {
 
 export default defineConfig(({ mode }) => {
   const root = path.resolve(__dirname);
-  const fromFile = loadEnvFile(root);
-  const fromVite = loadEnv(mode, root, "");
+  const projectRoot = path.resolve(__dirname, "../..");
+  const fromFile = loadEnvFile(projectRoot);
+  const fromVite = loadEnv(mode, projectRoot, "");
   const env = { ...process.env, ...fromFile, ...fromVite };
   const apiKey =
     (env.VITE_GOOGLE_MAPS_API_KEY ?? env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "").trim();
