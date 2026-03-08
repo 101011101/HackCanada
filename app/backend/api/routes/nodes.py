@@ -1,4 +1,5 @@
 import dataclasses
+import secrets
 import numpy as np
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from datetime import date, datetime, timezone, timedelta
@@ -65,7 +66,7 @@ def _greedy_assign(farm: FarmNode, farms, crops, hubs, config,
         for hub in hubs
     ], dtype=bool)
 
-    num_slots      = max(1, int(farm.plot_size_sqft // config.min_slot_sqft))
+    num_slots      = max(1, int(farm.plot_size_sqft // getattr(config, 'min_slot_sqft', 50.0)))
     assigned       = []
     running_supply = current_hub_supply.copy()
 
@@ -140,8 +141,14 @@ def update_crops_on_hand(node_id: int, body: models.CropsOnHandBody):
 # Create farm
 # ---------------------------------------------------------------------------
 
+@router.get('/nodes/keys')
+def get_node_keys():
+    """Return all node keys (admin use)."""
+    return storage.load_node_keys()
+
+
 @router.post('/nodes', response_model=list[models.BundleResponse])
-def add_node(req: models.NewFarmRequest):
+def add_node(req: models.NewFarmRequest, background_tasks: BackgroundTasks):
     farms, crops, hubs, config = storage.load_engine_state()
 
     new_id   = max(f.id for f in farms) + 1
@@ -185,6 +192,7 @@ def add_node(req: models.NewFarmRequest):
 
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
     bundles  = []
+    crops_for_ai = []
     for c in assigned:
         crop        = crops[c]
         suitability = compute_suitability(new_farm, crop)
@@ -210,6 +218,19 @@ def add_node(req: models.NewFarmRequest):
                 f"network gap {gap_pct:.0f}% unfilled"
             ),
         ))
+        crops_for_ai.append((crop, qty_kg))
+
+    def _generate_tasks_bg():
+        try:
+            hub_name, hub_priority = _get_primary_hub_info(new_id)
+            for crop, qty_kg in crops_for_ai:
+                ai_tasks = generate_tasks_for_farm(new_farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+                if ai_tasks is not None:
+                    set_cached_tasks(new_id, crop.id, 1, ai_tasks)
+        except Exception as e:
+            print(f"[task-gen] failed for new farm {new_id}: {e}")
+
+    background_tasks.add_task(_generate_tasks_bg)
     return bundles
 
 
@@ -281,12 +302,15 @@ def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest, background_t
         crops_for_ai.append((crop, qty_kg))
 
     def _generate_tasks_bg():
-        invalidate_farm_tasks(farm_id)
-        hub_name, hub_priority = _get_primary_hub_info(farm_id)
-        for crop, qty_kg in crops_for_ai:
-            ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
-            if ai_tasks is not None:
-                set_cached_tasks(farm_id, crop.id, cycle_number, ai_tasks)
+        try:
+            invalidate_farm_tasks(farm_id)
+            hub_name, hub_priority = _get_primary_hub_info(farm_id)
+            for crop, qty_kg in crops_for_ai:
+                ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+                if ai_tasks is not None:
+                    set_cached_tasks(farm_id, crop.id, cycle_number, ai_tasks)
+        except Exception as e:
+            print(f"[task-gen] failed for farm {farm_id}: {e}")
 
     background_tasks.add_task(_generate_tasks_bg)
     return bundles
@@ -364,8 +388,6 @@ def get_readings(
 ):
     assignments = storage.load_assignments()
     farm_crop_ids = set(assignments.get(str(farm_id), []))
-    if not farm_crop_ids:
-        return []
 
     readings = storage.load_readings()
 
@@ -376,8 +398,12 @@ def get_readings(
         return relevant[-limit:]
 
     # Default: average across all crops by minute bucket, scoped to this farm
+    # If farm has no assignment yet, include all readings for the farm regardless of crop
     from collections import defaultdict
-    relevant = [r for r in readings if r.get('farm_id') == farm_id and r.get('crop_id') in farm_crop_ids]
+    if farm_crop_ids:
+        relevant = [r for r in readings if r.get('farm_id') == farm_id and r.get('crop_id') in farm_crop_ids]
+    else:
+        relevant = [r for r in readings if r.get('farm_id') == farm_id]
     buckets: dict[str, list] = defaultdict(list)
     for r in relevant:
         bucket = datetime.fromisoformat(r['recorded_at']).strftime('%Y-%m-%dT%H:%M')
@@ -666,3 +692,32 @@ def delete_node(farm_id: int):
     storage.save_hub_routing(routing)
 
     return {'status': 'deleted', 'farm_id': farm_id}
+
+
+@router.post('/nodes/{farm_id}/key/generate', response_model=models.NodeKeyResponse)
+def generate_node_key(farm_id: int):
+    """Generate (or regenerate) the access key for a node."""
+    farms = storage.load_farms()
+    farm  = next((f for f in farms if f['id'] == farm_id), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+    keys    = storage.load_node_keys()
+    new_key = secrets.token_urlsafe(12)
+    keys[str(farm_id)] = new_key
+    storage.save_node_keys(keys)
+    return models.NodeKeyResponse(farm_id=farm_id, key=new_key)
+
+
+@router.post('/auth/node', response_model=models.NodeAuthResponse)
+def auth_node(body: models.NodeAuthRequest):
+    """Validate a node key and return the associated farm's id and name."""
+    keys       = storage.load_node_keys()
+    farm_id_str = next((fid for fid, k in keys.items() if k == body.key), None)
+    if farm_id_str is None:
+        raise HTTPException(status_code=401, detail='Invalid node key')
+    farm_id = int(farm_id_str)
+    farms   = storage.load_farms()
+    farm    = next((f for f in farms if f['id'] == farm_id), None)
+    if not farm:
+        raise HTTPException(status_code=404, detail='Farm not found')
+    return models.NodeAuthResponse(farm_id=farm_id, farm_name=farm['name'])

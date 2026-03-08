@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.backend.api import storage
-from app.backend.api.routes import optimize, nodes, coverage, hubs, report, config as config_router, requests as requests_router, ledger as ledger_router, rates as rates_router, engine as engine_router, suggestions as suggestions_router
+from app.backend.api.routes import optimize, nodes, coverage, hubs, report, config as config_router, requests as requests_router, ledger as ledger_router, rates as rates_router, engine as engine_router, suggestions as suggestions_router, invite as invite_router
 from app.backend.engine import transaction_engine
 from app.backend.rate_limit import install_rate_limiting
 
@@ -31,15 +31,7 @@ install_rate_limiting(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        'http://localhost:3000', 'http://127.0.0.1:3000',
-        'http://localhost:8080', 'http://127.0.0.1:8080',
-        'http://localhost:5173', 'http://127.0.0.1:5173',
-        'http://localhost:5174', 'http://127.0.0.1:5174',
-        'http://localhost:5175', 'http://127.0.0.1:5175',
-        'http://localhost:5176', 'http://127.0.0.1:5176',
-        'null',  # file:// origin
-    ],
+    allow_origins=['*'],
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -68,3 +60,4 @@ app.include_router(ledger_router.router)
 app.include_router(rates_router.router)
 app.include_router(engine_router.router)
 app.include_router(suggestions_router.router)
+app.include_router(invite_router.router)

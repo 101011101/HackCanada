@@ -129,6 +129,24 @@ def load_keys() -> dict:
 def save_keys(keys: dict) -> None:
     _save('keys.json', keys)
 
+def load_node_keys() -> dict:
+    try:
+        return _load('node_keys.json')
+    except FileNotFoundError:
+        return {}
+
+def save_node_keys(keys: dict) -> None:
+    _save('node_keys.json', keys)
+
+def load_invite_tokens() -> dict:
+    try:
+        return _load('invite_tokens.json')
+    except FileNotFoundError:
+        return {}
+
+def save_invite_tokens(tokens: dict) -> None:
+    _save('invite_tokens.json', tokens)
+
 
 # ---------------------------------------------------------------------------
 # Dict → engine type converters

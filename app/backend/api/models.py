@@ -152,6 +152,32 @@ class OptimizeResponse(BaseModel):
 # Config / Hub update requests
 # ---------------------------------------------------------------------------
 
+class InviteGenerateResponse(BaseModel):
+    token: str
+
+class ClaimInviteRequest(BaseModel):
+    token:              str
+    name:               str
+    lat:                float
+    lng:                float
+    plot_size_sqft:     float
+    plot_type:          str
+    tools:              str
+    budget:             str
+    pH:                 float
+    moisture:           float
+    temperature:        float
+    humidity:           float
+    sunlight_hours:            Optional[float] = None
+    preferred_crop_ids:        list[int]       = []
+    max_delivery_distance_m:   Optional[float] = None
+
+class ClaimInviteResponse(BaseModel):
+    farm_id:   int
+    farm_name: str
+    key:       str
+
+
 class ConfigUpdateRequest(BaseModel):
     max_travel_distance:   Optional[float] = None
     food_targets:          Optional[dict]  = None   # {str(crop_id): kg}
@@ -189,6 +215,20 @@ class HubAuthResponse(BaseModel):
 class HubKeyResponse(BaseModel):
     hub_id: int
     key:    str
+
+
+class NodeKeyResponse(BaseModel):
+    farm_id: int
+    key:     str
+
+
+class NodeAuthRequest(BaseModel):
+    key: str
+
+
+class NodeAuthResponse(BaseModel):
+    farm_id:   int
+    farm_name: str
 
 
 # ---------------------------------------------------------------------------
