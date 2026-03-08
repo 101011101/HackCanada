@@ -1,0 +1,51 @@
+from fastapi import APIRouter
+from datetime import date
+
+from app.api import storage, models
+from app.engine.scorer    import build_yield_matrix
+from app.engine.router    import build_reachability_matrix
+from app.engine.scheduler import (classify_nodes, compute_locked_supply,
+                                   compute_gap, compute_locked_supply_per_hub)
+from app.engine.optimizer import run_ilp
+from app.engine.reporter  import generate_report
+
+router = APIRouter()
+
+
+@router.post('/optimize', response_model=models.OptimizeResponse)
+def optimize():
+    farms, crops, hubs, config = storage.load_engine_state()
+    M = len(crops)
+
+    yield_matrix        = build_yield_matrix(farms, crops)
+    reachability_matrix = build_reachability_matrix(farms, hubs, config.max_travel_distance)
+
+    locked, available   = classify_nodes(farms, date.today())
+    locked_supply       = compute_locked_supply(farms, locked, yield_matrix, M)
+    gap_vector          = compute_gap(config, locked_supply, list(range(M)))
+    locked_hub_supply   = compute_locked_supply_per_hub(
+        farms, locked, yield_matrix, hubs, reachability_matrix, M)
+
+    assignment = run_ilp(
+        available, farms, crops, hubs,
+        yield_matrix, reachability_matrix,
+        gap_vector, config, locked_hub_supply,
+    )
+
+    report = generate_report(
+        farms, locked, available, assignment,
+        crops, hubs, yield_matrix, reachability_matrix, config,
+    )
+
+    # Persist assignments: {str(farm_id): crop_id}
+    assignments_dict = {
+        str(farms[i].id): int(assignment[idx])
+        for idx, i in enumerate(available)
+    }
+    storage.save_assignments(assignments_dict)
+
+    return models.OptimizeResponse(
+        status='ok',
+        farms_optimized=len(available),
+        network_health_pct=report['network_health_pct'],
+    )
