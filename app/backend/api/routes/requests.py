@@ -49,16 +49,26 @@ def submit_request(body: models.RequestBody):
                 detail=f'Insufficient balance. Cost: {cost:.2f}, balance: {farm.get("currency_balance", 0.0):.2f}'
             )
 
+    # Immediately route to the node's connected hubs from hub_routing.json
+    routing    = storage.load_hub_routing()
+    hubs_by_id = {h['id']: h for h in hubs}
+    hub_options = [
+        {'hub_id': hid, 'hub_name': hubs_by_id[hid]['name']}
+        for hid in routing.get(str(body.node_id), [])
+        if hid in hubs_by_id
+    ]
+    initial_status = 'options_ready' if hub_options else 'pending'
+
     requests = storage.load_requests()
     new_request = {
         'id':           _next_id(requests),
         'type':         body.type,
         'node_id':      body.node_id,
-        'hub_id':       body.hub_id,
+        'hub_id':       None,
         'crop_id':      body.crop_id,
         'quantity_kg':  body.quantity_kg,
-        'status':       'pending',
-        'hub_options':  [],
+        'status':       initial_status,
+        'hub_options':  hub_options,
         'created_at':   _now(),
         'matched_at':   None,
         'confirmed_at': None,
@@ -278,4 +288,31 @@ def select_hub(request_id: int, body: models.SelectHubBody):
         status='matched',
         hub_id=body.hub_id,
         message=f'Hub selected. Proceed to Hub #{body.hub_id} for exchange.',
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /requests/{request_id}/accept — hub accepts an options_ready request
+# ---------------------------------------------------------------------------
+
+@router.post('/requests/{request_id}/accept', response_model=models.AcceptResponse)
+def accept_request(request_id: int, body: models.AcceptBody):
+    requests = storage.load_requests()
+    req = next((r for r in requests if r['id'] == request_id), None)
+    if not req:
+        raise HTTPException(status_code=404, detail=f'Request {request_id} not found')
+    if req['status'] != 'options_ready':
+        raise HTTPException(status_code=400, detail="Request must be in 'options_ready' status")
+    if not any(opt['hub_id'] == body.hub_id for opt in req.get('hub_options', [])):
+        raise HTTPException(status_code=400, detail=f'Hub {body.hub_id} is not listed for this request')
+
+    req['hub_id']     = body.hub_id
+    req['status']     = 'matched'
+    req['matched_at'] = _now()
+    storage.save_requests(requests)
+
+    return models.AcceptResponse(
+        status='matched',
+        hub_id=body.hub_id,
+        message=f'Request accepted by Hub #{body.hub_id}.',
     )

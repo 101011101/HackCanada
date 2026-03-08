@@ -227,6 +227,16 @@ class CropsOnHandBody(BaseModel):
     quantity_kg: float
 
 
+class AcceptBody(BaseModel):
+    hub_id: int
+
+
+class AcceptResponse(BaseModel):
+    status:  str
+    hub_id:  int
+    message: str
+
+
 class HubInventoryItemResponse(BaseModel):
     crop_id:     int
     crop_name:   str

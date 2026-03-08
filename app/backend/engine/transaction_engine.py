@@ -83,16 +83,6 @@ def run(farms: list, hubs: list, crops: list, config) -> None:
                 req['hub_id']      = None
                 req['hub_options'] = []
 
-        elif req['status'] == 'options_ready':
-            still_valid = [
-                opt for opt in req.get('hub_options', [])
-                if opt['hub_id'] in hub_map
-                and _hard_constraints(req, hub_map[opt['hub_id']], inv, farm_map, rates)
-            ]
-            if not still_valid:
-                req['status']      = 'pending'
-                req['hub_options'] = []
-
     # ------------------------------------------------------------------
     # Match pending requests → options_ready
     # Sort by viable hub count ascending: most constrained requests first
