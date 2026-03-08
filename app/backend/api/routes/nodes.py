@@ -11,9 +11,24 @@ from app.backend.engine.router    import build_reachability_matrix, haversine, c
 from app.backend.engine.scheduler import (classify_nodes, compute_locked_supply,
                                    compute_gap, compute_locked_supply_per_hub)
 from app.backend.engine.optimizer import greedy_insert
-from app.backend.engine.data      import CROP_GUIDES, CROP_TASKS
+from app.backend.engine.data         import CROP_GUIDES, CROP_TASKS
+from app.backend.engine.gemini_tasks import generate_tasks_for_farm
+from app.backend.api.ai_task_cache   import get_cached_tasks, set_cached_tasks, invalidate_farm_tasks
 
 router = APIRouter()
+
+
+def _get_primary_hub_info(farm_id: int) -> tuple[str, str]:
+    """Return (hub_name, hub_priority) for the primary hub assigned to this farm."""
+    routing = storage.load_hub_routing()
+    hub_ids = routing.get(str(farm_id)) or routing.get(farm_id) or []
+    if not hub_ids:
+        return ('Unknown Hub', 'standard')
+    hubs = storage.load_hubs()
+    hub  = next((h for h in hubs if h['id'] == hub_ids[0]), None)
+    if not hub:
+        return ('Unknown Hub', 'standard')
+    return (hub['name'], hub['priority'])
 
 
 def _now() -> str:
@@ -168,6 +183,7 @@ def add_node(req: models.NewFarmRequest):
     routing = compute_hub_routing(all_farms, all_hubs, all_config.max_travel_distance)
     storage.save_hub_routing(routing)
 
+    hub_name, hub_priority = _get_primary_hub_info(new_id)
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
     bundles  = []
     for c in assigned:
@@ -195,6 +211,9 @@ def add_node(req: models.NewFarmRequest):
                 f"network gap {gap_pct:.0f}% unfilled"
             ),
         ))
+        ai_tasks = generate_tasks_for_farm(new_farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+        if ai_tasks is not None:
+            set_cached_tasks(new_id, crop.id, 1, ai_tasks)
     return bundles
 
 
@@ -237,6 +256,9 @@ def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
     n          = len(new_crop_ids)
     sqft_per   = round(farm.plot_size_sqft / n, 1)
     bundles    = []
+    invalidate_farm_tasks(farm_id)
+    hub_name, hub_priority = _get_primary_hub_info(farm_id)
+    cycle_number = farm_dict.get('cycle_number', 1)
     for crop_id in new_crop_ids:
         crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
         if not crop_dict:
@@ -261,6 +283,9 @@ def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
                 f"soil pH {farm.pH:.1f} (optimal {crop.optimal_pH[0]}–{crop.optimal_pH[1]})"
             ),
         ))
+        ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+        if ai_tasks is not None:
+            set_cached_tasks(farm_id, crop.id, cycle_number, ai_tasks)
     return bundles
 
 
@@ -467,6 +492,10 @@ def cycle_end(farm_id: int, body: models.CycleEndRequest):
     assignments[str(farm_id)] = assigned
     storage.save_assignments(assignments)
 
+    invalidate_farm_tasks(farm_id)
+    hub_name, hub_priority = _get_primary_hub_info(farm_id)
+    new_cycle_number = farm_dict['cycle_number']
+
     sqft_per = round(farm.plot_size_sqft / num_slots, 1)
     bundles  = []
     for c in assigned:
@@ -485,13 +514,16 @@ def cycle_end(farm_id: int, body: models.CycleEndRequest):
             sqft_allocated   = sqft_per,
             preference_match = c in farm.preferred_crop_ids,
             cycle_start_date = str(today),
-            cycle_number     = farm_dict['cycle_number'],
+            cycle_number     = new_cycle_number,
             joined_at        = farm.joined_at,
             reason=(
                 f"Suitability {suitability:.0%} for {crop.name} — "
                 f"network gap {gap_pct:.0f}% unfilled"
             ),
         ))
+        ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+        if ai_tasks is not None:
+            set_cached_tasks(farm_id, crop.id, new_cycle_number, ai_tasks)
     return bundles
 
 
@@ -545,17 +577,23 @@ def get_farm_tasks(farm_id: int):
     crop_dicts       = storage.load_crops()
     cycle_start_str  = farm_dict.get('cycle_start_date')
     cycle_start      = date.fromisoformat(cycle_start_str) if cycle_start_str else None
+    cycle_number     = farm_dict.get('cycle_number', 1)
     today            = date.today()
 
     items = []
     for crop_id in dict.fromkeys(crop_ids):  # deduplicate while preserving order
         crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
         crop_name = crop_dict['name'] if crop_dict else str(crop_id)
-        for task in CROP_TASKS.get(crop_id, []):
+
+        # Cache-first: use AI tasks if available, otherwise fall back to static
+        cached = get_cached_tasks(farm_id, crop_id, cycle_number)
+        task_source = cached if cached is not None else CROP_TASKS.get(crop_id, [])
+
+        for task in task_source:
             due_date = None
             status   = None
             if cycle_start:
-                due     = cycle_start + timedelta(days=task['day_from_start'])
+                due      = cycle_start + timedelta(days=task['day_from_start'])
                 due_date = str(due)
                 days_out = (due - today).days
                 if days_out < 0:
@@ -566,8 +604,8 @@ def get_farm_tasks(farm_id: int):
                     status = 'future'
             items.append(models.TaskItem(
                 id             = task['id'],
-                crop_id        = crop_id,
-                crop_name      = crop_name,
+                crop_id        = task.get('crop_id', crop_id),
+                crop_name      = task.get('crop_name', crop_name),
                 title          = task['title'],
                 subtitle       = task['subtitle'],
                 why            = task['why'],
