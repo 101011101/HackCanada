@@ -24,7 +24,7 @@ def generate_invite():
 
 
 @router.post('/invite/claim', response_model=models.ClaimInviteResponse)
-def claim_invite(req: models.ClaimInviteRequest, background_tasks: BackgroundTasks):
+def claim_invite(req: models.ClaimInviteRequest):
     """Validate an invite token and register a new farm node in one step."""
     tokens = storage.load_invite_tokens()
     entry  = tokens.get(req.token)
