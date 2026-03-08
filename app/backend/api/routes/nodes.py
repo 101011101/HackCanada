@@ -2,6 +2,7 @@ import dataclasses
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query
 from datetime import date, datetime, timezone, timedelta
+from typing import Optional
 
 from app.backend.api import storage, models
 from app.backend.engine.schemas   import FarmNode
@@ -52,7 +53,20 @@ def _greedy_assign(farm: FarmNode, farms, crops, hubs, config,
     num_slots      = max(1, int(farm.plot_size_sqft // config.min_slot_sqft))
     assigned       = []
     running_supply = current_hub_supply.copy()
-    for slot in range(num_slots):
+
+    # Honour user's explicit crop selections: seed the first slots with preferred
+    # crops (filtered to those that have positive suitability).
+    viable_preferred = [c for c in farm.preferred_crop_ids
+                        if 0 <= c < M and new_yield_row[c] > 0]
+    for crop_idx in viable_preferred[:num_slots]:
+        assigned.append(crop_idx)
+        slot_yield = new_yield_row[crop_idx] / num_slots
+        for h in range(H):
+            if new_reach_row[h]:
+                running_supply[h][crop_idx] += slot_yield
+
+    # Fill remaining slots with greedy optimizer
+    for slot in range(len(assigned), num_slots):
         modified = new_yield_row.copy()
         for already in assigned:
             modified[already] = 0.0
@@ -144,7 +158,7 @@ def add_node(req: models.NewFarmRequest):
     storage.save_farms(farm_dicts)
 
     assignments = storage.load_assignments()
-    assignments[str(new_id)] = assigned
+    assignments[str(new_id)] = list(dict.fromkeys(assigned))  # deduplicate crop slots
     storage.save_assignments(assignments)
 
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
@@ -172,6 +186,72 @@ def add_node(req: models.NewFarmRequest):
                 f"soil pH {new_farm.pH:.1f} "
                 f"(optimal {crop.optimal_pH[0]}–{crop.optimal_pH[1]}), "
                 f"network gap {gap_pct:.0f}% unfilled"
+            ),
+        ))
+    return bundles
+
+
+# ---------------------------------------------------------------------------
+# Update crop assignments on an existing farm
+# ---------------------------------------------------------------------------
+
+@router.patch('/nodes/{farm_id}/crops', response_model=list[models.BundleResponse])
+def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
+    """Add or replace crop assignments for an existing farm without creating a new one.
+
+    replace=True  → set assignments to exactly req.crop_ids (used by initial setup)
+    replace=False → append req.crop_ids to existing assignments, deduplicating
+    """
+    farm_dicts = storage.load_farms()
+    farm_dict  = next((d for d in farm_dicts if d['id'] == farm_id), None)
+    if not farm_dict:
+        raise HTTPException(status_code=404, detail=f'Farm {farm_id} not found')
+
+    assignments = storage.load_assignments()
+    existing    = assignments.get(str(farm_id), [])
+
+    if req.replace:
+        new_crop_ids = list(dict.fromkeys(req.crop_ids))
+    else:
+        combined     = existing + [c for c in req.crop_ids if c not in existing]
+        new_crop_ids = list(dict.fromkeys(combined))
+
+    if not new_crop_ids:
+        raise HTTPException(status_code=400, detail='crop_ids must not be empty')
+
+    assignments[str(farm_id)] = new_crop_ids
+    storage.save_assignments(assignments)
+
+    farm_dict['preferred_crop_ids'] = new_crop_ids
+    storage.save_farms(farm_dicts)
+
+    farm       = storage.dict_to_farmnode(farm_dict)
+    crop_dicts = storage.load_crops()
+    n          = len(new_crop_ids)
+    sqft_per   = round(farm.plot_size_sqft / n, 1)
+    bundles    = []
+    for crop_id in new_crop_ids:
+        crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
+        if not crop_dict:
+            continue
+        crop        = storage.dict_to_crop(crop_dict)
+        suitability = compute_suitability(farm, crop)
+        qty_kg      = round(suitability * crop.base_yield_per_sqft * sqft_per, 1)
+        bundles.append(models.BundleResponse(
+            farm_id          = farm.id,
+            farm_name        = farm.name,
+            crop_id          = crop.id,
+            crop_name        = crop.name,
+            quantity_kg      = qty_kg,
+            grow_weeks       = crop.grow_weeks,
+            sqft_allocated   = sqft_per,
+            preference_match = True,
+            cycle_start_date = str(farm.cycle_start_date) if farm.cycle_start_date else None,
+            cycle_number     = farm.cycle_number,
+            joined_at        = farm.joined_at,
+            reason           = (
+                f"Suitability {suitability:.0%} for {crop.name} — "
+                f"soil pH {farm.pH:.1f} (optimal {crop.optimal_pH[0]}–{crop.optimal_pH[1]})"
             ),
         ))
     return bundles
@@ -221,27 +301,66 @@ def post_reading(farm_id: int, body: models.ReadingEntry):
     farm['humidity']    = body.humidity
     storage.save_farms(farm_dicts)
 
-    # Append to readings log
+    # Append to readings log (scoped per farm + crop)
+    readings = storage.load_readings()
     entry = {
+        'id':          len(readings),
         'farm_id':     farm_id,
-        'timestamp':   _now(),
+        'crop_id':     body.crop_id,
+        'recorded_at': _now(),
         'pH':          body.pH,
         'moisture':    body.moisture,
         'temperature': body.temperature,
         'humidity':    body.humidity,
     }
-    readings = storage.load_readings()
     readings.append(entry)
     storage.save_readings(readings)
     return entry
 
 
 @router.get('/nodes/{farm_id}/readings', response_model=list[models.ReadingEntryResponse])
-def get_readings(farm_id: int, limit: int = Query(default=30, ge=1, le=500)):
+def get_readings(
+    farm_id: int,
+    limit:   int            = Query(default=30, ge=1, le=500),
+    crop_id: Optional[int]  = Query(default=None),
+):
+    assignments = storage.load_assignments()
+    farm_crop_ids = set(assignments.get(str(farm_id), []))
+    if not farm_crop_ids:
+        return []
+
     readings = storage.load_readings()
-    filtered = [r for r in readings if r['farm_id'] == farm_id]
-    filtered.sort(key=lambda r: r['timestamp'])
-    return filtered[-limit:]
+
+    if crop_id is not None:
+        # Return only this crop's readings for this farm, unaveraged
+        relevant = [r for r in readings if r.get('farm_id') == farm_id and r.get('crop_id') == crop_id]
+        relevant.sort(key=lambda r: r['recorded_at'])
+        return relevant[-limit:]
+
+    # Default: average across all crops by minute bucket, scoped to this farm
+    from collections import defaultdict
+    relevant = [r for r in readings if r.get('farm_id') == farm_id and r.get('crop_id') in farm_crop_ids]
+    buckets: dict[str, list] = defaultdict(list)
+    for r in relevant:
+        bucket = datetime.fromisoformat(r['recorded_at']).strftime('%Y-%m-%dT%H:%M')
+        buckets[bucket].append(r)
+
+    averaged = []
+    for bucket in sorted(buckets.keys()):
+        group = buckets[bucket]
+        n = len(group)
+        averaged.append({
+            'id':          group[0]['id'],
+            'farm_id':     farm_id,
+            'crop_id':     0,
+            'recorded_at': group[0]['recorded_at'],
+            'pH':          round(sum(r['pH'] for r in group) / n, 2),
+            'moisture':    round(sum(r['moisture'] for r in group) / n, 2),
+            'temperature': round(sum(r['temperature'] for r in group) / n, 2),
+            'humidity':    round(sum(r['humidity'] for r in group) / n, 2),
+        })
+
+    return averaged[-limit:]
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +538,7 @@ def get_farm_tasks(farm_id: int):
     today            = date.today()
 
     items = []
-    for crop_id in crop_ids:
+    for crop_id in dict.fromkeys(crop_ids):  # deduplicate while preserving order
         crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
         crop_name = crop_dict['name'] if crop_dict else str(crop_id)
         for task in CROP_TASKS.get(crop_id, []):

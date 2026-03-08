@@ -21,7 +21,7 @@ def get_suggestions(req: models.SuggestionRequest):
         pH=req.pH if req.pH is not None else 6.5,
         moisture=req.moisture if req.moisture is not None else 60.0,
         temperature=req.temperature if req.temperature is not None else 20.0,
-        humidity=60.0,
+        humidity=req.humidity if req.humidity is not None else 60.0,
         status='new',
         preferred_crop_ids=req.preferred_crop_ids,
     )

@@ -31,7 +31,7 @@ def get_coverage():
     assignment_indices  = []
     for i in available:
         crop_ids = assignments_dict.get(farms[i].id)
-        assignment_indices.append(crop_ids[0] if crop_ids else 0)
+        assignment_indices.append(list(crop_ids) if crop_ids else [0])
 
     report = generate_report(
         farms, locked, available,

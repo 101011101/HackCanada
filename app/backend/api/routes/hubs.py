@@ -6,6 +6,12 @@ from app.backend.engine.data import CROP_TASKS
 router = APIRouter()
 
 
+@router.get('/farms')
+def get_farms():
+    """All farm nodes with coordinates and soil data."""
+    return storage.load_farms()
+
+
 @router.get('/hubs')
 def get_hubs():
     """All hub nodes with location + capacity."""
