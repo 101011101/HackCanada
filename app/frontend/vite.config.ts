@@ -36,6 +36,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     root,
+    server: {
+      host: '0.0.0.0',
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),
