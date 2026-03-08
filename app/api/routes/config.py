@@ -26,6 +26,10 @@ def update_config(req: models.ConfigUpdateRequest):
         cfg['inertia_weight'] = req.inertia_weight
     if req.overproduction_buffer is not None:
         cfg['overproduction_buffer'] = req.overproduction_buffer
+    if req.preference_weight is not None:
+        cfg['preference_weight'] = req.preference_weight
+    if req.min_slot_sqft is not None:
+        cfg['min_slot_sqft'] = req.min_slot_sqft
     storage.save_config(cfg)
     return {'status': 'ok'}
 
