@@ -228,3 +228,15 @@ export interface FarmBasic {
 export function getFarms() {
   return request<FarmBasic[]>("/farms");
 }
+
+export interface HubAuthResponse {
+  hub_id: number;
+  hub_name: string;
+}
+
+export function authHub(key: string) {
+  return request<HubAuthResponse>("/auth/hub", {
+    method: "POST",
+    body: JSON.stringify({ key }),
+  });
+}

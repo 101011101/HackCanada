@@ -205,3 +205,35 @@ export function getSuggestions(req: SuggestionRequest): Promise<SuggestionItem[]
     body: JSON.stringify(req),
   });
 }
+
+export interface NewHubRequest {
+  name: string;
+  lat: number;
+  lng: number;
+  priority: string;
+  capacity_kg: number;
+  local_demand: Record<string, number>;
+}
+
+export function createHub(body: NewHubRequest): Promise<HubNode> {
+  return request<HubNode>('/hubs', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteHub(hubId: number): Promise<{ status: string; hub_id: number }> {
+  return request<{ status: string; hub_id: number }>(`/hubs/${hubId}`, {
+    method: 'DELETE',
+  });
+}
+
+export function generateHubKey(hubId: number): Promise<{ hub_id: number; key: string }> {
+  return request<{ hub_id: number; key: string }>(`/hubs/${hubId}/key/generate`, {
+    method: 'POST',
+  });
+}
+
+export function getHubKeys(): Promise<Record<string, string>> {
+  return request<Record<string, string>>('/hubs/keys');
+}
