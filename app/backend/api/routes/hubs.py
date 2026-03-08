@@ -19,6 +19,12 @@ def get_hubs():
     return storage.load_hubs()
 
 
+@router.get('/farms')
+def get_farms():
+    """All farms (nodes) for admin lookups — id, name, etc."""
+    return storage.load_farms()
+
+
 @router.get('/crops')
 def get_crops():
     """All crop definitions (id, name, grow_weeks, color, etc.)."""

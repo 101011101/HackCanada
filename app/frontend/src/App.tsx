@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useFarm } from './user/store/FarmContext';
 import AdminDashboard from './admin/AdminDashboard';
 import Setup from './user/pages/Setup';
+import MyFarmPage from '@/pages/MyFarmPage';
+import MyFoodPage from '@/pages/MyFoodPage';
 
 const Landing     = lazy(() => import('./user/pages/Landing'));
 const Suggestions = lazy(() => import('./user/pages/Suggestions'));
@@ -32,6 +34,8 @@ export default function App() {
         <Route path="/"            element={<Landing />} />
         <Route path="/setup"       element={<SetupRoute />} />
         <Route path="/suggestions" element={<Suggestions />} />
+        <Route path="/myfarm"      element={<MyFarmPage />} />
+        <Route path="/myfood"      element={<MyFoodPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard"   element={<Dashboard />} />

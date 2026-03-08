@@ -17,8 +17,9 @@ import DataInformation from "./DataInformation";
 import Charts from "./Charts";
 import Instructions from "./Instructions";
 import AdminLedger from "./AdminLedger";
+import MyHubAdminView from "./MyHubAdminView";
 
-type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger";
+type ActivePage = "network-map" | "data-info" | "charts" | "instructions" | "ledger" | "myhub";
 
 // ── Sidebar nav icons (inline SVG as JSX) ───────────────────────────────────
 
@@ -42,6 +43,9 @@ const IconTasks = () => (
 );
 const IconLedger = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="11" x2="9" y2="11"/></svg>
+);
+const IconHub = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14"><path d="M2 6l6-4 6 4v7a1 1 0 01-1 1H3a1 1 0 01-1-1V6z"/><path d="M6 14V9h4v5"/></svg>
 );
 
 // ── Style constants ─────────────────────────────────────────────────────────
@@ -426,6 +430,11 @@ export default function AdminDashboard() {
           {!sidebarCollapsed && <>Ledger <span style={S.navDot(activePage === "ledger")} /></>}
         </button>
 
+        <div style={S.sectionLabel}>Hub</div>
+        <button style={S.navItem(activePage === "myhub")} onClick={() => setActivePage("myhub")}>
+          <IconHub /> MyHub <span style={S.navDot(activePage === "myhub")} />
+        </button>
+
         <div style={S.sectionLabel(sidebarCollapsed)}>Infrastructure</div>
         <button style={S.navItem(false)}>
           <IconNetwork />
@@ -511,42 +520,49 @@ export default function AdminDashboard() {
 
       {/* ── Content area ── */}
       <div style={S.contentArea}>
-        {/* Topbar */}
-        <div style={S.topbar}>
-          <div style={S.topbarTitle}>
-            {activePage === "data-info" ? "Data Information"
-              : activePage === "instructions" ? "Instructions"
-              : activePage === "ledger" ? "Ledger"
-              : "Data Visualization"}
+        {/* Topbar — hide for MyHub (it has its own) */}
+        {activePage !== "myhub" && (
+          <div style={S.topbar}>
+            <div style={S.topbarTitle}>
+              {activePage === "data-info" ? "Data Information"
+                : activePage === "instructions" ? "Instructions"
+                : activePage === "ledger" ? "Ledger"
+                : "Data Visualization"}
+            </div>
+            <span style={S.topbarSub}>Admin Dashboard</span>
+            <div style={S.topbarActions}>
+              {activePage === "data-info" ? (
+                <>
+                  <span style={S.badge(T.info, "rgba(91,141,239,0.12)")}>Live Data</span>
+                  <button style={S.btn("secondary")}>Export CSV</button>
+                </>
+              ) : activePage === "charts" ? (
+                <>
+                  <button style={S.btn("secondary")}>Export Charts</button>
+                </>
+              ) : activePage === "instructions" ? (
+                <>
+                  <span style={S.badge(T.accent, T.accentBg)}>Engine Output</span>
+                  <button style={S.btn("secondary")} onClick={handleOptimize}>Run Optimization</button>
+                </>
+              ) : activePage === "ledger" ? (
+                null
+              ) : (
+                <>
+                  <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
+                  <button style={S.btn("secondary")} onClick={handleRedrawLines}>Redraw Lines</button>
+                  <button style={S.btn("accent")} onClick={handleOptimize}>Run Optimization</button>
+                </>
+              )}
+            </div>
           </div>
-          <span style={S.topbarSub}>Admin Dashboard</span>
-          <div style={S.topbarActions}>
-            {activePage === "data-info" ? (
-              <>
-                <span style={S.badge(T.info, "rgba(91,141,239,0.12)")}>Live Data</span>
-              </>
-            ) : activePage === "charts" ? (
-              null
-            ) : activePage === "instructions" ? (
-              <>
-                <span style={S.badge(T.accent, T.accentBg)}>Engine Output</span>
-                <button style={S.btn("secondary")} onClick={handleOptimize}>Run Optimization</button>
-              </>
-            ) : activePage === "ledger" ? (
-              null
-            ) : (
-              <>
-                <span style={S.badge(T.success, "rgba(76,175,80,0.12)")}>All Systems Online</span>
-                <button style={S.btn("secondary")} onClick={handleRedrawLines}>Redraw Lines</button>
-                <button style={S.btn("secondary")} onClick={handleOptimize}>Run Optimization</button>
-              </>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Scrollable content */}
         <div style={S.scrollContent}>
-          {activePage === "data-info" ? (
+          {activePage === "myhub" ? (
+            <MyHubAdminView />
+          ) : activePage === "data-info" ? (
             <DataInformation farmList={farmList} edges={edges} hubs={hubList} crops={crops} assignments={assignments} report={report} />
           ) : activePage === "charts" ? (
             <Charts farmList={farmList} edges={edges} crops={crops} assignments={assignments} hubs={hubList} />

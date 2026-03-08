@@ -15,7 +15,8 @@
     "status": "available",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 25
   },
   {
     "id": 2,
@@ -33,7 +34,9 @@
     "status": "available",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 74.0,
+    "crops_on_hand": {}
   },
   {
     "id": 4,
@@ -51,7 +54,8 @@
     "status": "new",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 5
   },
   {
     "id": 5,
@@ -69,7 +73,8 @@
     "status": "available",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 100
   },
   {
     "id": 8,
@@ -87,7 +92,9 @@
     "status": "available",
     "current_crop_id": null,
     "cycle_end_date": null,
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 38.0,
+    "crops_on_hand": {}
   },
   {
     "id": 10,
@@ -231,7 +238,9 @@
     "status": "growing",
     "current_crop_id": 0,
     "cycle_end_date": "2026-03-22",
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 30.0,
+    "crops_on_hand": {}
   },
   {
     "id": 3,
@@ -249,7 +258,8 @@
     "status": "growing",
     "current_crop_id": 1,
     "cycle_end_date": "2026-03-11",
-    "yield_history": {}
+    "yield_history": {},
+    "currency_balance": 0
   },
   {
     "id": 6,
