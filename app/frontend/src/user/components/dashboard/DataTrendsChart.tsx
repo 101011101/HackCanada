@@ -61,7 +61,9 @@ interface AreaChartBlockProps {
 
 function AreaChartBlock({ readings, metric, height, gradientId }: AreaChartBlockProps) {
   const color = metricColor(metric);
-  const data = readings.map(r => ({ date: formatDate(r.recorded_at), value: r[metric] }));
+  const data = readings
+    .map(r => ({ date: formatDate(r.recorded_at), value: (r as Record<string, unknown>)[metric] ?? null }))
+    .filter(d => d.value !== null);
 
   return (
     <ResponsiveContainer width="100%" height={height}>

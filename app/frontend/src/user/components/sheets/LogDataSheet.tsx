@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import BottomSheet from '../shared/BottomSheet';
 import { postReadings } from '../../services/api';
 import type { BundleResponse } from '../../types';
@@ -87,10 +88,14 @@ export default function LogDataSheet({ open, onClose, farmId, bundle, initialSoi
   }, [open, initialSoil, farmId]);
 
   const handleSubmit = async () => {
+    if (!bundle || !bundle.crop_id) {
+      setError('No crop selected. Please select a crop before logging data.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await postReadings(farmId, { crop_id: bundle?.crop_id ?? 0, pH, moisture, temperature, humidity });
+      await postReadings(farmId, { crop_id: bundle.crop_id, pH, moisture, temperature, humidity });
 
       // Persist updated sunlight to localStorage
       localStorage.setItem(`mycelium:sunlight_hours:${farmId}`, String(sunlight));
@@ -116,12 +121,19 @@ export default function LogDataSheet({ open, onClose, farmId, bundle, initialSoi
 
   return (
     <BottomSheet open={open} onClose={onClose} title={`Log data · ${cropName}`}>
+      <AnimatePresence mode="wait">
       {success ? (
-        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--success)', fontWeight: 600, fontSize: 15 }}>
+        <motion.div
+          key="success"
+          style={{ textAlign: 'center', padding: '24px 0', color: 'var(--success)', fontWeight: 600, fontSize: 15 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+        >
           Logged successfully ✓
-        </div>
+        </motion.div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div key="form" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Soil readings */}
           <div>
@@ -194,7 +206,20 @@ export default function LogDataSheet({ open, onClose, farmId, bundle, initialSoi
             </div>
           </div>
 
-          {error && <p style={{ fontSize: 12, color: 'var(--error)' }}>{error}</p>}
+          <AnimatePresence>
+            {error && (
+              <motion.span
+                key="error"
+                style={{ fontSize: 12, color: 'var(--error)', display: 'block' }}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+              >
+                {error}
+              </motion.span>
+            )}
+          </AnimatePresence>
 
           <button
             type="button"
@@ -206,6 +231,7 @@ export default function LogDataSheet({ open, onClose, farmId, bundle, initialSoi
           </button>
         </div>
       )}
+      </AnimatePresence>
     </BottomSheet>
   );
 }

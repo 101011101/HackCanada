@@ -1,3 +1,6 @@
+import { useRef, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+
 interface DesktopNavProps {
   activeView: 'tasks' | 'zone';
   onSelect: (view: 'tasks' | 'zone') => void;
@@ -5,9 +8,37 @@ interface DesktopNavProps {
 }
 
 export default function DesktopNav({ activeView, onSelect, onOpenCropPicker }: DesktopNavProps) {
+  const tasksRef = useRef<HTMLButtonElement>(null);
+  const zoneRef = useRef<HTMLButtonElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ top: 0, height: 0 });
+
+  useEffect(() => {
+    const activeRef = activeView === 'tasks' ? tasksRef : zoneRef;
+    const el = activeRef.current;
+    if (el) {
+      setIndicatorStyle({
+        top: el.offsetTop + el.offsetHeight * 0.2,
+        height: el.offsetHeight * 0.6,
+      });
+    }
+  }, [activeView]);
+
   return (
-    <div className="d-nav">
+    <div className="d-nav" style={{ position: 'relative' }}>
+      <motion.div
+        animate={{ top: indicatorStyle.top, height: indicatorStyle.height }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          width: 3,
+          background: 'var(--accent, #E8913A)',
+          borderRadius: 999,
+          pointerEvents: 'none',
+        }}
+      />
       <button
+        ref={tasksRef}
         className={`d-nav-item${activeView === 'tasks' ? ' d-nav-item--on' : ''}`}
         onClick={() => onSelect('tasks')}
         type="button"
@@ -20,6 +51,7 @@ export default function DesktopNav({ activeView, onSelect, onOpenCropPicker }: D
         Tasks
       </button>
       <button
+        ref={zoneRef}
         className={`d-nav-item${activeView === 'zone' ? ' d-nav-item--on' : ''}`}
         onClick={() => onSelect('zone')}
         type="button"

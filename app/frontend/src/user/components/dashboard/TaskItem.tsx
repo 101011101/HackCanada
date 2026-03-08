@@ -1,5 +1,6 @@
 import type { TaskItem as TaskItemType } from '../../types';
 import type { UserTaskState } from '../../types';
+import { motion } from 'framer-motion';
 
 interface TaskItemProps {
   task: TaskItemType;
@@ -20,6 +21,11 @@ export default function TaskItem({
   const showApiStatus = userState === null;
 
   return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.18 }}
+    >
     <details className="task-item">
       <summary>
         {/* Toggle — ON + strikethrough when user-done */}
@@ -144,5 +150,6 @@ export default function TaskItem({
         )}
       </div>
     </details>
+    </motion.div>
   );
 }

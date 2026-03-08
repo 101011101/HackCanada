@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 interface ButtonProps {
   variant: 'primary' | 'secondary' | 'accent' | 'ghost';
@@ -21,8 +22,16 @@ export default function Button({ variant, size, fullWidth, icon, disabled, onCli
   ].filter(Boolean).join(' ');
 
   return (
-    <button className={classes} disabled={disabled} onClick={onClick} type={type}>
+    <motion.button
+      className={classes}
+      disabled={disabled}
+      onClick={onClick}
+      type={type}
+      whileTap={!disabled ? { scale: 0.97 } : {}}
+      whileHover={!disabled ? { opacity: 0.92 } : {}}
+      transition={{ duration: 0.12 }}
+    >
       {children}
-    </button>
+    </motion.button>
   );
 }

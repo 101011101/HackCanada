@@ -1,3 +1,6 @@
+import { useRef, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+
 interface BottomTabBarProps {
   activeTab: 'farm' | 'food';
   onTabChange: (tab: 'farm' | 'food') => void;
@@ -5,9 +8,34 @@ interface BottomTabBarProps {
 }
 
 export default function BottomTabBar({ activeTab, onTabChange, onAddPlot }: BottomTabBarProps) {
+  const farmRef = useRef<HTMLButtonElement>(null);
+  const foodRef = useRef<HTMLButtonElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const activeRef = activeTab === 'farm' ? farmRef : foodRef;
+    const el = activeRef.current;
+    if (el) {
+      setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
+    }
+  }, [activeTab]);
+
   return (
-    <div className="m-tabbar">
+    <div className="m-tabbar" style={{ position: 'fixed' }}>
+      <motion.div
+        animate={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          height: 3,
+          background: 'var(--accent, #E8913A)',
+          borderRadius: 999,
+          pointerEvents: 'none',
+        }}
+      />
       <button
+        ref={farmRef}
         className={`m-tab${activeTab === 'farm' ? ' m-tab--on' : ''}`}
         onClick={() => onTabChange('farm')}
         type="button"
@@ -33,6 +61,7 @@ export default function BottomTabBar({ activeTab, onTabChange, onAddPlot }: Bott
         </svg>
       </button>
       <button
+        ref={foodRef}
         className={`m-tab${activeTab === 'food' ? ' m-tab--on' : ''}`}
         onClick={() => onTabChange('food')}
         type="button"

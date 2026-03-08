@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import type { BundleResponse } from '../../types';
 
 interface HeroSectionProps {
@@ -45,7 +46,11 @@ export default function HeroSection({
   const dEpochText = dEpochParts.join(' · ');
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Mobile hero */}
       <div className="m-hero m-only" id="hero-section">
         <div className="hero-body">
@@ -63,7 +68,11 @@ export default function HeroSection({
               <span>Day {dayOfCycle} of {totalDays}</span>
             </div>
             <div className="pbar">
-              <div className="pbar-fill" style={{ width: `${progressPct}%` }} />
+              <motion.div
+                className="pbar-fill"
+                animate={{ width: `${progressPct}%` }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              />
             </div>
           </div>
 
@@ -126,6 +135,6 @@ export default function HeroSection({
           </div>
         </div>
       </div>
-    </>
+    </motion.div>
   );
 }

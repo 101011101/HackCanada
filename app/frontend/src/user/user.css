@@ -190,7 +190,7 @@
     .data-widget-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border-lt);}
     .data-widget-title{font-size:13px;font-weight:600;}
     .data-widget-ts{font-size:10px;color:var(--ink-3);}
-    .data-readings{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border-lt);}
+    .data-readings{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border-lt);}
     .data-reading{padding:12px 12px;border-right:1px solid var(--border-lt);display:flex;flex-direction:column;gap:2px;}
     .data-reading:last-child{border-right:none;}
     .data-reading-icon{width:24px;height:24px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
@@ -201,7 +201,8 @@
     /* ── DATA VIZ panel (mobile + desktop shared) ── */
     .viz-panel{background:var(--bg-elev);border-radius:var(--r-md);box-shadow:var(--sh-sm);overflow:hidden;}
     .viz-panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border-lt);}
-    .viz-panel-title{font-size:13px;font-weight:600;}
+    .viz-panel-title{font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .viz-panel-header>div{flex-shrink:0;}
     .viz-panel-body{padding:18px;}
     /* collapsible variant — summary acts as the header */
     details.viz-panel>summary{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;list-style:none;user-select:none;}

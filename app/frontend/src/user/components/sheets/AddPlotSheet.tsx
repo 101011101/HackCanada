@@ -80,6 +80,7 @@ export default function AddPlotSheet({ open, onClose }: AddPlotSheetProps) {
   const [form, setForm] = useState<AddPlotFormData>(DEFAULT_FORM);
   const [showErrors, setShowErrors] = useState(false);
   const [soilPrefilled, setSoilPrefilled] = useState(false);
+  const [soilFetchError, setSoilFetchError] = useState(false);
 
   useEffect(() => {
     if (!open || !farmId) return;
@@ -94,13 +95,14 @@ export default function AddPlotSheet({ open, onClose }: AddPlotSheetProps) {
         }));
         setSoilPrefilled(true);
       })
-      .catch(() => {});
+      .catch(() => { setSoilFetchError(true); });
   }, [open, farmId]);
 
   useEffect(() => {
     if (!open) {
       setShowErrors(false);
       setSoilPrefilled(false);
+      setSoilFetchError(false);
       setForm({ ...DEFAULT_FORM, name: randomSlug() });
     }
   }, [open]);
@@ -214,6 +216,7 @@ export default function AddPlotSheet({ open, onClose }: AddPlotSheetProps) {
               Soil &amp; climate
             </span>
             {soilPrefilled && <span className="badge badge--info">Pre-filled from your farm</span>}
+            {soilFetchError && <span className="badge badge--error">Could not load soil data — enter manually</span>}
           </div>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useFarm } from '../store/FarmContext';
 import { getSuggestions, createNode, addCropsToNode } from '../services/api';
 import type { AddPlotFormData, CropSuggestion } from '../types';
+import { motion } from 'framer-motion';
 
 interface SuggestionsRouterState {
   formData?: AddPlotFormData;
@@ -42,9 +43,11 @@ function CropCard({ suggestion, selected, onToggle }: {
   const barColor = pct >= 75 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--border)';
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onToggle}
+      animate={{ scale: selected ? 1.015 : 1 }}
+      whileTap={{ scale: 0.99 }}
       style={{
         display: 'block',
         width: '100%',
@@ -113,7 +116,7 @@ function CropCard({ suggestion, selected, onToggle }: {
           </span>
         ))}
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -321,11 +324,22 @@ export default function Suggestions() {
 
         {/* Crop cards */}
         {!loading && suggestions.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <motion.div
+            variants={{ visible: { transition: { staggerChildren: 0.07 } }, hidden: {} }}
+            initial="hidden"
+            animate="visible"
+            style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+          >
             {suggestions.map((s) => (
-              <CropCard key={s.crop_id} suggestion={s} selected={selectedIds.has(s.crop_id)} onToggle={() => toggleCrop(s.crop_id)} />
+              <motion.div
+                key={s.crop_id}
+                variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.22 }}
+              >
+                <CropCard suggestion={s} selected={selectedIds.has(s.crop_id)} onToggle={() => toggleCrop(s.crop_id)} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 
