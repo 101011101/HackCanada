@@ -1,0 +1,9 @@
+{
+  "name": "hackcanada",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix app/frontend",
+    "build": "npm run build --prefix app/frontend",
+    "preview": "npm run preview --prefix app/frontend"
+  }
+}
