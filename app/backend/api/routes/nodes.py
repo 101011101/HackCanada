@@ -1,6 +1,6 @@
 import dataclasses
 import numpy as np
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from datetime import date, datetime, timezone, timedelta
 from typing import Optional
 
@@ -183,7 +183,6 @@ def add_node(req: models.NewFarmRequest):
     routing = compute_hub_routing(all_farms, all_hubs, all_config.max_travel_distance)
     storage.save_hub_routing(routing)
 
-    hub_name, hub_priority = _get_primary_hub_info(new_id)
     sqft_per = round(new_farm.plot_size_sqft / num_slots, 1)
     bundles  = []
     for c in assigned:
@@ -211,9 +210,6 @@ def add_node(req: models.NewFarmRequest):
                 f"network gap {gap_pct:.0f}% unfilled"
             ),
         ))
-        ai_tasks = generate_tasks_for_farm(new_farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
-        if ai_tasks is not None:
-            set_cached_tasks(new_id, crop.id, 1, ai_tasks)
     return bundles
 
 
@@ -222,7 +218,7 @@ def add_node(req: models.NewFarmRequest):
 # ---------------------------------------------------------------------------
 
 @router.patch('/nodes/{farm_id}/crops', response_model=list[models.BundleResponse])
-def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
+def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest, background_tasks: BackgroundTasks):
     """Add or replace crop assignments for an existing farm without creating a new one.
 
     replace=True  → set assignments to exactly req.crop_ids (used by initial setup)
@@ -255,10 +251,9 @@ def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
     crop_dicts = storage.load_crops()
     n          = len(new_crop_ids)
     sqft_per   = round(farm.plot_size_sqft / n, 1)
-    bundles    = []
-    invalidate_farm_tasks(farm_id)
-    hub_name, hub_priority = _get_primary_hub_info(farm_id)
     cycle_number = farm_dict.get('cycle_number', 1)
+    bundles    = []
+    crops_for_ai = []  # collect (crop, qty_kg) for background generation
     for crop_id in new_crop_ids:
         crop_dict = next((d for d in crop_dicts if d['id'] == crop_id), None)
         if not crop_dict:
@@ -283,9 +278,17 @@ def update_farm_crops(farm_id: int, req: models.UpdateCropsRequest):
                 f"soil pH {farm.pH:.1f} (optimal {crop.optimal_pH[0]}–{crop.optimal_pH[1]})"
             ),
         ))
-        ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
-        if ai_tasks is not None:
-            set_cached_tasks(farm_id, crop.id, cycle_number, ai_tasks)
+        crops_for_ai.append((crop, qty_kg))
+
+    def _generate_tasks_bg():
+        invalidate_farm_tasks(farm_id)
+        hub_name, hub_priority = _get_primary_hub_info(farm_id)
+        for crop, qty_kg in crops_for_ai:
+            ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
+            if ai_tasks is not None:
+                set_cached_tasks(farm_id, crop.id, cycle_number, ai_tasks)
+
+    background_tasks.add_task(_generate_tasks_bg)
     return bundles
 
 
@@ -492,10 +495,6 @@ def cycle_end(farm_id: int, body: models.CycleEndRequest):
     assignments[str(farm_id)] = assigned
     storage.save_assignments(assignments)
 
-    invalidate_farm_tasks(farm_id)
-    hub_name, hub_priority = _get_primary_hub_info(farm_id)
-    new_cycle_number = farm_dict['cycle_number']
-
     sqft_per = round(farm.plot_size_sqft / num_slots, 1)
     bundles  = []
     for c in assigned:
@@ -514,16 +513,13 @@ def cycle_end(farm_id: int, body: models.CycleEndRequest):
             sqft_allocated   = sqft_per,
             preference_match = c in farm.preferred_crop_ids,
             cycle_start_date = str(today),
-            cycle_number     = new_cycle_number,
+            cycle_number     = farm_dict['cycle_number'],
             joined_at        = farm.joined_at,
             reason=(
                 f"Suitability {suitability:.0%} for {crop.name} — "
                 f"network gap {gap_pct:.0f}% unfilled"
             ),
         ))
-        ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_priority)
-        if ai_tasks is not None:
-            set_cached_tasks(farm_id, crop.id, new_cycle_number, ai_tasks)
     return bundles
 
 

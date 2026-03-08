@@ -8,8 +8,6 @@ from app.backend.engine.scheduler    import (classify_nodes, compute_locked_supp
                                       compute_gap, compute_locked_supply_per_hub)
 from app.backend.engine.optimizer    import run_ilp, compute_multi_crop_assignments
 from app.backend.engine.reporter     import generate_report
-from app.backend.engine.gemini_tasks import generate_tasks_for_farm
-from app.backend.api.ai_task_cache   import invalidate_farm_tasks, set_cached_tasks
 
 router = APIRouter()
 
@@ -55,32 +53,6 @@ def optimize():
 
     routing = compute_hub_routing(farms, hubs, config.max_travel_distance)
     storage.save_hub_routing(routing)
-
-    # Eagerly generate AI tasks for all newly assigned farms (sequential to avoid rate limits)
-    hub_routing = storage.load_hub_routing()
-    hub_dicts   = storage.load_hubs()
-    for idx, i in enumerate(available):
-        farm       = farms[i]
-        crop_ids   = full_assignments[idx]
-        num_slots  = len(crop_ids)
-        sqft_per   = round(farm.plot_size_sqft / num_slots, 1) if num_slots else farm.plot_size_sqft
-        cycle_num  = farm.cycle_number or 1
-
-        # Resolve primary hub for this farm
-        hub_ids   = hub_routing.get(str(farm.id)) or hub_routing.get(farm.id) or []
-        hub_dict  = next((h for h in hub_dicts if h['id'] == hub_ids[0]), None) if hub_ids else None
-        hub_name  = hub_dict['name']     if hub_dict else 'Unknown Hub'
-        hub_pri   = hub_dict['priority'] if hub_dict else 'standard'
-
-        invalidate_farm_tasks(farm.id)
-        for crop_id in crop_ids:
-            crop     = next((c for c in crops if c.id == crop_id), None)
-            if crop is None:
-                continue
-            qty_kg   = round(yield_matrix[i][crop_id] / num_slots, 1)
-            ai_tasks = generate_tasks_for_farm(farm, crop, sqft_per, qty_kg, hub_name, hub_pri)
-            if ai_tasks is not None:
-                set_cached_tasks(farm.id, crop_id, cycle_num, ai_tasks)
 
     return models.OptimizeResponse(
         status='ok',

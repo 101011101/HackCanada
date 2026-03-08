@@ -4,6 +4,7 @@ All Gemini interaction is isolated here — no other file calls the API directly
 """
 import os
 import json
+import time
 
 import google.generativeai as genai
 
@@ -78,11 +79,18 @@ def call_gemini(prompt: str) -> list[dict] | None:
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            model_name='gemini-2.0-flash',
-            generation_config={'response_mime_type': 'application/json'},
+            model_name='gemini-2.5-flash',
+            generation_config={
+                'response_mime_type': 'application/json',
+                'thinking_config': {'thinking_budget': 0},
+            },
         )
+        print(f"[Gemini] Calling gemini-2.5-flash...")
+        t0 = time.time()
         response = model.generate_content(prompt)
+        elapsed_ms = (time.time() - t0) * 1000
         tasks = json.loads(response.text)
+        print(f"[Gemini] Done in {elapsed_ms:.0f}ms — {len(tasks) if isinstance(tasks, list) else '?'} tasks returned")
 
         if not isinstance(tasks, list):
             return None
