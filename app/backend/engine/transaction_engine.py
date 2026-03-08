@@ -139,6 +139,21 @@ def run(farms: list, hubs: list, crops: list, config) -> None:
             top3 = sorted(candidates, key=lambda x: x['score'], reverse=True)[:3]
             req['hub_options'] = top3
             req['status']      = 'options_ready'
+        else:
+            # Allow nearest hub that still passes constraints so select-hub can succeed
+            in_range = []
+            for hub in hubs:
+                dist_m = haversine(node.lat, node.lng, hub.lat, hub.lng)
+                if dist_m > config.max_travel_distance:
+                    continue
+                if not _hard_constraints(req, hub, inv, farm_map, rates):
+                    continue
+                dist_km = dist_m / 1000.0
+                in_range.append({'hub_id': hub.id, 'distance_km': round(dist_km, 2), 'score': 0.0})
+            if in_range:
+                nearest_one = sorted(in_range, key=lambda x: x['distance_km'])[:1]
+                req['hub_options'] = nearest_one
+                req['status']      = 'options_ready'
 
     save_requests(requests)
 

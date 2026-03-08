@@ -180,7 +180,8 @@ farms = [
              plot_type='rooftop',   tools='intermediate', budget='medium',
              pH=6.8, moisture=70, temperature=21, humidity=60,
              status='growing', current_crop_id=0,
-             cycle_end_date=date(2026, 3, 20)),     # Tomato
+             cycle_end_date=date(2026, 3, 20),
+             currency_balance=10.0),     # Tomato — demo balance for MyFood requests (10 HC)
 
     FarmNode(id=3,  name='Farm #04 — Community Lot',
              lat=43.6610, lng=-79.3950, plot_size_sqft=400,

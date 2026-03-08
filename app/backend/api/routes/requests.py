@@ -72,6 +72,14 @@ def submit_request(body: models.RequestBody):
 # GET /requests — list with optional filters
 # ---------------------------------------------------------------------------
 
+def _request_at_or_potential_for_hub(r: dict, hub_id: int) -> bool:
+    if r.get('hub_id') == hub_id:
+        return True
+    if r.get('status') == 'options_ready':
+        return any(opt.get('hub_id') == hub_id for opt in r.get('hub_options', []))
+    return False
+
+
 @router.get('/requests', response_model=list[models.RequestResponse])
 def list_requests(
     node_id: Optional[int] = Query(None),
@@ -83,7 +91,8 @@ def list_requests(
     if node_id is not None:
         results = [r for r in results if r['node_id'] == node_id]
     if hub_id is not None:
-        results = [r for r in results if r['hub_id'] == hub_id]
+        # Show requests at this hub (matched/confirmed) OR options_ready that list this hub (awaiting user to select)
+        results = [r for r in results if _request_at_or_potential_for_hub(r, hub_id)]
     if status is not None:
         results = [r for r in results if r['status'] == status]
     if type is not None:
