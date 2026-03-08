@@ -95,11 +95,24 @@ def run(farms: list, hubs: list, crops: list, config) -> None:
 
     # ------------------------------------------------------------------
     # Match pending requests → options_ready
+    # Sort by viable hub count ascending: most constrained requests first
     # ------------------------------------------------------------------
-    for req in requests:
-        if req['status'] != 'pending':
-            continue
+    def _viable_count(req: dict) -> int:
+        node = farm_map.get(req['node_id'])
+        if node is None:
+            return 0
+        return sum(
+            1 for hub in hubs
+            if haversine(node.lat, node.lng, hub.lat, hub.lng) <= config.max_travel_distance
+            and _hard_constraints(req, hub, inv, farm_map, rates)
+        )
 
+    pending = sorted(
+        [r for r in requests if r['status'] == 'pending'],
+        key=_viable_count
+    )
+
+    for req in pending:
         node = farm_map.get(req['node_id'])
         if node is None:
             continue
