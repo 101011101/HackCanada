@@ -1,8 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import StepPlotBasics from '../components/setup/StepPlotBasics';
 import type { PlotBasicsDraft } from '../components/setup/StepPlotBasics';
-import { createNode } from '../services/api';
-import { useFarm } from '../store/FarmContext';
 
 interface SetupProps {
   onComplete: () => void;
@@ -38,71 +37,42 @@ const DEFAULT_SOIL: StepSoilDraft = { pH: 7.0, moisture: 50 };
 const DEFAULT_CLIMATE: StepClimateDraft = { temperature: 20, humidity: 50 };
 const DEFAULT_RESOURCES: StepResourcesDraft = { tools: 'basic', budget: 'low' };
 
-export default function Setup({ onComplete }: SetupProps) {
-  const { join } = useFarm();
+export default function Setup({ onComplete: _onComplete }: SetupProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [plotBasics, setPlotBasics] = useState<PlotBasicsDraft>(DEFAULT_PLOT_BASICS);
   const [soil, setSoil] = useState<StepSoilDraft>(DEFAULT_SOIL);
   const [climate, setClimate] = useState<StepClimateDraft>(DEFAULT_CLIMATE);
   const [resources, setResources] = useState<StepResourcesDraft>(DEFAULT_RESOURCES);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (
-      plotBasics.lat === null ||
-      plotBasics.lng === null ||
-      plotBasics.plot_type === ''
-    ) {
-      setError('Please complete all required fields.');
+  const handleSubmit = () => {
+    setError(null);
+    if (plotBasics.plot_type === '') {
+      setError('Please select a plot type.');
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const bundles = await createNode({
-        name: plotBasics.name,
-        lat: plotBasics.lat,
-        lng: plotBasics.lng,
-        plot_size_sqft: plotBasics.plot_size_sqft,
-        plot_type: plotBasics.plot_type,
-        tools: resources.tools,
-        budget: resources.budget,
-        pH: soil.pH,
-        moisture: soil.moisture,
-        temperature: climate.temperature,
-        humidity: climate.humidity,
-        preferred_crop_ids: [],
-      });
-
-      const firstBundle = bundles[0];
-      if (!firstBundle) {
-        throw new Error('No farm assignment returned from server.');
-      }
-
-      const farmId = firstBundle.farm_id;
-
-      // Gap 1: save sunlight hours to localStorage keyed by farmId
-      localStorage.setItem(
-        `mycelium:sunlight_hours:${farmId}`,
-        String(plotBasics.sunlight_hours)
-      );
-
-      // Persist farm identity
-      join(farmId, plotBasics.lat, plotBasics.lng);
-
-      // Clear setup draft
-      localStorage.removeItem('mycelium:setup_draft');
-      localStorage.removeItem('mycelium:setup_step');
-
-      onComplete();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    // Don't create the farm here — pass all collected data to the Suggestions
+    // page, which creates the farm once the user has chosen their crops.
+    navigate('/suggestions', {
+      state: {
+        formData: {
+          name:           plotBasics.name,
+          lat:            plotBasics.lat,
+          lng:            plotBasics.lng,
+          plot_size_sqft: plotBasics.plot_size_sqft,
+          plot_type:      plotBasics.plot_type,
+          sunlight_hours: plotBasics.sunlight_hours,
+          tools:          resources.tools,
+          budget:         resources.budget,
+          pH:             soil.pH,
+          moisture:       soil.moisture,
+          temperature:    climate.temperature,
+          humidity:       climate.humidity,
+        },
+      },
+    });
   };
 
   return (
@@ -390,10 +360,9 @@ export default function Setup({ onComplete }: SetupProps) {
                 type="button"
                 className="btn btn--accent"
                 style={{ flex: 1 }}
-                disabled={submitting}
                 onClick={handleSubmit}
               >
-                {submitting ? 'Setting up…' : 'Connect to network'}
+                Connect to network
               </button>
             </div>
           </div>

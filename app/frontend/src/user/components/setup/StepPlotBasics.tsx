@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export interface PlotBasicsDraft {
   name: string;
   lat: number | null;
@@ -25,23 +27,26 @@ export default function StepPlotBasics({
   onChange,
   onNext,
 }: StepPlotBasicsProps) {
+  const [showErrors, setShowErrors] = useState(false);
   const handleGps = () => {
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      onChange({
-        ...draft,
-        lat: parseFloat(pos.coords.latitude.toFixed(6)),
-        lng: parseFloat(pos.coords.longitude.toFixed(6)),
-      });
-    });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(6));
+        const lng = parseFloat(pos.coords.longitude.toFixed(6));
+        onChange({ ...draft, lat, lng });
+      },
+      () => {},
+      { timeout: 10000 }
+    );
   };
 
-  const canAdvance =
-    draft.name.trim().length > 0 &&
-    draft.lat !== null &&
-    draft.lng !== null &&
-    draft.plot_size_sqft > 0 &&
-    draft.plot_type !== '';
+  const errors = {
+    name: draft.name.trim().length === 0 ? 'Farm name is required' : null,
+    plot_size_sqft: draft.plot_size_sqft <= 0 ? 'Plot size is required' : null,
+    plot_type: draft.plot_type === '' ? 'Select a plot type' : null,
+  };
+  const canAdvance = !errors.name && !errors.plot_size_sqft && !errors.plot_type;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -72,7 +77,7 @@ export default function StepPlotBasics({
           placeholder="My rooftop garden"
           style={{
             padding: '10px 14px',
-            border: '1.5px solid var(--border)',
+            border: `1.5px solid ${showErrors && errors.name ? 'var(--error)' : 'var(--border)'}`,
             borderRadius: 'var(--r-md)',
             fontSize: 14,
             background: 'var(--bg-elev)',
@@ -80,6 +85,7 @@ export default function StepPlotBasics({
             outline: 'none',
           }}
         />
+        {showErrors && errors.name && <span style={{ fontSize: 11, color: 'var(--error)' }}>{errors.name}</span>}
       </div>
 
       {/* Location */}
@@ -131,7 +137,7 @@ export default function StepPlotBasics({
           placeholder="120"
           style={{
             padding: '10px 14px',
-            border: '1.5px solid var(--border)',
+            border: `1.5px solid ${showErrors && errors.plot_size_sqft ? 'var(--error)' : 'var(--border)'}`,
             borderRadius: 'var(--r-md)',
             fontSize: 14,
             background: 'var(--bg-elev)',
@@ -139,6 +145,7 @@ export default function StepPlotBasics({
             outline: 'none',
           }}
         />
+        {showErrors && errors.plot_size_sqft && <span style={{ fontSize: 11, color: 'var(--error)' }}>{errors.plot_size_sqft}</span>}
       </div>
 
       {/* Plot type */}
@@ -160,6 +167,7 @@ export default function StepPlotBasics({
             </button>
           ))}
         </div>
+        {showErrors && errors.plot_type && <span style={{ fontSize: 11, color: 'var(--error)' }}>{errors.plot_type}</span>}
       </div>
 
       {/* Sunlight hours — Gap 1 */}
@@ -201,8 +209,10 @@ export default function StepPlotBasics({
       <button
         type="button"
         className="btn btn--primary btn--full"
-        disabled={!canAdvance}
-        onClick={onNext}
+        onClick={() => {
+          setShowErrors(true);
+          if (canAdvance) onNext();
+        }}
         style={{ marginTop: 8 }}
       >
         Continue

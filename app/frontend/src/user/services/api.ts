@@ -18,10 +18,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 import type {
   BundleResponse,
+  BalanceResponse,
+  ReadingEntryResponse,
   NewFarmRequest,
   SoilReadingResponse,
   TaskItem,
   RiskFlag,
+  HubEntry,
+  CropSuggestion,
+  SuggestionsRequest,
 } from '../types';
 
 export function createNode(body: NewFarmRequest): Promise<BundleResponse[]> {
@@ -54,5 +59,46 @@ export function postCycleEnd(
   return request<BundleResponse[]>(`/nodes/${farmId}/cycle-end`, {
     method: 'POST',
     body: JSON.stringify({ actual_yield_kg: actualYieldKg }),
+  });
+}
+
+export function postReadings(
+  farmId: number,
+  body: { crop_id: number; pH: number; moisture: number; temperature: number; humidity: number }
+): Promise<ReadingEntryResponse> {
+  return request<ReadingEntryResponse>(`/nodes/${farmId}/readings`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function getBalance(farmId: number): Promise<BalanceResponse> {
+  return request<BalanceResponse>(`/nodes/${farmId}/balance`);
+}
+
+export function getReadings(farmId: number, limit = 30, cropId?: number): Promise<ReadingEntryResponse[]> {
+  const params = cropId !== undefined ? `?limit=${limit}&crop_id=${cropId}` : `?limit=${limit}`;
+  return request<ReadingEntryResponse[]>(`/nodes/${farmId}/readings${params}`);
+}
+
+export function getSuggestions(body: SuggestionsRequest): Promise<CropSuggestion[]> {
+  return request<CropSuggestion[]>('/suggestions', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function getHubs(): Promise<HubEntry[]> {
+  return request<HubEntry[]>('/hubs');
+}
+
+export function addCropsToNode(
+  farmId: number,
+  cropIds: number[],
+  replace: boolean
+): Promise<BundleResponse[]> {
+  return request<BundleResponse[]>(`/nodes/${farmId}/crops`, {
+    method: 'PATCH',
+    body: JSON.stringify({ crop_ids: cropIds, replace }),
   });
 }

@@ -46,6 +46,15 @@ export interface RiskFlag {
   severity: 'low' | 'medium' | 'high';
 }
 
+export interface HubEntry {
+  id: number;
+  name: string;
+  lat: number;
+  lng: number;
+  priority: 'critical' | 'standard' | 'low';
+  capacity_kg: number;
+}
+
 export interface BalanceResponse {
   node_id: number;
   currency_balance: number;
@@ -93,8 +102,59 @@ export interface NewFarmRequest {
   preferred_crop_ids: number[];
 }
 
+export interface ReadingEntryResponse {
+  id: number;
+  farm_id: number;
+  crop_id: number;
+  recorded_at: string;
+  pH: number;
+  moisture: number;
+  temperature: number;
+  humidity: number;
+}
+
 // ---------------------------------------------------------------------------
 // User task completion state (localStorage-backed)
 // ---------------------------------------------------------------------------
 
 export type UserTaskState = 'done' | 'skipped';
+
+// ---------------------------------------------------------------------------
+// Suggestions / Add-plot flow
+// ---------------------------------------------------------------------------
+
+export interface AddPlotFormData {
+  name: string;
+  lat: number | null;
+  lng: number | null;
+  plot_size_sqft: number;
+  plot_type: string;
+  sunlight_hours: number;
+  tools: 'basic' | 'intermediate' | 'advanced';
+  budget: 'low' | 'medium' | 'high';
+  pH: number;
+  moisture: number;
+  temperature: number;
+  humidity: number;
+}
+
+export interface CropSuggestion {
+  crop_id: number;
+  crop_name: string;
+  suitability_pct: number;
+  estimated_yield_kg: number;
+  grow_weeks: number;
+  reason: string;
+}
+
+export interface SuggestionsRequest {
+  plot_size_sqft: number;
+  plot_type: string;
+  tools: string;
+  budget: string;
+  pH?: number;
+  moisture?: number;
+  temperature?: number;
+  humidity?: number;
+  preferred_crop_ids?: number[];
+}

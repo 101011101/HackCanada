@@ -4,12 +4,9 @@ interface DataWidgetProps {
   updatedMinutesAgo: number | null;
   moisture: { value: number; status: string } | null;
   temperature: { value: number; delta: string } | null;
+  pH: number | null;
 }
 
-/**
- * Reads sunlight hours from localStorage key "mycelium:sunlight_hours:{farmId}".
- * Returns the value as a number, or null if absent / invalid.
- */
 function readSunlightHours(farmId: number): number | null {
   const raw = localStorage.getItem(`mycelium:sunlight_hours:${farmId}`);
   if (raw === null) return null;
@@ -23,15 +20,12 @@ export default function DataWidget({
   updatedMinutesAgo,
   moisture,
   temperature,
+  pH,
 }: DataWidgetProps) {
   const sunlightHours = readSunlightHours(farmId);
-
-  const timestampLabel =
-    updatedMinutesAgo !== null ? `${updatedMinutesAgo} min ago` : '—';
-
+  const timestampLabel = updatedMinutesAgo !== null ? `${updatedMinutesAgo} min ago` : '—';
   const moistureStatus = moisture?.status ?? '';
-  const moistureDeltaClass =
-    moistureStatus === 'Optimal' ? 'delta--up' : 'delta--dn';
+  const moistureDeltaClass = moistureStatus === 'Optimal' ? 'delta--up' : 'delta--dn';
 
   return (
     <div className="data-widget">
@@ -43,80 +37,40 @@ export default function DataWidget({
       <div className="data-readings">
         {/* Moisture */}
         <div className="data-reading">
-          <div
-            className="data-reading-icon"
-            style={{ background: 'rgba(91,141,239,0.12)' }}
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="var(--info)"
-              strokeWidth={1.5}
-              width={12}
-              height={12}
-            >
+          <div className="data-reading-icon" style={{ background: 'rgba(91,141,239,0.12)' }}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--info)" strokeWidth={1.5} width={12} height={12}>
               <path d="M8 2C8 2 4 6 4 11a4 4 0 0 0 8 0C12 6 8 2 8 2Z" />
             </svg>
           </div>
-          <div
-            className="data-reading-val"
-            style={{ color: 'var(--info)' }}
-          >
+          <div className="data-reading-val" style={{ color: 'var(--info)' }}>
             {moisture !== null ? `${moisture.value}%` : '—'}
           </div>
           <div className="data-reading-lbl">Moisture</div>
           {moisture !== null && (
-            <div className={`data-reading-delta ${moistureDeltaClass}`}>
-              {moisture.status}
-            </div>
+            <div className={`data-reading-delta ${moistureDeltaClass}`}>{moisture.status}</div>
           )}
         </div>
 
         {/* Temperature */}
         <div className="data-reading">
-          <div
-            className="data-reading-icon"
-            style={{ background: 'rgba(232,145,58,0.12)' }}
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth={1.5}
-              width={12}
-              height={12}
-            >
+          <div className="data-reading-icon" style={{ background: 'rgba(232,145,58,0.12)' }}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--accent)" strokeWidth={1.5} width={12} height={12}>
               <path d="M8 9V4a1 1 0 0 0-2 0v5a3 3 0 1 0 2 0Z" />
             </svg>
           </div>
-          <div
-            className="data-reading-val"
-            style={{ color: 'var(--accent)' }}
-          >
+          <div className="data-reading-val" style={{ color: 'var(--accent)' }}>
             {temperature !== null ? `${temperature.value}°C` : '—'}
           </div>
           <div className="data-reading-lbl">Temp</div>
           {temperature !== null && (
-            <div className="data-reading-delta delta--dn">
-              {temperature.delta}
-            </div>
+            <div className="data-reading-delta delta--dn">{temperature.delta}</div>
           )}
         </div>
 
-        {/* Sunlight — from localStorage, not live API */}
+        {/* Sunlight */}
         <div className="data-reading">
-          <div
-            className="data-reading-icon"
-            style={{ background: 'rgba(76,175,80,0.12)' }}
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="var(--success)"
-              strokeWidth={1.5}
-              width={12}
-              height={12}
-            >
+          <div className="data-reading-icon" style={{ background: 'rgba(76,175,80,0.12)' }}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--success)" strokeWidth={1.5} width={12} height={12}>
               <circle cx={8} cy={8} r={3} />
               <line x1={8} y1={1} x2={8} y2={3} />
               <line x1={8} y1={13} x2={8} y2={15} />
@@ -124,17 +78,28 @@ export default function DataWidget({
               <line x1={13} y1={8} x2={15} y2={8} />
             </svg>
           </div>
-          <div
-            className="data-reading-val"
-            style={{ color: 'var(--success)' }}
-          >
-            {sunlightHours !== null
-              ? `${sunlightHours.toFixed(1)}h`
-              : '—'}
+          <div className="data-reading-val" style={{ color: 'var(--success)' }}>
+            {sunlightHours !== null ? `${sunlightHours.toFixed(1)}h` : '—'}
           </div>
           <div className="data-reading-lbl">Sunlight</div>
+          <div className="data-reading-delta" style={{ color: 'var(--ink-3)' }}>From setup</div>
+        </div>
+
+        {/* pH */}
+        <div className="data-reading">
+          <div className="data-reading-icon" style={{ background: 'rgba(155,89,182,0.12)' }}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="#9b59b6" strokeWidth={1.5} width={12} height={12}>
+              <circle cx={8} cy={8} r={5} />
+              <line x1={8} y1={5} x2={8} y2={11} />
+              <line x1={5} y1={8} x2={11} y2={8} />
+            </svg>
+          </div>
+          <div className="data-reading-val" style={{ color: '#9b59b6' }}>
+            {pH !== null ? pH.toFixed(1) : '—'}
+          </div>
+          <div className="data-reading-lbl">pH</div>
           <div className="data-reading-delta" style={{ color: 'var(--ink-3)' }}>
-            From setup
+            {pH !== null ? (pH < 6 ? 'Acidic' : pH > 7.5 ? 'Alkaline' : 'Neutral') : ''}
           </div>
         </div>
       </div>
