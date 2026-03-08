@@ -269,7 +269,7 @@ export default function MyHubAdminView() {
     <button
       onClick={() => setDemoMode(d => !d)}
       style={{
-        position: "fixed", bottom: 20, right: 20, zIndex: 999,
+        position: "fixed", bottom: 20, left: 20, zIndex: 999,
         background: demoMode ? T.accent : T.bgElev,
         color: demoMode ? "#fff" : T.ink3,
         border: `1.5px solid ${demoMode ? T.accent : T.border}`,

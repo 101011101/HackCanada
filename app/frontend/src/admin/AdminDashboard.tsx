@@ -368,7 +368,15 @@ export default function AdminDashboard() {
   }, [form, panelMode, editFarmId, loadAll]);
 
   const handleOptimize = useCallback(() => {
-    runOptimize().then(loadAll).catch(console.error);
+    console.log("[Optimizer] Running optimization...");
+    runOptimize()
+      .then((result) => {
+        console.log("[Optimizer] Done:", result);
+        return loadAll();
+      })
+      .catch((err) => {
+        console.error("[Optimizer] Error:", err);
+      });
   }, [loadAll]);
 
   const handleRedrawLines = useCallback(() => {
